@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ordersprinter</title>
+    <link rel="stylesheet" href="../style/waiter.css">
+    <link rel="stylesheet" href="../style/login.css">
+    <link rel="stylesheet" href="../style/main.css">
+    <link rel="stylesheet" href="../style/nav.css">
+    <link href='https://fonts.googleapis.com/css?family=Roboto:400,900&display=swap' rel='stylesheet'>
+    <link href='https://fonts.googleapis.com/css?family=Kalam&display=swap' rel='stylesheet'>
+    <script src="../scripts/waiter.js"></script>
+    <script src='https://kit.fontawesome.com/e7df220bd7.js'></script>
+    <script src='https://www.gstatic.com/firebasejs/6.3.4/firebase-app.js'></script>
+    <script src='https://www.gstatic.com/firebasejs/6.3.4/firebase-auth.js'></script>
+    <script src='https://www.gstatic.com/firebasejs/6.3.4/firebase-database.js'></script>
+</head>
+<body>
+    <nav id='nav'>
+        <i class='fas fa-arrow-left' id='back'></i>
+        <i class='fas fa-sign-out-alt hide' id='signOut'></i>
+        <i class='fas fa-home hide' id='home'></i>
+        <i class='fas fa-shopping-cart hide' id='list'></i>
+    </nav>
+
+    <div id='logInScreen'>
+        <h1>Kellner Log in</h1>
+
+        <form id='logInForm'>
+            <input type='text' placeholder='Benutzername' id='username'>
+            <input type='password' placeholder='Passwort' id='password'>
+            <div class='button' id='logInBtn'>Anmelden</div>
+            <p id="loginfdb">&nbsp;</p>
+        </form>
+    </div>
+
+    <div id="tableSelection" class="hide">
+        <div id="tableSelectionWrapper"></div>
+    </div>
+
+    <div id='waiterScreen' class='hide'>
+        <div id="antiWrapper">
+            <h2>alkoholfrei</h2>
+            <p id="tableNumber"></p>
+        </div>
+        <div id="alkWrapper">
+            <h2>alkoholisch</h2>
+        </div>
+        <div id="noteWindow">
+            <h4>Annmerkung schreiben</h4>
+            <textarea id="note" cols="30" rows="10" placeholder="Annmerkung" maxlength="100"></textarea>
+            <div class="button" id="noteBtn">Speichern</div>
+        </div>
+    </div>
+
+    <div id='shoppingCart' class="hide">
+        <div id='shoppingWrapper'></div>
+    </div>
+</body>
+</html>

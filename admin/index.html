@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ordersprinter</title>
+    <link rel="stylesheet" href="../style/adminCP.css">
+    <link rel="stylesheet" href="../style/login.css">
+    <link rel="stylesheet" href="../style/main.css">
+    <link rel="stylesheet" href="../style/nav.css">
+    <link href='https://fonts.googleapis.com/css?family=Roboto:400,900&display=swap' rel='stylesheet'>
+    <link href='https://fonts.googleapis.com/css?family=Kalam&display=swap' rel='stylesheet'>
+    <script src="../scripts/admin.js"></script>
+    <script src='https://kit.fontawesome.com/e7df220bd7.js'></script>
+    <script src='https://www.gstatic.com/firebasejs/6.3.4/firebase-app.js'></script>
+    <script src='https://www.gstatic.com/firebasejs/6.3.4/firebase-auth.js'></script>
+    <script src='https://www.gstatic.com/firebasejs/6.3.4/firebase-database.js'></script>
+</head>
+<body>
+    <nav id='nav'>
+        <i class="fas fa-arrow-left" id="back"></i>
+        <i class='fas fa-sign-out-alt hide' id='signOut'></i>
+        <i class='fas fa-home hide' id='home'></i>
+        <i class="far fa-chart-bar hide" id="chart"></i>
+    </nav>
+
+    <div id='logInScreen'>
+        <h1>Administrator Log in</h1>
+
+        <form id='logInForm'>
+            <input type='text' placeholder='Benutzername' id='username'>
+            <input type='password' placeholder='Passwort' id='password'>
+            <div class='button' id='logInBtn'>Anmelden</div>
+            <p id="loginfdb">&nbsp;</p>
+        </form>
+    </div>
+
+    <div id='adminScreen' class='hide'>
+        <!-- <h1 id="adminText">admin</h1> -->
+
+        <div id='adminWrapper' class='hide'>
+            <div id='adminDrink' class='adminBox'> <p><i class='fas fa-wine-glass-alt'></i> Getränke verwalten</p> </div>
+            <div id='adminFood' class='adminBox'> <p><i class='fas fa-hamburger'></i> Speisen verwalten</p> </div>
+            <div id='adminUsers' class='adminBox'> <p><i class='fas fa-users'></i> Kellner verwalten</p> </div>
+            <div id='adminTable' class='adminBox'> <p><i class='fas fa-table'></i> Tische verwalten</p> </div>
+        </div>
+
+        <div id="adminDrinkWrapper" class="hide">
+            <h2>Getränke verwalten</h2>
+            <div id="drinkWrapper"></div>
+            <div id="addDrinkWindow">
+                <h4 style="margin: 1vmin 0">neues Getränk hinzufügen</h4>
+                <input type="text" placeholder="Name" id="addName">
+                <input type="number" placeholder="Preis" id="addPrice" step="0.5">
+                <div style="width: 80%;display: flex;justify-content: space-between;flex-direction: row;align-items: center;"> <p style="font-weight: 100;">enthält Alk.</p> <input type="checkbox" id="addAnti"></div>
+                <div style="width: 80%;display: flex;justify-content: flex-end;"><div class="button" id="addNewDrink">hinzufügen</div></div>
+            </div>            
+        </div>
+
+        <div id="adminUsersWrapper" class="hide">
+            <h2>Kellner verwalten</h2>
+            <div id="userWrapper"></div>
+            <div id="addUserWindow">
+                <h4 style="margin: 1vmin 0">neuen Kellner hinzufügen</h4>
+                <input type="text" placeholder="Benutzername" id="addUsername">
+                <div style="width: 80%;display: flex;justify-content: flex-end;"><div class="button" id="addNewUser">hinzufügen</div></div>
+                <p id="addUserFDB">&nbsp;</p>
+            </div>            
+        </div>
+
+        <div id="adminTableWrapper" class="hide">            
+            <div id="tableWrapper"></div>
+
+            <div id="addTableWindow">
+                <h4 style="margin: 1vmin 0">neuen Tisch hinzufügen</h4>
+                <input type="number" placeholder="Tischnummer" id="addNumber">
+                <div style="width: 80%;display: flex;justify-content: flex-end;"><div class="button" id="addNewTable">hinzufügen</div></div>
+                <p id="addTableFDB">&nbsp;</p>
+            </div> 
+        </div>
+    </div>
+</body>
+</html>

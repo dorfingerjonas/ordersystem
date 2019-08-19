@@ -1,0 +1,16 @@
+#nav {
+    width: 100vw;
+    height: 10vh;
+    position: fixed;
+    left: 0;
+    bottom: 0;
+    background: rgba(255, 196, 21, 0.6);
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    overflow: hidden;
+    font-size: 7vmin;
+    padding: 1vmin;
+    margin: 0 auto;
+    color: #242424;
+}

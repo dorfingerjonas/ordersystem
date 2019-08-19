@@ -1,0 +1,55 @@
+#logInScreen {
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+}
+
+#logInScreen h1 {
+    position: absolute;
+    font-size: 9vmin;
+    text-align: center;
+    top: 15vh;
+}
+
+#logInForm {
+    height: auto;
+    width: 75%;
+    display: flex;
+    justify-content: center;
+    align-items: flex-end;
+    flex-direction: column;
+}
+
+#logInForm input {
+    width: 100%;
+    border: none;
+    border-bottom: 1.5px solid lightgray;
+    outline: none;
+    transition: all 300ms ease-in-out;
+    margin: 5vmin 0;
+    font-size: 85%;
+}
+
+#logInForm input:focus {
+    border-color: #00000080;
+}
+
+.button {
+    padding: 3vmin;
+    background: white;
+    color: #242424;
+    border: 2px solid #242424;
+    border-radius: 50px;
+    font-size: 85%;
+}
+
+#loginfdb {
+    color: red;
+    font-weight: 100;
+    font-size: 4vmin;
+    text-align: center;
+    width: 100%;
+}
