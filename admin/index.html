@@ -4,24 +4,36 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Ordersprinter</title>
+    <link rel="stylesheet" href="../style/loading.css">
     <link rel="stylesheet" href="../style/adminCP.css">
     <link rel="stylesheet" href="../style/login.css">
     <link rel="stylesheet" href="../style/main.css">
     <link rel="stylesheet" href="../style/nav.css">
-    <link href='https://fonts.googleapis.com/css?family=Roboto:400,900&display=swap' rel='stylesheet'>
+    <!-- <link href='https://fonts.googleapis.com/css?family=Roboto:400,900&display=swap' rel='stylesheet'> -->
     <link href='https://fonts.googleapis.com/css?family=Kalam&display=swap' rel='stylesheet'>
     <script src="../scripts/admin.js"></script>
+    <script src="../scripts/charts.js"></script>
     <script src='https://kit.fontawesome.com/e7df220bd7.js'></script>
     <script src='https://www.gstatic.com/firebasejs/6.3.4/firebase-app.js'></script>
     <script src='https://www.gstatic.com/firebasejs/6.3.4/firebase-auth.js'></script>
     <script src='https://www.gstatic.com/firebasejs/6.3.4/firebase-database.js'></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.3/Chart.js"></script>
 </head>
 <body>
+    <div id="loader" class="hide">
+            <div class="lds-ellipsis">
+                <div></div>
+                <div></div>
+                <div></div>
+                <div></div>
+            </div>
+    </div>
+
     <nav id='nav'>
         <i class="fas fa-arrow-left" id="back"></i>
         <i class='fas fa-sign-out-alt hide' id='signOut'></i>
         <i class='fas fa-home hide' id='home'></i>
-        <i class="far fa-chart-bar hide" id="chart"></i>
+        <i class="fas fa-ellipsis-v hide" id="toggleIcons"></i>
     </nav>
 
     <div id='logInScreen'>
@@ -43,6 +55,8 @@
             <div id='adminFood' class='adminBox'> <p><i class='fas fa-hamburger'></i> Speisen verwalten</p> </div>
             <div id='adminUsers' class='adminBox'> <p><i class='fas fa-users'></i> Kellner verwalten</p> </div>
             <div id='adminTable' class='adminBox'> <p><i class='fas fa-table'></i> Tische verwalten</p> </div>
+            <div id='adminMessage' class='adminBox'> <p><i class='fas fa-comments'></i> Kommunikation</p> </div>
+            <div id='adminStats' class='adminBox'> <p><i class="fas fa-chart-bar"></i> Statistik</p> </div>
         </div>
 
         <div id="adminDrinkWrapper" class="hide">
@@ -57,6 +71,17 @@
             </div>            
         </div>
 
+        <div id="adminFoodWrapper" class="hide">
+            <h2>Speisen verwalten</h2>
+            <div id="foodWrapper"></div>
+            <div id="addFoodWindow">
+                <h4 style="margin: 1vmin 0">neue Speise hinzufügen</h4>
+                <input type="text" placeholder="Name" id="addNameFood">
+                <input type="number" placeholder="Preis" id="addPriceFood" step="0.5">
+                <div style="width: 80%;display: flex;justify-content: flex-end;"><div class="button" id="addNewFood">hinzufügen</div></div>
+            </div>            
+        </div>
+
         <div id="adminUsersWrapper" class="hide">
             <h2>Kellner verwalten</h2>
             <div id="userWrapper"></div>
@@ -68,7 +93,7 @@
             </div>            
         </div>
 
-        <div id="adminTableWrapper" class="hide">            
+        <div id="adminTableWrapper" class="hide">
             <div id="tableWrapper"></div>
 
             <div id="addTableWindow">
@@ -77,6 +102,53 @@
                 <div style="width: 80%;display: flex;justify-content: flex-end;"><div class="button" id="addNewTable">hinzufügen</div></div>
                 <p id="addTableFDB">&nbsp;</p>
             </div> 
+        </div>
+
+        <div id="adminMessageWrapper" class="hide">
+            <h2>Versenden Sie Nachrichten an alle Kellner</h2>
+
+            <textarea id="messageText" cols="30" rows="10"></textarea>
+
+            <div id="sendMessageBox">
+                <p>Nachricht senden?</p>
+
+                <div id="radioBox">
+                    <div>
+                        <input type="radio" name="sendMsg" id="sendMsgYes">
+                        <label>Ja</label>
+                    </div>
+
+                    <div>
+                        <input type="radio" name="sendMsg" id="sendMsgNo">
+                        <label>Nein</label>
+                    </div>
+                </div>
+            </div>
+
+            <div id="saveChanges" class="button">Speichern</div>
+        </div>
+
+        <div id="adminStatsWrapper" class="hide">
+            <h2>Statistik</h2>
+
+            <div id="refreshStats">
+                <p><i class="fas fa-sync-alt"></i></p>
+            </div>
+
+            <div class="statsWrapper">
+                <h3>Bestellungen</h3>
+                <canvas id="orderChart" width="400" height="400"></canvas>
+            </div>
+
+            <div class="statsWrapper">
+                <h3>Kassiert</h3>
+                <canvas id="cashChart" width="400" height="400"></canvas>
+            </div>
+
+            <div class="statsWrapper">
+                <h3>Speisen und Getränke verkauft</h3>
+                <div id="totalSoldWrapper"></div>
+            </div>
         </div>
     </div>
 </body>

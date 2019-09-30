@@ -4,24 +4,42 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Ordersprinter</title>
+    <link rel="stylesheet" href="../style/message.css">
+    <link rel="stylesheet" href="../style/loading.css">
     <link rel="stylesheet" href="../style/waiter.css">
     <link rel="stylesheet" href="../style/login.css">
+    <link rel="stylesheet" href="../style/cash.css">
     <link rel="stylesheet" href="../style/main.css">
     <link rel="stylesheet" href="../style/nav.css">
-    <link href='https://fonts.googleapis.com/css?family=Roboto:400,900&display=swap' rel='stylesheet'>
+    <!-- <link href='https://fonts.googleapis.com/css?family=Roboto:400,900&display=swap' rel='stylesheet'> -->
     <link href='https://fonts.googleapis.com/css?family=Kalam&display=swap' rel='stylesheet'>
     <script src="../scripts/waiter.js"></script>
+    <script src="../scripts/waiterMessage.js"></script>
+    <script src="../scripts/requestFullScreen.js"></script>
     <script src='https://kit.fontawesome.com/e7df220bd7.js'></script>
     <script src='https://www.gstatic.com/firebasejs/6.3.4/firebase-app.js'></script>
     <script src='https://www.gstatic.com/firebasejs/6.3.4/firebase-auth.js'></script>
     <script src='https://www.gstatic.com/firebasejs/6.3.4/firebase-database.js'></script>
 </head>
 <body>
+    <div id="loader" class="hide">
+            <div class="lds-ellipsis">
+                <div></div>
+                <div></div>
+                <div></div>
+                <div></div>
+            </div>
+    </div>
+
     <nav id='nav'>
         <i class='fas fa-arrow-left' id='back'></i>
+        <i class='fas fa-arrow-left hide' id='back2Cash'></i>
         <i class='fas fa-sign-out-alt hide' id='signOut'></i>
-        <i class='fas fa-home hide' id='home'></i>
+        <i class='fas fa-cash-register hide' id="cash"></i>
+        <i class='fas fa-arrow-left hide' id='home'></i>
         <i class='fas fa-shopping-cart hide' id='list'></i>
+        <i class="fas fa-ellipsis-v hide" id="menu"></i>
+        <i class="fas fa-money-bill-wave hide" id="pay"></i>
     </nav>
 
     <div id='logInScreen'>
@@ -33,6 +51,10 @@
             <div class='button' id='logInBtn'>Anmelden</div>
             <p id="loginfdb">&nbsp;</p>
         </form>
+
+        <div id="fullScreenWrapper" class="hide">
+            <i class="fas fa-compress"></i>
+        </div>
     </div>
 
     <div id="tableSelection" class="hide">
@@ -42,20 +64,49 @@
     <div id='waiterScreen' class='hide'>
         <div id="antiWrapper">
             <h2>alkoholfrei</h2>
-            <p id="tableNumber"></p>
+            <p id="tableNumberOrder"></p>
         </div>
         <div id="alkWrapper">
-            <h2>alkoholisch</h2>
+            <h2>alkoholhaltig</h2>
         </div>
         <div id="noteWindow">
             <h4>Annmerkung schreiben</h4>
             <textarea id="note" cols="30" rows="10" placeholder="Annmerkung" maxlength="100"></textarea>
             <div class="button" id="noteBtn">Speichern</div>
         </div>
+
+        <div id="confirmWindow" class="warning">
+            <h4>Warnung!</h4>
+            <p>Sind Sie sicher, dass Sie zurück zur Tischauswahl möchten? Sie haben Ihre aktuelle Bestellung noch nicht gesendet!</p>
+            
+            <div id="BtnWrapper">
+                <div class="button" id="acceptReturn">Ja</div>
+                <div class="button" id="disacceptReturn">Nein</div>
+            </div>
+        </div>
     </div>
 
-    <div id='shoppingCart' class="hide">
-        <div id='shoppingWrapper'></div>
+    <div id="message">
+        <p id="messageContent"></p>
+        <i class="fas fa-times-circle" id="toggleMessage"></i>
+    </div>
+
+    <div id="cashScreen" class="hide">
+        <div id="chooseDrinkToPay" class="hide">
+            <div id="antiWrapperCash">
+                <h2>alkoholfrei</h2>
+            </div>
+            <div id="alkWrapperCash">
+                <h2>alkoholhaltig</h2>
+            </div>
+            <div id="foodWrapperCash">
+                <h2>Speisen</h2>
+            </div>
+        </div>
+
+        <div id="shoppingCart" class="hide">
+            <div id="cashWrapper"></div>
+        </div>
     </div>
 </body>
 </html>

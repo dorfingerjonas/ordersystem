@@ -1,0 +1,6 @@
+todo:
+- kassiersystem (ohne auf den tischen gespeicherten bestellungen)
+- start animation
+- loading animation bei den login buttons
+- überprüfen ob bereits angemeldet (beachten ob account stimmt)
+// DONE - tableselection @ waiterscreen y: scroll, x: hidden
