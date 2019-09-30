@@ -319,7 +319,6 @@ window.addEventListener('load', () => {
 
     let elements = [
       cashScreen,
-      home,
       list,
       signOut,
       chooseDrinkToPay,
