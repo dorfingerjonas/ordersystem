@@ -8,6 +8,8 @@ window.addEventListener('load', () => {
         document.getElementById('fullScreenWrapper').classList.remove('hide');
         document.getElementById('fullScreenWrapper').addEventListener('click', () => {
             document.body.requestFullscreen();
+            // document.body.webkitRequestFullscreen();
+            // document.body.mozRequestFullScreen();
         });
     } else {
         document.getElementById('fullScreenWrapper').classList.add('hide');

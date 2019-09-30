@@ -738,7 +738,7 @@ window.addEventListener('load', () => {
                 for (const user of users) {
                     if (user.messageSeen !== undefined) {
                         firebase.database().ref(`private/user/${indizes[i]}/messageSeen`).update({
-                            messageSeen : sendMsgYes.checked
+                            messageSeen : !sendMsgYes.checked
                         });
                     }
                     i++;
