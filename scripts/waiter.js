@@ -209,7 +209,8 @@ window.addEventListener('load', () => {
     const boxes = [
       cashScreen,
       document.getElementById('chooseDrinkToPay'),
-      pay
+      pay,
+      home
     ];
 
     for (const box of boxes) {
@@ -320,6 +321,7 @@ window.addEventListener('load', () => {
     let elements = [
       cashScreen,
       list,
+      home,
       signOut,
       chooseDrinkToPay,
       pay
@@ -1028,6 +1030,9 @@ window.addEventListener('load', () => {
         box.classList.remove('hide');
         box.style.display = 'flex';
       }
+
+      home.classList.add('hide');
+      home.style.display = 'none';
 
       printThingsToPay();
 
