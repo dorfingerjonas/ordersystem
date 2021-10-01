@@ -6,6 +6,7 @@ export interface Drink {
   id: number;
   name: string;
   price: number;
+  category: 'alcohol' | 'anti';
 }
 
 export interface Food {
