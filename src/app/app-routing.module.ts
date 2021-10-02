@@ -14,7 +14,13 @@ const routes: Routes = [
   },
   {
     path: 'tables',
-    loadChildren: () => import('./views/tables/tables.module').then(m => m.TablesModule)
+    loadChildren: () => import('./views/tables/tables.module').then(m => m.TablesModule),
+    canActivate: [ AuthGuard ]
+  },
+  {
+    path: 'order/:tableNr',
+    loadChildren: () => import('./views/order/order.module').then(m => m.OrderModule),
+    canActivate: [ AuthGuard ]
   }
 ];
 
