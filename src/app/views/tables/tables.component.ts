@@ -27,6 +27,6 @@ export class TablesComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.header.text = 'Tischauswahl';
+    setTimeout(() => this.header.text = 'Tischauswahl');
   }
 }
