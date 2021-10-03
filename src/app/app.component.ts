@@ -27,8 +27,6 @@ export class AppComponent implements OnInit {
     this.auth.isLoggedInState.subscribe(state => {
       let redirectUrl: string | UrlTree = '/tables';
 
-      this.loading.activateLoading();
-
       if (state) {
         this.route.queryParams.subscribe(value => {
           if (value.redirectUrl) {
