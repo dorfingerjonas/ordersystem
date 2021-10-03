@@ -3,7 +3,7 @@
   "version": 1,
   "newProjectRoot": "projects",
   "projects": {
-    "schuldners-liste": {
+    "orderystem": {
       "projectType": "application",
       "schematics": {
         "@schematics/angular:component": {
@@ -20,7 +20,7 @@
         "build": {
           "builder": "@angular-devkit/build-angular:browser",
           "options": {
-            "outputPath": "dist/schuldners-liste",
+            "outputPath": "dist/orderystem",
             "index": "src/index.html",
             "main": "src/main.ts",
             "polyfills": "src/polyfills.ts",
@@ -68,18 +68,18 @@
         "serve": {
           "builder": "@angular-devkit/build-angular:dev-server",
           "options": {
-            "browserTarget": "schuldners-liste:build"
+            "browserTarget": "orderystem:build"
           },
           "configurations": {
             "production": {
-              "browserTarget": "schuldners-liste:build:production"
+              "browserTarget": "orderystem:build:production"
             }
           }
         },
         "extract-i18n": {
           "builder": "@angular-devkit/build-angular:extract-i18n",
           "options": {
-            "browserTarget": "schuldners-liste:build"
+            "browserTarget": "orderystem:build"
           }
         },
         "test": {
@@ -116,16 +116,16 @@
           "builder": "@angular-devkit/build-angular:protractor",
           "options": {
             "protractorConfig": "e2e/protractor.conf.js",
-            "devServerTarget": "schuldners-liste:serve"
+            "devServerTarget": "orderystem:serve"
           },
           "configurations": {
             "production": {
-              "devServerTarget": "schuldners-liste:serve:production"
+              "devServerTarget": "orderystem:serve:production"
             }
           }
         }
       }
     }
   },
-  "defaultProject": "schuldners-liste"
+  "defaultProject": "orderystem"
 }
