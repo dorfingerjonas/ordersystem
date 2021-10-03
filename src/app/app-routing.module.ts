@@ -21,6 +21,11 @@ const routes: Routes = [
     path: 'order/:tableNr',
     loadChildren: () => import('./views/order/order.module').then(m => m.OrderModule),
     canActivate: [ AuthGuard ]
+  },
+  {
+    path: 'pay',
+    loadChildren: () => import('./views/pay/pay.module').then(m => m.PayModule),
+    canActivate: [ AuthGuard ]
   }
 ];
 
