@@ -2,7 +2,6 @@ import { Injectable } from '@angular/core';
 import { AngularFireAuth } from '@angular/fire/auth';
 import firebase from 'firebase';
 import { Observable, Subject } from 'rxjs';
-import UserCredential = firebase.auth.UserCredential;
 
 @Injectable({
   providedIn: 'root'
@@ -11,14 +10,17 @@ export class AuthService {
 
   private readonly loggedInState: Subject<boolean>;
   private loggedIn: boolean;
+  private email: string;
 
   constructor(private auth: AngularFireAuth) {
     this.loggedInState = new Subject<boolean>();
     this.loggedIn = false;
+    this.email = '';
 
     this.auth.user.subscribe(user => {
       this.loggedIn = !!user;
       this.loggedInState.next(this.loggedIn);
+      this.email = user?.email || '';
     });
   }
 
@@ -28,6 +30,11 @@ export class AuthService {
 
   get isLoggedIn(): boolean {
     return this.loggedIn;
+  }
+
+  get username(): string {
+    const username = this.email.replace('@dorfingerjonas.at', '');
+    return username.charAt(0).toUpperCase() + username.substring(1, username.length);
   }
 
   signOut(): ReturnType<firebase.auth.Auth['signOut']> {
