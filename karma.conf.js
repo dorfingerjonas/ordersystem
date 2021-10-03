@@ -25,12 +25,12 @@ module.exports = function (config) {
       suppressAll: true // removes the duplicated traces
     },
     coverageReporter: {
-      dir: require('path').join(__dirname, './coverage/schuldners-liste'),
+      dir: require('path').join(__dirname, './coverage/ordersystem'),
       subdir: '.',
       reporters: [
         { type: 'html' },
-        { type: 'text-summary' }
-      ]
+        { type: 'text-summary' },
+      ],
     },
     reporters: ['progress', 'kjhtml'],
     port: 9876,
