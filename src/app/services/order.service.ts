@@ -12,8 +12,6 @@ export class OrderService {
 
   persist(order: Order): Promise<void> {
     return new Promise((resolve, reject) => {
-      console.log(order);
-
       this.db.list('orders').push(order)
         .then(res => resolve())
         .catch(err => reject());
