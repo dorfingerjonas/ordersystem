@@ -18,6 +18,7 @@ export interface Food {
 }
 
 export interface Order {
+  id: number;
   drinks: Drink[];
   food: Food[];
   table: Table;
