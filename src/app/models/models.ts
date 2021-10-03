@@ -16,3 +16,11 @@ export interface Food {
   price: number;
   amount?: number;
 }
+
+export interface Order {
+  drinks: Drink[];
+  food: Food[];
+  table: Table;
+  waiter: string;
+  timestamp: number;
+}
