@@ -73,6 +73,7 @@ export class OrderComponent implements OnInit, OnDestroy {
 
   order(): void {
     const order: Order = {
+      id: Date.now(),
       drinks: this.drinks.filter(drink => (drink.amount || 0) > 0),
       food: this.food.filter(food => (food.amount || 0) > 0),
       table: {
