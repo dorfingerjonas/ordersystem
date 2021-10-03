@@ -22,7 +22,7 @@ import { LoadingComponent } from './components/loading/loading.component';
   imports: [
     BrowserModule,
     AppRoutingModule,
-    AngularFireModule.initializeApp(environment.firebaseConfig, 'schuldners-liste'),
+    AngularFireModule.initializeApp(environment.firebaseConfig, 'ordersystem'),
     AngularFireAuthModule,
     AngularFireDatabaseModule,
     FontAwesomeModule
