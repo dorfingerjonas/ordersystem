@@ -1,9 +1,11 @@
 import { database } from 'firebase-admin';
 import { Order } from './models/models';
+import admin from 'firebase-admin';
 import DataSnapshot = database.DataSnapshot;
 
-const admin = require('firebase-admin');
+// eslint-disable-next-line @typescript-eslint/no-var-requires
 const serviceAccount = require('./firebase-api-key.json');
+// eslint-disable-next-line @typescript-eslint/no-var-requires
 const printer = require('@thiagoelg/node-printer/lib');
 
 admin.initializeApp({
