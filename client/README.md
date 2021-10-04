@@ -17,7 +17,7 @@ npm install
 #### Start in development mode
 
 ```
-npm run dev
+npm start
 ```
 
 ### Build Project
