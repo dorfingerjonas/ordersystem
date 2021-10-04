@@ -1,7 +1,7 @@
 {
   "name": "ordersystem",
   "short_name": "ordersystem",
-  "theme_color": "#1976d2",
+  "theme_color": "#486491",
   "background_color": "#fafafa",
   "display": "standalone",
   "scope": "./",

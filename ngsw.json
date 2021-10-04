@@ -1,6 +1,6 @@
 {
   "configVersion": 1,
-  "timestamp": 1633326119187,
+  "timestamp": 1633326595999,
   "index": "/ordersystem/index.html",
   "assetGroups": [
     {
@@ -68,7 +68,7 @@
     "/ordersystem/favicon.ico": "22f6a4a3bcaafafb0254e0f2fa4ceb89e505e8b2",
     "/ordersystem/index.html": "6364b98e059094eeca4c139f8a2892fb3cb3a387",
     "/ordersystem/main.f1977f15ba7b4c3014f9.js": "44031df08a14c7ba163e3e5ee04c121bed093bc5",
-    "/ordersystem/manifest.webmanifest": "5a8cd4c541febb6e45a2d342007acf4f81757213",
+    "/ordersystem/manifest.webmanifest": "6b7bf1eeb285cec97428179744b5c3e192433fa9",
     "/ordersystem/polyfills.991a55cc3c17f9780c78.js": "7b11c73a0a38f00b461ec29035221b4924df4820",
     "/ordersystem/runtime.54a4e2356cb9120fdb47.js": "7f8db6836006e1a9738c8e6727a42468c30abf18",
     "/ordersystem/styles.ff83c1167bae4d74a053.css": "38c82c5226df9b2cb4d33c83d5f32b83c75b641c"
