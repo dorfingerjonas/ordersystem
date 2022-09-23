@@ -1,73 +1,70 @@
 import { database } from 'firebase-admin';
 import { Order } from './models/models';
-import admin from 'firebase-admin';
 import DataSnapshot = database.DataSnapshot;
 
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const serviceAccount = require('./firebase-api-key.json');
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const printer = require('@thiagoelg/node-printer/lib');
+const admin = require('firebase-admin');
+const serviceAccount = require('../firebase-api-key.json');
+const ThermalPrinter = require('node-thermal-printer').printer;
+const PrinterTypes = require('node-thermal-printer').types;
+
+const printer = new ThermalPrinter({
+    type: PrinterTypes.STAR,
+    interface: 'printer:Star TSP100 Cutter (TSP143)',
+    removeSpecialCharacters: false,
+    lineCharacter: '*',
+    width: 48,
+    driver: require('printer')
+});
 
 admin.initializeApp({
-  credential: admin.credential.cert(serviceAccount),
-  databaseURL: 'https://order-sprinter.firebaseio.com'
+    credential: admin.credential.cert(serviceAccount),
+    databaseURL: 'https://order-sprinter.firebaseio.com/'
 });
 
 const db = admin.database();
 const ref = db.ref('orders');
 
-const printedReceipts: number[] = [];
-
 ref.on('child_added', (snapshot: DataSnapshot) => {
-  const order = snapshot.val();
+    printReceipt(snapshot.val()).then(res => {
+        printer.clear();
+        console.log(res);
 
-  printReceipt(order);
-  printedReceipts.push(order.id);
+        db.ref('printed-orders').push(snapshot.val()).then(() => {
+            ref.child(snapshot.key).remove();
+        });
+    });
 });
 
-function printReceipt(order: Order): void {
-  if (!printedReceipts.includes(order.id)) {
-    printer.printDirect({
-      data: buildReceiptData(order),
-      printer: 'BIXOLON SRP-350III',
-      type: 'RAW',
-      success: function (jobID: number) {
-        console.log('sent to printer with ID: ' + jobID);
-      },
-      error: function (err: Error) {
-        console.log(err);
-      }
-    });
-  }
+function printReceipt(order: Order): Promise<string> {
+    buildReceiptData(order);
+    printer.cut();
+    return printer.execute();
 }
 
-function buildReceiptData(order: Order): string {
-  let data = '';
+function buildReceiptData(order: Order): void {
+    printer.drawLine();
+    printer.newLine();
 
-  data += '*****************************************\n';
-  data += `Tisch: ${ order.table.nr }\n`;
-  data += `Datum: ${ formatDate(order.timestamp) }\n`;
-  data += `Besteller: ${ order.waiter }\n\n`;
+    printer.println(`Tisch: ${ order.table.nr }`);
+    printer.println(`Datum: ${ formatDate(order.timestamp) }`);
+    printer.println(`Besteller: ${ order.waiter }`);
 
-  if (order.drinks) {
-    for (const drink of order.drinks) {
-      data += `${ drink.amount } ${ drink.name }\n`;
+    printer.newLine();
+
+    if (order.drinks) {
+        order.drinks.forEach(drink => printer.println(`${ drink.amount } ${ drink.name }`));
     }
-  }
 
-  if (order.food) {
-    for (const food of order.food) {
-      data += `${ food.amount } ${ food.name }\n`;
+    if (order.food) {
+        order.food.forEach(food => printer.println(`${ food.amount } ${ food.name }`));
     }
-  }
 
-  data += '*****************************************\n\n\n\n\n\n\n\n\n\n';
-
-  return data;
+    printer.newLine();
+    printer.drawLine();
 }
 
 function formatDate(timestamp: number): string {
-  const date = new Date(timestamp);
-
-  return date.toLocaleString();
+    return new Date(timestamp)
+        .toLocaleString()
+        .replace(/\//gm, '.');
 }
