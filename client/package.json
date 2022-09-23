@@ -4,7 +4,7 @@
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
-    "build": "ng build --prod --base-href /ordersystem/",
+    "build": "ng build --prod --base-href /ordersystem/ --deploy-url /ordersystem/",
     "test": "ng test",
     "lint": "ng lint",
     "e2e": "ng e2e"
