@@ -63,11 +63,15 @@ export class OrderComponent implements OnInit, OnDestroy {
     });
   }
 
+  increaseAmount(event: any, item: Drink | Food): void {
+    if (![ 'svg', 'fa-icon', 'path' ].includes(event.target.localName)) {
+      item.amount = (item.amount || 0) + 1;
+    }
+  }
+
   decreaseAmount(item: Drink | Food): void {
-    if (item.amount) {
-      if (item.amount > 0) {
-        item.amount = item.amount - 2;
-      }
+    if (item.amount && item.amount > 0) {
+      item.amount = item.amount - 1;
     }
   }
 
@@ -94,6 +98,13 @@ export class OrderComponent implements OnInit, OnDestroy {
     });
   }
 
+  isOrderValid(): boolean {
+    const drinks = this.drinks.filter(drink => (drink.amount || 0) > 0);
+    const food = this.food.filter(f => (f.amount || 0) > 0);
+
+    return drinks.length > 0 || food.length > 0;
+  }
+
   private buildDisplayTable(): void {
     this.displayTable = [
       {
@@ -111,12 +122,5 @@ export class OrderComponent implements OnInit, OnDestroy {
     ];
 
     this.loading.deactivateLoading();
-  }
-
-  isOrderValid(): boolean {
-    const drinks = this.drinks.filter(drink => (drink.amount || 0) > 0);
-    const food = this.food.filter(f => (f.amount || 0) > 0);
-
-    return drinks.length > 0 || food.length > 0;
   }
 }

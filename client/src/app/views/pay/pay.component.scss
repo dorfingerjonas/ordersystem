@@ -7,17 +7,18 @@
     > span {
       width: 100%;
       display: block;
-      background: var(--lighter);
+      background: var(--accent);
       font-size: 4vw;
+      color: var(--dark-gray);
       font-weight: bolder;
       padding: 1% 2%;
       box-sizing: border-box;
     }
 
     .item {
-      padding: 1% 1%;
+      padding: 3% 1%;
       box-sizing: border-box;
-      font-size: 3vw;
+      font-size: 3.5vw;
       display: flex;
       flex-direction: row;
       z-index: 99;
@@ -85,6 +86,7 @@
   input {
     width: 100%;
     padding: .65em;
+    margin-bottom: 20%;
     box-shadow: var(--box-shadow);
     background: transparent;
     box-sizing: border-box;
@@ -100,10 +102,11 @@
   }
 }
 
-#total {
+#total, #diff {
   text-align: center;
+  font-size: 3.2vw;
 }
 
 #diff {
-  text-align: center;
+  margin-bottom: 4%;
 }

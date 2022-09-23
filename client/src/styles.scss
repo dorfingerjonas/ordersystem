@@ -1,7 +1,10 @@
 @import url('https://fonts.googleapis.com/css2?family=Open+Sans&display=swap');
 
 :root {
-  --primary: #486491;
+  --primary: #faaf40;
+  --secondary: #ffc063;
+  //--accent: #2290E3;
+  --accent: #fccf89;
   --white: #fff;
   --ok: #42b983;
   --danger: #dc5656;
@@ -10,7 +13,7 @@
   --dark-gray: #353535;
   --light: #91cfa1;
   --lighter: #c6eccf;
-  --table-accent: #c2d0ea
+  --table-accent: #eaeaea
 }
 
 body {
@@ -22,7 +25,7 @@ body {
 
 // general style
 .button {
-  padding: 10px 20px;
+  padding: 3% 20px;
   font-size: 3vw;
   border: none;
   border-radius: 3px;

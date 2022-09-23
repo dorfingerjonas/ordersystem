@@ -1,7 +1,7 @@
 <div *ngFor="let config of displayTable" class="category">
   <span>{{ config.title }}</span>
 
-  <div (click)="item.amount = (item.amount || 0) + 1" *ngFor="let item of config.items" class="item">
+  <div (click)="increaseAmount($event, item)" *ngFor="let item of config.items" class="item">
     <span class="amount">{{ item.amount || 0 }}</span>
     <span class="name">{{ item.name }}</span>
     <span class="price">{{ item.price }}€</span>

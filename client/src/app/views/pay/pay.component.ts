@@ -58,11 +58,17 @@ export class PayComponent implements OnInit, OnDestroy {
     });
   }
 
+  increaseAmount(event: any, item: Drink | Food): void {
+    if (![ 'svg', 'fa-icon', 'path' ].includes(event.target.localName)) {
+      item.amount = (item.amount || 0) + 1;
+      this.pay();
+    }
+  }
+
   decreaseAmount(item: Drink | Food): void {
-    if (item.amount) {
-      if (item.amount > 0) {
-        item.amount = item.amount - 2;
-      }
+    if (item.amount && item.amount > 0) {
+      item.amount = item.amount - 1;
+      this.pay();
     }
   }
 
