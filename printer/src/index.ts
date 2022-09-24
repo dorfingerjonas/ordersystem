@@ -24,6 +24,14 @@ admin.initializeApp({
 const db = admin.database();
 const ref = db.ref('orders');
 
+printer.isPrinterConnected().then((isConnected: boolean) => {
+    if (isConnected) {
+        console.log('Printer "Star TSP100 Cutter (TSP143)" connected');
+    } else {
+        console.log('Printer "Star TSP100 Cutter (TSP143)" is not connected');
+    }
+});
+
 ref.on('child_added', (snapshot: DataSnapshot) => {
     printReceipt(snapshot.val()).then(res => {
         printer.clear();
@@ -32,6 +40,8 @@ ref.on('child_added', (snapshot: DataSnapshot) => {
         db.ref('printed-orders').push(snapshot.val()).then(() => {
             ref.child(snapshot.key).remove();
         });
+    }).catch(err => {
+        console.log(err);
     });
 });
 

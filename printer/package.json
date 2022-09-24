@@ -13,7 +13,7 @@
   "license": "MIT",
   "dependencies": {
     "@thiagoelg/node-printer": "^0.5.5",
-    "firebase-admin": "^9.12.0",
+    "firebase-admin": "^11.0.1",
     "node-thermal-printer": "^4.1.2",
     "printer": "^0.4.0"
   },
