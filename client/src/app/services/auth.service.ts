@@ -33,8 +33,11 @@ export class AuthService {
   }
 
   get username(): string {
-    const username = this.email.replace('@dorfingerjonas.at', '');
-    return username.charAt(0).toUpperCase() + username.substring(1, username.length);
+    return this.email
+      .split('@')[0]
+      .split('-')
+      .map(v => v.substring(0, 1).toUpperCase() + v.substring(1, v.length).toLowerCase())
+      .join(' ');
   }
 
   signOut(): ReturnType<firebase.auth.Auth['signOut']> {

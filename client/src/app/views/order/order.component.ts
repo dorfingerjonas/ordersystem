@@ -89,7 +89,7 @@ export class OrderComponent implements OnInit, OnDestroy {
 
     this.loading.activateLoading();
 
-    this.orderService.persist(order).then(value => {
+    this.orderService.persist(order).then(() => {
       this.loading.deactivateLoading();
 
       this.router.navigateByUrl('/tables');
