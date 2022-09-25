@@ -1,5 +1,5 @@
 export interface Table {
-  nr: number;
+  nr: string;
 }
 
 export interface Drink {

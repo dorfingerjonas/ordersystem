@@ -19,7 +19,7 @@ export class OrderComponent implements OnInit, OnDestroy {
 
   displayTable: { title: string; items: Drink[] | Food[] } [];
   minusIcon = minusIcon;
-  tableNr: number;
+  tableNr: string;
   private drinks: Drink[];
   private food: Food[];
   private subscriptions: Subscription[] = [];
@@ -34,7 +34,7 @@ export class OrderComponent implements OnInit, OnDestroy {
     this.displayTable = [];
     this.drinks = [];
     this.food = [];
-    this.tableNr = parseInt(this.router.url.replace('/order/', ''), 0);
+    this.tableNr = this.router.url.replace('/order/', '');
   }
 
   ngOnInit(): void {
