@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Drink, Food } from '../../models/models';
 import { Subscription } from 'rxjs';
 import { LoadingService } from '../../services/loading.service';
@@ -9,12 +9,11 @@ import { FoodService } from '../../services/food.service';
 @Component({
   selector: 'app-pay',
   templateUrl: './pay.component.html',
-  styleUrls: ['./pay.component.scss']
+  styleUrls: [ './pay.component.scss' ]
 })
-export class PayComponent {
+export class PayComponent implements OnInit, OnDestroy {
 
   displayTable: { title: string; items: Drink[] | Food[] } [];
-  minusIcon = null;
   total: number;
   givenMoney: number | undefined;
   private drinks: Drink[];

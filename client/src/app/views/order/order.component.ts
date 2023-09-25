@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Drink, Food, Order } from '../../models/models';
 import { Subscription } from 'rxjs';
 import { Router } from '@angular/router';
@@ -12,9 +12,9 @@ import { AuthService } from '../../services/auth.service';
 @Component({
   selector: 'app-order',
   templateUrl: './order.component.html',
-  styleUrls: ['./order.component.scss']
+  styleUrls: [ './order.component.scss' ]
 })
-export class OrderComponent {
+export class OrderComponent implements OnInit, OnDestroy {
 
   displayTable: { title: string; items: Drink[] | Food[] } [];
   minusIcon = null;
