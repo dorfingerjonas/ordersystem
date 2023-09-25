@@ -1,0 +1,12 @@
+<div *ngFor="let config of displayTable" class="category">
+    <span>{{ config.title }}</span>
+
+    <div (click)="increaseAmount($event, item)" *ngFor="let item of config.items" class="item">
+        <span class="amount">{{ item.amount || 0 }}</span>
+        <span class="name">{{ item.name }}</span>
+        <span class="price">{{ item.price }}€</span>
+        <mat-icon (click)="decreaseAmount(item)" class="minus">remove_shopping_cart</mat-icon>
+    </div>
+</div>
+
+<button (click)="order()" [disabled]="!isOrderValid()" class="button btn-danger">Bestellen</button>
