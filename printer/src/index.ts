@@ -37,7 +37,7 @@ ref.on('child_added', (snapshot: DataSnapshot) => {
         printer.clear();
         console.log(res);
 
-        db.ref('printed-orders').push(snapshot.val()).then(() => {
+        db.ref('completed-orders').push(snapshot.val()).then(() => {
             ref.child(snapshot.key).remove();
         });
     }).catch(err => {
@@ -55,20 +55,28 @@ function buildReceiptData(order: Order): void {
     printer.drawLine();
     printer.newLine();
 
+    printer.setTextDoubleHeight();
+
     printer.println(`Tisch: ${ order.table.nr }`);
+    printer.setTextNormal();
+
     printer.println(`Datum: ${ formatDate(order.timestamp) }`);
     printer.println(`Besteller: ${ order.waiter }`);
+
+    printer.setTextDoubleHeight();
+
 
     printer.newLine();
 
     if (order.drinks) {
-        order.drinks.forEach(drink => printer.println(`${ drink.amount } ${ drink.name }`));
+        order.drinks.forEach(drink => printer.println(`${ drink.amount }x ${ drink.name }`));
     }
 
     if (order.food) {
-        order.food.forEach(food => printer.println(`${ food.amount } ${ food.name }`));
+        order.food.forEach(food => printer.println(`${ food.amount }x ${ food.name }`));
     }
 
+    printer.setTextNormal();
     printer.newLine();
     printer.drawLine();
 }
