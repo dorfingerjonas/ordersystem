@@ -7,6 +7,9 @@ on:
     paths:
       - 'client/**'
 
+  workflow_dispatch:
+      
+
 jobs:
   build:
     name: Build ⚙
