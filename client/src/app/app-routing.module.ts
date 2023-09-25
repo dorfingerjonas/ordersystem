@@ -4,7 +4,7 @@ import { SigninComponent } from './views/signin/signin.component';
 import { TablesComponent } from './views/tables/tables.component';
 import { OrderComponent } from './views/order/order.component';
 import { PayComponent } from './views/pay/pay.component';
-import { AuthGuard } from '@angular/fire/auth-guard';
+import { AuthGuard } from './services/guards/auth.guard';
 
 const routes: Routes = [
   {
