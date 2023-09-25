@@ -4,6 +4,7 @@ import { SigninComponent } from './views/signin/signin.component';
 import { TablesComponent } from './views/tables/tables.component';
 import { OrderComponent } from './views/order/order.component';
 import { PayComponent } from './views/pay/pay.component';
+import { AuthGuard } from '@angular/fire/auth-guard';
 
 const routes: Routes = [
   {
@@ -12,18 +13,18 @@ const routes: Routes = [
   },
   {
     path: 'tables',
-    component: TablesComponent
-    // canActivate: [ AuthGuard ]
+    component: TablesComponent,
+    canActivate: [ AuthGuard ]
   },
   {
     path: 'order/:tableNr',
-    component: OrderComponent
-    // canActivate: [ AuthGuard ]
+    component: OrderComponent,
+    canActivate: [ AuthGuard ]
   },
   {
     path: 'pay',
-    component: PayComponent
-    // canActivate: [ AuthGuard ]
+    component: PayComponent,
+    canActivate: [ AuthGuard ]
   },
   {
     path: '',
@@ -38,7 +39,8 @@ const routes: Routes = [
 ];
 
 @NgModule({
-  imports: [RouterModule.forRoot(routes)],
-  exports: [RouterModule]
+  imports: [ RouterModule.forRoot(routes) ],
+  exports: [ RouterModule ]
 })
-export class AppRoutingModule { }
+export class AppRoutingModule {
+}
