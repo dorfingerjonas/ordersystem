@@ -7,7 +7,7 @@ export interface Drink {
   name: string;
   price: number;
   category: 'alcohol' | 'anti';
-  amount?: number;
+  amount: number;
 }
 
 export interface Food {

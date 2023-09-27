@@ -1,5 +1,5 @@
 {
-  "name": "ordersystem-printer",
+  "name": "ordersystem-printer-analysis",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
@@ -12,10 +12,7 @@
   "author": "Jonas Dorfinger",
   "license": "MIT",
   "dependencies": {
-    "@thiagoelg/node-printer": "^0.5.5",
-    "firebase-admin": "^11.0.1",
-    "node-thermal-printer": "^4.1.2",
-    "printer": "^0.4.0"
+    "firebase-admin": "^11.0.1"
   },
   "devDependencies": {
     "@types/node": "^14.14.35",
