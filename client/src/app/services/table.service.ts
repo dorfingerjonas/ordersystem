@@ -11,6 +11,14 @@ export class TableService {
   tables: Observable<Table[]>;
 
   constructor(private db: AngularFireDatabase) {
-    this.tables = this.db.object('tables').valueChanges() as Observable<Table[]>;
+    this.tables = this.db.object<Table[]>('tables').valueChanges() as Observable<Table[]>;
+  }
+
+  public update(tables: Table[]): Promise<void> {
+    return this.db.object<Table[]>('tables').update(tables);
+  }
+
+  persist(tables: Table[]): Promise<void> {
+    return this.db.object<Table[]>('tables').set(tables);
   }
 }

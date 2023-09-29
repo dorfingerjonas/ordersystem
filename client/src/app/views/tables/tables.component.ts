@@ -27,7 +27,7 @@ export class TablesComponent implements OnInit, OnDestroy {
     setTimeout(() => this.header.text = 'Tischauswahl');
 
     const sub = this.tableService.tables.subscribe(tables => {
-      this.tables = tables;
+      this.tables = tables.sort((a, b) => a.nr.localeCompare(b.nr));
       this.loading.deactivateLoading();
     });
 
