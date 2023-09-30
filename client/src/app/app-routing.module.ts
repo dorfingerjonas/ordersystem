@@ -23,6 +23,11 @@ const routes: Routes = [
     canActivate: [ AuthGuard ]
   },
   {
+    path: 'edit',
+    loadChildren: () => import('./views/edit/edit.module').then(m => m.EditModule),
+    canActivate: [ AuthGuard ]
+  },
+  {
     path: '',
     pathMatch: 'full',
     redirectTo: 'tables'

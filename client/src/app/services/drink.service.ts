@@ -13,4 +13,12 @@ export class DrinkService {
   constructor(private db: AngularFireDatabase) {
     this.drinks = this.db.object('drinks').valueChanges() as Observable<Drink[]>;
   }
+
+  update(drinks: Drink[]): Promise<void> {
+    return this.db.object<Drink[]>('drinks').update(drinks);
+  }
+
+  persist(drinks: Drink[]): Promise<void> {
+    return this.db.object<Drink[]>('drinks').set(drinks);
+  }
 }
