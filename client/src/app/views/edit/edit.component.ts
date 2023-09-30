@@ -30,17 +30,18 @@ export class EditComponent implements OnInit {
       this.header.text = 'Inhalte Bearbeiten';
     }, 50);
     this.drinkService.drinks.subscribe(drinks => {
-      this.drinks = drinks;
-      this.displayDrinks = drinks;
+      this.drinks = drinks || [];
+      console.log(this.drinks);
+      this.displayDrinks = this.drinks;
     });
 
     this.foodService.food.subscribe(food => {
-      this.food = food;
+      this.food = food || [];
       this.displayFood = this.food;
     });
 
     this.tableService.tables.subscribe(tables => {
-      this.tables = tables.sort((a, b) => a.nr.localeCompare(b.nr));
+      this.tables = (tables || []).sort((a, b) => a.nr.localeCompare(b.nr));
       this.displayTables = this.tables;
     });
   }
