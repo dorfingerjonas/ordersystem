@@ -1,50 +1,27 @@
-# Ordersystem - UI
+# Ordersystem
 
-## Create Database
+This project was generated with [Angular CLI](https://github.com/angular/angular-cli) version 16.2.16.
 
-To make Ordersystem work properly, you need to create your own [database](https://console.firebase.google.com/). After creating an application for your db, just paste your config into both environment files (``client/src/environments/``)
+## Development server
 
-## Start the application
+Run `ng serve` for a dev server. Navigate to `http://localhost:4200/`. The application will automatically reload if you change any of the source files.
 
-### Development mode
+## Code scaffolding
 
-#### Install dependencies
+Run `ng generate component component-name` to generate a new component. You can also use `ng generate directive|pipe|service|class|guard|interface|enum|module`.
 
-```
-npm install
-```
+## Build
 
-#### Start in development mode
+Run `ng build` to build the project. The build artifacts will be stored in the `dist/` directory.
 
-```
-npm start
-```
+## Running unit tests
 
-### Build Project
+Run `ng test` to execute the unit tests via [Karma](https://karma-runner.github.io).
 
-#### Install dependencies
+## Running end-to-end tests
 
-```
-npm install
-```
+Run `ng e2e` to execute the end-to-end tests via a platform of your choice. To use this command, you need to first add a package that implements end-to-end testing capabilities.
 
-#### Build
+## Further help
 
-```
-npm run build
-```
-
-> **Important:** If you're planning to host this app, make sure to change the ``base-url`` param's value in the [package.json](https://github.com/dorfingerjonas/ordersystem/blob/master/client/package.json#L7).
-
-### Lint
-
-```
-npm run lint
-```
-
-
-
-<hr>
-
-Copyright © 2021, Jonas Dorfinger. This software is [MIT licensed](../LICENSE).
-
+To get more help on the Angular CLI use `ng help` or go check out the [Angular CLI Overview and Command Reference](https://angular.io/cli) page.
