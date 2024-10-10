@@ -1,0 +1,21 @@
+:host {
+  height: 100%;
+  width: 100%;
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  background: var(--secondary);
+
+  #icon-wrapper {
+    height: 100%;
+    width: 100%;
+    max-width: 600px;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+
+    mat-icon {
+      cursor: pointer;
+    }
+  }
+}

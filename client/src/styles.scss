@@ -1,1 +1,102 @@
-/* You can add global styles to this file, and also import other style files */
+
+// Custom Theming for Angular Material
+// For more information: https://material.angular.io/guide/theming
+@use '@angular/material' as mat;
+// Plus imports for other components in your app.
+
+// Include the common styles for Angular Material. We include this here so that you only
+// have to load a single css file for Angular Material in your app.
+// Be sure that you only ever include this mixin once!
+@include mat.core();
+
+// Define the palettes for your theme using the Material Design palettes available in palette.scss
+// (imported above). For each palette, you can optionally specify a default, lighter, and darker
+// hue. Available color palettes: https://material.io/design/color/
+$ordersystem-primary: mat.define-palette(mat.$indigo-palette);
+$ordersystem-accent: mat.define-palette(mat.$pink-palette, A200, A100, A400);
+
+// The warn palette is optional (defaults to red).
+$ordersystem-warn: mat.define-palette(mat.$red-palette);
+
+// Create the theme object. A theme consists of configurations for individual
+// theming systems such as "color" or "typography".
+$ordersystem-theme: mat.define-light-theme((
+  color: (
+    primary: $ordersystem-primary,
+    accent: $ordersystem-accent,
+    warn: $ordersystem-warn,
+  )
+));
+
+// Include theme styles for core and each component used in your app.
+// Alternatively, you can import and @include the theme mixins for each component
+// that you are using.
+@include mat.all-component-themes($ordersystem-theme);
+
+@import url('https://fonts.googleapis.com/css2?family=Open+Sans&display=swap');
+
+:root {
+  --primary: #faaf40;
+  --secondary: #ffc063;
+  //--accent: #2290E3;
+  --accent: #fccf89;
+  --white: #fff;
+  --ok: #42b983;
+  --danger: #dc5656;
+  --box-shadow: 1px 1px 9px 0 #dbdbdb;
+  --link: #319ffc;
+  --dark-gray: #353535;
+  --light: #91cfa1;
+  --lighter: #c6eccf;
+  --table-accent: #eaeaea
+}
+
+body {
+  width: 100vw;
+  overflow: hidden scroll;
+  font-family: 'Open Sans', sans-serif;
+  margin: 0 auto;
+}
+
+// general style
+.button {
+  padding: 10px 20px;
+  font-size: 1em;
+  border: none;
+  border-radius: 3px;
+  box-shadow: var(--box-shadow);
+  outline: none;
+
+  &:disabled {
+    opacity: .5;
+    cursor: default;
+  }
+}
+
+.btn-primary {
+  background: var(--primary);
+  color: var(--white);
+}
+
+.btn-ok {
+  background: var(--ok);
+  color: var(--white);
+}
+
+.btn-danger {
+  background: var(--danger);
+  color: var(--white);
+}
+
+.error {
+  color: var(--danger);
+  font-size: .9em;
+  margin: .5vh 0 0 0;
+}
+
+.link {
+  color: var(--link);
+}
+
+html, body { height: 100%; }
+body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
