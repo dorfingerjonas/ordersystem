@@ -1,1 +1,4 @@
-<p>tables works!</p>
+<div id="table-wrapper">
+  <span *ngIf="tables?.length === 0" class="error">Keine Tische gefunden</span>
+  <span *ngFor="let t of tables" class="table" matRipple routerLink="/order/{{ t.nr }}">{{ t.nr }}</span>
+</div>

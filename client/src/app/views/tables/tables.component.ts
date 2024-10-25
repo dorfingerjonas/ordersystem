@@ -12,31 +12,29 @@ import { DataService } from '../../services/data.service';
 })
 export class TablesComponent implements OnInit, OnDestroy {
 
-  tables: Table[];
+  tables: Table[] | null;
   private subscriptions: Subscription[] = [];
 
   constructor(private header: HeaderService,
               private dataService: DataService,
               private loading: LoadingService) {
-    this.tables = [];
+    this.tables = null;
 
     this.loading.activateLoading();
   }
 
-  ngOnInit(): void {
+  public ngOnInit(): void {
     setTimeout(() => this.header.text = 'Tischauswahl');
 
     const sub = this.dataService.tables.subscribe(tables => {
-      this.tables = tables.sort((a, b) => a.nr.localeCompare(b.nr));
+      this.tables = tables;
       this.loading.deactivateLoading();
     });
 
     this.subscriptions.push(sub);
   }
 
-  ngOnDestroy(): void {
-    this.subscriptions.forEach(value => {
-      value.unsubscribe();
-    });
+  public ngOnDestroy(): void {
+    this.subscriptions.forEach(value => value.unsubscribe());
   }
 }
