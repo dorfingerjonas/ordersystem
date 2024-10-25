@@ -8,14 +8,16 @@ import { AuthService } from '../../services/auth.service';
 })
 export class FooterComponent {
 
-  icons: { url: string, icon: string }[] = [
+  icons: { url: string, icon: string, displayText: string }[] = [
     {
       url: 'tables',
-      icon: 'table_restaurant'
+      icon: 'table_restaurant',
+      displayText: 'Tischauswahl'
     },
     {
       url: 'pay',
-      icon: 'local_atm'
+      icon: 'local_atm',
+      displayText: 'Bezahlen'
     }
   ];
 

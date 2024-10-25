@@ -1,5 +1,11 @@
 <div id="icon-wrapper">
-  <mat-icon (click)="signOut()">logout</mat-icon>
+  <!--  <div class="icon">-->
+  <!--    <mat-icon (click)="signOut()">logout</mat-icon>-->
+  <!--    <span>Ausloggen</span>-->
+  <!--  </div>-->
 
-  <mat-icon *ngFor="let icon of icons" [routerLink]="icon.url">{{ icon.icon }}</mat-icon>
+  <div *ngFor="let icon of icons" class="icon">
+    <mat-icon [routerLink]="icon.url">{{ icon.icon }}</mat-icon>
+    <span>{{ icon.displayText }}</span>
+  </div>
 </div>
