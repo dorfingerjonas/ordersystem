@@ -2,6 +2,7 @@ import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { TablesComponent } from './tables.component';
 import { RouterModule, Routes } from '@angular/router';
+import { MatRippleModule } from '@angular/material/core';
 
 const routes: Routes = [
   {
@@ -16,7 +17,9 @@ const routes: Routes = [
   ],
   imports: [
     CommonModule,
-    RouterModule.forChild(routes)
+    RouterModule.forChild(routes),
+    MatRippleModule
   ]
 })
-export class TablesModule { }
+export class TablesModule {
+}
