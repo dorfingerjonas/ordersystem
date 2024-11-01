@@ -1,0 +1,37 @@
+#title-wrapper {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 5px 10px;
+  background: var(--accent);
+}
+
+#item-wrapper {
+
+  .item {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 4.5vw;
+    padding: 10px 0;
+
+    &:nth-child(2n) {
+      background: var(--table-accent);
+    }
+
+    .amount {
+      width: 15%;
+      text-align: center;
+    }
+
+    .name {
+      width: 60%;
+    }
+
+    .price, .remove {
+      width: 10%;
+    }
+  }
+}

@@ -1,1 +1,27 @@
-<p>order works!</p>
+<app-order-category *ngIf="alcoholDrinks" [(items)]="alcoholDrinks" title="alkoholische Getränke"></app-order-category>
+<app-order-category *ngIf="antiDrinks" [(items)]="antiDrinks" title="anti-alkoholische Getränke"></app-order-category>
+<app-order-category *ngIf="food" [(items)]="food" title="Speisen"></app-order-category>
+
+<textarea [(ngModel)]="orderNotes" matInput placeholder="Anmerkung/Notiz"></textarea>
+
+<div id="cart-wrapper">
+  <h2>Warenkorb</h2>
+
+  <div *ngFor="let f of getOrderDetails()?.drinks" class="item">
+    <span>{{ f.amount }} x {{ f.name }}</span>
+  </div>
+
+  <div *ngFor="let f of getOrderDetails()?.food" class="item">
+    <span>{{ f.amount }} x {{ f.name }}</span>
+  </div>
+
+  <span *ngIf="orderNotes && orderNotes.length > 0">Notiz: {{ orderNotes }}</span>
+
+  <span *ngIf="getOrderDetails()?.food?.length === 0 && getOrderDetails()?.drinks?.length === 0" class="error">Der Warenkorb ist leer</span>
+
+  <button (click)="order()" *ngIf="getOrderDetails()?.food?.length !== 0 || getOrderDetails()?.drinks?.length !== 0"
+          class="button btn-ok"
+          matRipple>Bestellen
+  </button>
+
+</div>

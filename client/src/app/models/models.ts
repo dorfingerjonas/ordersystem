@@ -2,26 +2,26 @@ export interface Table {
   nr: string;
 }
 
-export interface Drink {
+export interface OrderableItem {
   id: number;
   name: string;
   price: number;
-  category: 'alcohol' | 'anti';
   amount?: number;
 }
 
-export interface Food {
-  id: number;
-  name: string;
-  price: number;
-  amount?: number;
+export interface Drink extends OrderableItem {
+  category: 'alcohol' | 'anti';
+}
+
+export interface Food extends OrderableItem {
 }
 
 export interface Order {
   id: number;
-  drinks: Drink[];
-  food: Food[];
+  drinks: OrderableItem[];
+  food: OrderableItem [];
   table: Table;
   waiter: string;
   timestamp: number;
+  note?: string;
 }
