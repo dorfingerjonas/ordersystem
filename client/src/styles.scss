@@ -2,18 +2,47 @@
 
 @include mat.core();
 
-$ordersystem-primary: mat.define-palette(mat.$indigo-palette);
-$ordersystem-accent: mat.define-palette(mat.$pink-palette, A200, A100, A400);
-
+$ordersystem-primary: (
+  50 : #000,
+  100 : #fccf89,
+  200 : #fccf89,
+  300 : #000,
+  400 : #ffc063,
+  500 : #faaf40,
+  600 : #000,
+  700 : #000,
+  800 : #000,
+  900 : #000,
+  A100 : #000,
+  A200 : #000,
+  A400 : #000,
+  A700 : #000,
+  contrast: (
+    50 : #000000,
+    100 : #000000,
+    200 : #000000,
+    300 : #000000,
+    400 : #000000,
+    500 : #000000,
+    600 : #000000,
+    700 : #000000,
+    800 : #000000,
+    900 : #ffffff,
+    A100 : #000000,
+    A200 : #000000,
+    A400 : #000000,
+    A700 : #000000,
+  )
+);
+$ordersystem-accent: mat.define-palette($ordersystem-primary, A200, A100, A400);
 $ordersystem-warn: mat.define-palette(mat.$red-palette);
 
 $ordersystem-theme: mat.define-light-theme((
   color: (
-    primary: $ordersystem-primary,
+    primary: mat.define-palette($ordersystem-primary),
     accent: $ordersystem-accent,
-    warn: $ordersystem-warn,
-  )
-));
+    warn: $ordersystem-warn
+  )));
 
 @include mat.all-component-themes($ordersystem-theme);
 
