@@ -12,7 +12,9 @@ import { MatButtonModule } from '@angular/material/button';
 import { TablePopupComponent } from './edit-tables/table-popup/table-popup.component';
 import { MatDialogModule } from '@angular/material/dialog';
 import { MatInputModule } from '@angular/material/input';
-import { FormsModule } from '@angular/forms';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { DrinkPopupComponent } from './edit-drinks/drink-popup/drink-popup.component';
+import { MatSelectModule } from '@angular/material/select';
 
 const routes: Routes = [
   {
@@ -39,7 +41,8 @@ const routes: Routes = [
     EditDrinksComponent,
     EditTablesComponent,
     EditFoodComponent,
-    TablePopupComponent
+    TablePopupComponent,
+    DrinkPopupComponent
   ],
   imports: [
     CommonModule,
@@ -50,7 +53,9 @@ const routes: Routes = [
     MatButtonModule,
     MatDialogModule,
     MatInputModule,
-    FormsModule
+    FormsModule,
+    MatSelectModule,
+    ReactiveFormsModule
   ]
 })
 export class DashboardModule {

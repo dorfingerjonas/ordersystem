@@ -1,1 +1,26 @@
-<p>edit-drinks works!</p>
+<div *ngIf="drinksHashed !== hash(drinks)" class="button btn-danger" id="unsaved">
+  <mat-icon>warning</mat-icon>
+  Ungespeicherte Änderungen
+</div>
+
+<div (click)="create()" class="button btn-primary" matRipple>Getränk hinzufügen</div>
+
+<div (click)="save()" class="button btn-ok" matRipple>Speichern</div>
+
+<div *ngFor="let c of categories" class="category">
+  <span class="category-header">{{ c === 'alcohol' ? 'alkoholisch' : 'anti-alkoholisch' }}</span>
+  <div *ngFor="let d of getFilteredDrinks(c)" class="drink">
+    <span>{{ d.name }}</span>
+    <span>{{ formatPrice(d.price | number : '1.2-2') }}€</span>
+
+    <div class="icon-wrapper">
+      <button (click)="edit(d)" mat-icon-button>
+        <mat-icon color="primary">edit</mat-icon>
+      </button>
+
+      <button (click)="delete(d)" mat-icon-button>
+        <mat-icon color="warn">delete</mat-icon>
+      </button>
+    </div>
+  </div>
+</div>
