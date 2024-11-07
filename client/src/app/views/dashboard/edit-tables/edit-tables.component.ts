@@ -15,15 +15,19 @@ export class EditTablesComponent {
 
   public tables: Table[];
   public tablesHashed: string;
+  public loaded: boolean;
 
   constructor(private readonly data: DataService,
               private readonly header: HeaderService,
               private readonly dialog: MatDialog,
               private readonly snackBar: MatSnackBar) {
     this.tables = [];
+    this.loaded = false;
+
     this.data.tables.subscribe(tables => {
       this.tables = tables;
       this.tablesHashed = this.hash(tables);
+      this.loaded = true;
     });
     this.tablesHashed = '';
 

@@ -15,16 +15,19 @@ export class EditFoodComponent {
 
   public food: Food[];
   public foodHashed: string;
+  public loaded: boolean;
 
   constructor(private readonly data: DataService,
               private readonly header: HeaderService,
               private readonly dialog: MatDialog,
               private readonly snackBar: MatSnackBar) {
     this.food = [];
+    this.loaded = false;
 
     this.data.food.subscribe(food => {
       this.food = food;
       this.foodHashed = this.hash(food);
+      this.loaded = true;
     });
 
     this.foodHashed = '';

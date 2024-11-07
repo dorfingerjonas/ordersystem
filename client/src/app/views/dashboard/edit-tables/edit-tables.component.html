@@ -21,3 +21,7 @@
     </button>
   </div>
 </div>
+
+<span *ngIf="tables.length === 0 && loaded" class="error">Es sind noch keine Tische vorhanden</span>
+
+<div class="button btn-danger" matRipple routerLink="/dashboard">Zurück</div>

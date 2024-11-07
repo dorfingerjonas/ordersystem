@@ -22,3 +22,7 @@
     </button>
   </div>
 </div>
+
+<span *ngIf="food.length === 0 && loaded" class="error">Es sind noch keine Speisen vorhanden</span>
+
+<div class="button btn-danger" matRipple routerLink="/dashboard">Zurück</div>

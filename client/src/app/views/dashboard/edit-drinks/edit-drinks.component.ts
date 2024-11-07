@@ -16,16 +16,19 @@ export class EditDrinksComponent {
   public drinks: Drink[];
   public drinksHashed: string;
   public categories: ('anti' | 'alcohol')[];
+  public loaded: boolean;
 
   constructor(private readonly data: DataService,
               private readonly header: HeaderService,
               private readonly dialog: MatDialog,
               private readonly snackBar: MatSnackBar) {
     this.drinks = [];
+    this.loaded = false;
 
     this.data.drinks.subscribe(drinks => {
       this.drinks = drinks;
       this.drinksHashed = this.hash(drinks);
+      this.loaded = true;
     });
 
     this.categories = [ 'alcohol', 'anti' ];

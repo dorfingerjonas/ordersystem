@@ -10,6 +10,7 @@
 
 <div *ngFor="let c of categories" class="category">
   <span class="category-header">{{ c === 'alcohol' ? 'alkoholisch' : 'anti-alkoholisch' }}</span>
+  <span *ngIf="getFilteredDrinks(c).length === 0 && loaded" class="error">Es sind noch keine Getränke vorhanden</span>
   <div *ngFor="let d of getFilteredDrinks(c)" class="drink">
     <span>{{ d.name }}</span>
     <span>{{ formatPrice(d.price | number : '1.2-2') }}€</span>
@@ -25,3 +26,5 @@
     </div>
   </div>
 </div>
+
+<div class="button btn-danger" matRipple routerLink="/dashboard">Zurück</div>
