@@ -1,5 +1,5 @@
 import { Component, Inject } from '@angular/core';
-import { MAT_DIALOG_DATA } from '@angular/material/dialog';
+import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { Table } from '../../../../models/models';
 
 @Component({
@@ -12,7 +12,8 @@ export class TablePopupComponent {
   public table: Table;
   public isEdit: boolean;
 
-  constructor(@Inject(MAT_DIALOG_DATA) public data: Table | null) {
+  constructor(@Inject(MAT_DIALOG_DATA) public data: Table | null,
+              public dialogRef: MatDialogRef<TablePopupComponent>) {
     this.isEdit = false;
 
     if (data) {
@@ -22,6 +23,14 @@ export class TablePopupComponent {
       this.table = {
         nr: ''
       };
+    }
+  }
+
+  public save(): void {
+    if (this.table.nr.trim().length === 0) {
+      this.dialogRef.close(null);
+    } else {
+      this.dialogRef.close({ nr: this.table.nr.trim() });
     }
   }
 
