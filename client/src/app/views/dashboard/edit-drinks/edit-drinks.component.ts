@@ -84,8 +84,8 @@ export class EditDrinksComponent {
     });
   }
 
-  public hash(tables: Drink[]): string {
-    return btoa(JSON.stringify(tables));
+  public hash(drinks: Drink[]): string {
+    return btoa(JSON.stringify(drinks));
   }
 
   public formatPrice(price: string | null): string {

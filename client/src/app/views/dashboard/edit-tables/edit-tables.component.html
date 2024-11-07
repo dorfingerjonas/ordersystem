@@ -3,9 +3,10 @@
   Ungespeicherte Änderungen
 </div>
 
-<div (click)="create()" class="button btn-primary" matRipple>Tisch hinzufügen</div>
-
-<div (click)="save()" class="button btn-ok" matRipple>Speichern</div>
+<div id="button-wrapper">
+  <div (click)="create()" class="button btn-primary" matRipple>Tisch hinzufügen</div>
+  <div (click)="save()" class="button btn-ok" matRipple>Speichern</div>
+</div>
 
 <div *ngFor="let t of tables" class="table">
   <span>{{ t.nr }}</span>

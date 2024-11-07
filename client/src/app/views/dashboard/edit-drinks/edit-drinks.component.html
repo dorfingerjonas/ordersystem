@@ -3,9 +3,10 @@
   Ungespeicherte Änderungen
 </div>
 
-<div (click)="create()" class="button btn-primary" matRipple>Getränk hinzufügen</div>
-
-<div (click)="save()" class="button btn-ok" matRipple>Speichern</div>
+<div id="button-wrapper">
+  <div (click)="create()" class="button btn-primary" matRipple>Getränk hinzufügen</div>
+  <div (click)="save()" class="button btn-ok" matRipple>Speichern</div>
+</div>
 
 <div *ngFor="let c of categories" class="category">
   <span class="category-header">{{ c === 'alcohol' ? 'alkoholisch' : 'anti-alkoholisch' }}</span>

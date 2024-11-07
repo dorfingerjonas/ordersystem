@@ -15,6 +15,7 @@ import { MatInputModule } from '@angular/material/input';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { DrinkPopupComponent } from './edit-drinks/drink-popup/drink-popup.component';
 import { MatSelectModule } from '@angular/material/select';
+import { FoodPopupComponent } from './edit-food/food-popup/food-popup.component';
 
 const routes: Routes = [
   {
@@ -42,7 +43,8 @@ const routes: Routes = [
     EditTablesComponent,
     EditFoodComponent,
     TablePopupComponent,
-    DrinkPopupComponent
+    DrinkPopupComponent,
+    FoodPopupComponent
   ],
   imports: [
     CommonModule,

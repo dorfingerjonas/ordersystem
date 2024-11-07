@@ -26,6 +26,7 @@ export class DrinkPopupComponent {
     if (data) {
       this.drink = { ...data };
       this.isEdit = true;
+      this.formControl.setValue(data.name);
     } else {
       this.drink = {
         id: Date.now(),
@@ -38,6 +39,8 @@ export class DrinkPopupComponent {
 
   public save(): void {
     if (this.formControl.invalid) return;
+
+    this.drink.name = String(this.formControl.value).trim();
 
     if (this.drink.name.trim().length === 0) {
       this.dialogRef.close(null);
