@@ -27,6 +27,8 @@ export class EditTablesComponent {
     });
     this.tablesHashed = '';
 
+    this.data.fetchData();
+
     this.header.text = 'Tische bearbeiten';
   }
 

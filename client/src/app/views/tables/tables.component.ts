@@ -16,9 +16,11 @@ export class TablesComponent implements OnInit, OnDestroy {
   private subscriptions: Subscription[] = [];
 
   constructor(private header: HeaderService,
-              private dataService: DataService,
+              private data: DataService,
               private loading: LoadingService) {
     this.tables = null;
+
+    this.data.fetchData();
 
     this.loading.activateLoading();
   }
@@ -26,7 +28,7 @@ export class TablesComponent implements OnInit, OnDestroy {
   public ngOnInit(): void {
     setTimeout(() => this.header.text = 'Tischauswahl');
 
-    const sub = this.dataService.tables.subscribe(tables => {
+    const sub = this.data.tables.subscribe(tables => {
       this.tables = tables;
       this.loading.deactivateLoading();
     });

@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { Observable } from 'rxjs';
+import { BehaviorSubject } from 'rxjs';
 import { Drink, Food, Order, Table } from '../models/models';
 import { AngularFireDatabase } from '@angular/fire/compat/database';
 
@@ -8,16 +8,23 @@ import { AngularFireDatabase } from '@angular/fire/compat/database';
 })
 export class DataService {
 
-  tables: Observable<Table[]>;
-  drinks: Observable<Drink[]>;
-  food: Observable<Food[]>;
-  orders: Observable<Order[]>;
+  tables: BehaviorSubject<Table[]>;
+  drinks: BehaviorSubject<Drink[]>;
+  food: BehaviorSubject<Food[]>;
+  orders: BehaviorSubject<Order[]>;
 
   constructor(private db: AngularFireDatabase) {
-    this.tables = this.db.object<Table[]>('tables').valueChanges() as Observable<Table[]>;
-    this.drinks = this.db.object('drinks').valueChanges() as Observable<Drink[]>;
-    this.food = this.db.object('food').valueChanges() as Observable<Food[]>;
-    this.orders = this.db.list('orders').valueChanges() as Observable<Order[]>;
+    this.tables = new BehaviorSubject<Table[]>([]);
+    this.drinks = new BehaviorSubject<Drink[]>([]);
+    this.food = new BehaviorSubject<Food[]>([]);
+    this.orders = new BehaviorSubject<Order[]>([]);
+
+    this.db.list<Table>('tables').valueChanges().subscribe(t => this.tables.next(t || []));
+    this.db.list<Drink>('drinks').valueChanges().subscribe(d => this.drinks.next(d || []));
+    this.db.list<Food>('food').valueChanges().subscribe(f => this.food.next(f || []));
+    this.db.list<Order>('orders').valueChanges().subscribe(o => this.orders.next(o || []));
+
+    this.fetchData();
   }
 
   public createOrder(order: Order): Promise<firebase.default.database.Reference> {
@@ -26,10 +33,6 @@ export class DataService {
         .then(res => resolve(res))
         .catch(err => reject(err));
     });
-  }
-
-  public updateTables(tables: Table[]): Promise<void> {
-    return this.db.object<Table[]>('tables').update(tables);
   }
 
   public persistTables(tables: Table[]): Promise<void> {
@@ -50,5 +53,12 @@ export class DataService {
 
   public persistFood(food: Food[]): Promise<void> {
     return this.db.object<Food[]>('food').set(food);
+  }
+
+  public fetchData(): void {
+    this.tables.next(this.tables.value);
+    this.drinks.next(this.drinks.value);
+    this.food.next(this.food.value);
+    this.orders.next(this.orders.value);
   }
 }

@@ -23,6 +23,8 @@ export class DashboardComponent {
               private readonly auth: AuthService) {
     this.header.text = 'Dashboard';
 
+    this.data.fetchData();
+
     this.orderCount = 0;
     this.saleVolume = 0;
 

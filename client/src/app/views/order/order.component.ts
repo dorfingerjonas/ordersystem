@@ -28,6 +28,8 @@ export class OrderComponent {
 
     this.header.text = `Tisch ${ this.selectedTableNr }`;
 
+    this.data.fetchData();
+
     this.alcoholDrinks = null;
     this.antiDrinks = null;
     this.food = null;
