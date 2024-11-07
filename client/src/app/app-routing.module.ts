@@ -23,6 +23,11 @@ const routes: Routes = [
     canActivate: [ authGuard ]
   },
   {
+    path: 'dashboard',
+    loadChildren: () => import('./views/dashboard/dashboard.module').then(m => m.DashboardModule),
+    canActivate: [ authGuard ]
+  },
+  {
     path: '**',
     redirectTo: 'tables',
     pathMatch: 'full'

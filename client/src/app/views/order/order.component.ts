@@ -4,6 +4,7 @@ import { Order, OrderableItem, Table } from '../../models/models';
 import { DataService } from '../../services/data.service';
 import { HeaderService } from '../../services/header.service';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { AuthService } from '../../services/auth.service';
 
 @Component({
   selector: 'app-order',
@@ -21,7 +22,8 @@ export class OrderComponent {
   constructor(private readonly route: ActivatedRoute,
               private readonly data: DataService,
               private readonly header: HeaderService,
-              private readonly snackBar: MatSnackBar) {
+              private readonly snackBar: MatSnackBar,
+              private readonly auth: AuthService) {
     this.selectedTableNr = this.route.snapshot.params['tableNr'];
 
     this.header.text = `Tisch ${ this.selectedTableNr }`;
@@ -66,7 +68,7 @@ export class OrderComponent {
       table: {
         nr: this.selectedTableNr
       } as Table,
-      waiter: '', // TODO: add waiter NAME!!!
+      waiter: this.auth.username,
       timestamp: Date.now(),
       id: Date.now(),
       note: this.orderNotes || ''

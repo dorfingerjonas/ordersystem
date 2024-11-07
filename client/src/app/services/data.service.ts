@@ -11,16 +11,18 @@ export class DataService {
   tables: Observable<Table[]>;
   drinks: Observable<Drink[]>;
   food: Observable<Food[]>;
+  orders: Observable<Order[]>;
 
   constructor(private db: AngularFireDatabase) {
     this.tables = this.db.object<Table[]>('tables').valueChanges() as Observable<Table[]>;
     this.drinks = this.db.object('drinks').valueChanges() as Observable<Drink[]>;
     this.food = this.db.object('food').valueChanges() as Observable<Food[]>;
+    this.orders = this.db.list('orders').valueChanges() as Observable<Order[]>;
   }
 
   public createOrder(order: Order): Promise<firebase.default.database.Reference> {
     return new Promise((resolve, reject) => {
-      this.db.list('orders').push(order)
+      this.db.list('pending-orders').push(order)
         .then(res => resolve(res))
         .catch(err => reject(err));
     });
