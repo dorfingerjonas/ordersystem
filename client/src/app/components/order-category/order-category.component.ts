@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { OrderableItem } from '../../../models/models';
+import { OrderableItem } from '../../models/models';
 
 @Component({
   selector: 'app-order-category',
@@ -34,7 +34,6 @@ export class OrderCategoryComponent {
 
     this.itemsChange.emit(this.items);
   }
-
 
   public formatPrice(price: number): string {
     return price.toString().replace('.', ',');
