@@ -100,7 +100,18 @@ async function printReceipt(order: Order, key: string | null): Promise<void> {
     printer.clear();
     console.log(executeRes);
 
-    db.ref(`completed-orders/${ order.table.nr }`).push(order).then(() => {
+    [ ...order.food, ...order.drinks ].forEach(item => {
+        for (let i = 0; i < (item.amount || 0); i++) {
+            const orderId = Date.now();
+
+            db.ref(`completed-orders/${ order.table.nr }/${ orderId }`).set({
+                itemId: item.id,
+                amount: 1,
+                paid: false,
+                orderId
+            });
+        }
+
         if (key) {
             pendingOrdersRef.child(key).remove();
         }
