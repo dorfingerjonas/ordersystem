@@ -25,3 +25,19 @@ export interface Order {
   timestamp: number;
   note?: string;
 }
+
+export interface OpenOrder {
+  nr: string;
+  openItems: CompletedOrderItem[];
+}
+
+export interface CompletedOrderItem {
+  itemId: number;
+  orderId: number;
+  amount: number;
+  paid: boolean;
+}
+
+export interface CompletedOrderDTO {
+  [key: number]: CompletedOrderItem;
+}
