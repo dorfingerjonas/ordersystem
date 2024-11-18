@@ -98,24 +98,37 @@ async function printReceipt(order: Order, key: string | null): Promise<void> {
     const executeRes = await printer.execute({ waitForResponse: true });
 
     printer.clear();
+
     console.log(executeRes);
+
+    const val = (await db.ref(`completed-orders/${ order.table.nr }`).get()).val();
+
+    const currentOrders: any[] = [];
+
+    if (val) {
+        for (const valElement of val as any[]) {
+            currentOrders.push(valElement);
+        }
+    }
 
     [ ...order.food, ...order.drinks ].forEach(item => {
         for (let i = 0; i < (item.amount || 0); i++) {
             const orderId = Date.now();
 
-            db.ref(`completed-orders/${ order.table.nr }/${ orderId }`).set({
+            currentOrders.push({
                 itemId: item.id,
                 amount: 1,
                 paid: false,
                 orderId
             });
         }
-
-        if (key) {
-            pendingOrdersRef.child(key).remove();
-        }
     });
+
+    db.ref(`completed-orders/${ order.table.nr }/`).set(currentOrders);
+
+    if (key) {
+        pendingOrdersRef.child(key).remove();
+    }
 }
 
 function buildReceiptData(order: Order): void {
