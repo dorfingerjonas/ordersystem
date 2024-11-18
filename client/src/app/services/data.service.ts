@@ -11,20 +11,20 @@ export class DataService {
   public tables: BehaviorSubject<Table[]>;
   public drinks: BehaviorSubject<Drink[]>;
   public food: BehaviorSubject<Food[]>;
-  public orders: BehaviorSubject<Order[]>;
+  public orders: BehaviorSubject<CompletedOrderItem[]>;
   public openOrders: BehaviorSubject<OpenOrder[]>;
 
   constructor(private db: AngularFireDatabase) {
     this.tables = new BehaviorSubject<Table[]>([]);
     this.drinks = new BehaviorSubject<Drink[]>([]);
     this.food = new BehaviorSubject<Food[]>([]);
-    this.orders = new BehaviorSubject<Order[]>([]);
+    this.orders = new BehaviorSubject<CompletedOrderItem[]>([]);
     this.openOrders = new BehaviorSubject<OpenOrder[]>([]);
 
     this.db.list<Table>('tables').valueChanges().subscribe(t => this.tables.next(t || []));
     this.db.list<Drink>('drinks').valueChanges().subscribe(d => this.drinks.next(d || []));
     this.db.list<Food>('food').valueChanges().subscribe(f => this.food.next(f || []));
-    this.db.list<Order>('orders').valueChanges().subscribe(o => this.orders.next(o || []));
+    this.db.list<CompletedOrderItem[]>('completed-orders').valueChanges().subscribe(o => this.orders.next((o || []).flat(5)));
     this.db.object<CompletedOrderDTO[]>('completed-orders').valueChanges().subscribe(o => {
       if (!o) return;
 

@@ -2,8 +2,7 @@ import { Component } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { DataService } from '../../services/data.service';
 import { HeaderService } from '../../services/header.service';
-import { MatSnackBar } from '@angular/material/snack-bar';
-import { AuthService } from '../../services/auth.service';
+import { Drink, Food, OrderableItem } from '../../models/models';
 
 @Component({
   selector: 'app-dashboard',
@@ -12,37 +11,50 @@ import { AuthService } from '../../services/auth.service';
 })
 export class DashboardComponent {
 
-  public orderCount: number;
   public saleVolume: number;
-
+  private food: Food[];
+  private drinks: Drink[];
 
   constructor(private readonly route: ActivatedRoute,
               private readonly data: DataService,
-              private readonly header: HeaderService,
-              private readonly snackBar: MatSnackBar,
-              private readonly auth: AuthService) {
+              private readonly header: HeaderService) {
+    this.food = [];
+    this.drinks = [];
+
     this.header.text = 'Dashboard';
 
     this.data.fetchData();
 
-    this.orderCount = 0;
     this.saleVolume = 0;
 
+    this.data.food.subscribe(f => this.food = f);
+    this.data.drinks.subscribe(d => this.drinks = d);
+
     this.data.orders.subscribe(orders => {
+      const items: OrderableItem[] = [ ...this.food, ...this.drinks ];
+
       if (!(orders && orders.length > 0)) return;
 
-      this.orderCount = orders.length;
+      this.saleVolume = orders.map(o => {
+        const item: OrderableItem | undefined = items.find(i => i.id === o.itemId);
 
-      this.saleVolume = orders.reduce((totalCost, order) => {
-        const drinksCost = order.drinks?.reduce((sum, item) => {
-          return sum + item.price * (item.amount || 1);
-        }, 0) || 0;
+        if (item) {
+          return {
+            id: item.id,
+            amount: o.amount,
+            name: item.name,
+            price: item.price
+          } as OrderableItem;
+        }
 
-        const foodCost = order.food?.reduce((sum, item) => {
-          return sum + item.price * (item.amount || 1);
-        }, 0) || 0;
-
-        return (totalCost || 0) + drinksCost + foodCost;
+        return {
+          id: -1,
+          amount: 0,
+          name: '',
+          price: 0
+        } as OrderableItem;
+      }).reduce((totalCost, item) => {
+        return totalCost + item.price * item.amount!;
       }, 0);
     });
   }
