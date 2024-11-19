@@ -23,7 +23,6 @@ function printPendingOrders(): void {
         if (value) {
             data.forEach(a => {
                 handleOrder(a.val() as Order, a.key);
-                // printReceipt(a.val() as Order, a.key);
             });
         }
     });
