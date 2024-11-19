@@ -1,0 +1,16 @@
+<h1>Tisch {{ isEdit ? 'bearbeiten' : 'hinzufügen' }}</h1>
+
+<mat-form-field appearance="outline">
+  <mat-label>Tischnummer</mat-label>
+  <input [(ngModel)]="table.nr" matInput>
+</mat-form-field>
+
+<div id="button-wrapper">
+  <div [mat-dialog-close]="null" class="button btn-danger" matRipple>
+    Abbrechen
+  </div>
+
+  <div (click)="save()" class="button btn-ok" matRipple>
+    Bestätigen
+  </div>
+</div>

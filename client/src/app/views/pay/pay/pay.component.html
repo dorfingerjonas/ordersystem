@@ -1,0 +1,38 @@
+<span *ngIf="selectedTableNr" id="open-items-header">offene Getränke und Speisen</span>
+
+<div *ngIf="selectedTableNr" id="open-items-wrapper">
+  <div (click)="selectOpenItem(item.id)" *ngFor="let item of getAccumulatedOpenItems(openItems)" class="item" matRipple>
+    <span class="amount">{{ item.amount }}</span>
+    <span class="name">{{ item.name }}</span>
+    <span class="price">{{ formatPrice(item.price) }}€</span>
+  </div>
+  <mat-error *ngIf="getAccumulatedOpenItems(openItems).length === 0">
+    Keine offenen Positionen auf diesem Tisch
+  </mat-error>
+</div>
+
+<span *ngIf="selectedTableNr" id="all-items-header">Alle Getränke und Speisen</span>
+
+<app-order-category *ngIf="alcoholDrinks" [(items)]="alcoholDrinks" title="alkoholische Getränke"></app-order-category>
+<app-order-category *ngIf="antiDrinks" [(items)]="antiDrinks" title="anti-alkoholische Getränke"></app-order-category>
+<app-order-category *ngIf="food" [(items)]="food" title="Speisen"></app-order-category>
+
+<div id="cart-wrapper">
+  <h2>Warenkorb</h2>
+
+  <div *ngFor="let f of getCartSummary()?.drinks" class="item">
+    <span>{{ f.amount }} x {{ f.name }} ({{ formatPrice(f.price) }}€)</span>
+  </div>
+
+  <div *ngFor="let f of getCartSummary()?.food" class="item">
+    <span>{{ f.amount }} x {{ f.name }} ({{ formatPrice(f.price) }}€)</span>
+  </div>
+
+  <span *ngIf="getCartSummary()?.food?.length === 0 && getCartSummary()?.drinks?.length === 0" class="error">Der Warenkorb ist leer</span>
+
+  <span *ngIf="(getCartSummary()?.sum || 0) > 0" id="sum">Summe: {{ formatPrice(getCartSummary()?.sum || 0) }}€</span>
+
+  <button (click)="complete()" *ngIf="selectedTableNr" class="button btn-ok" matRipple>Bezahlvorgang abschließen
+  </button>
+  <button (click)="reset()" class="button btn-danger" matRipple>Zurücksetzen</button>
+</div>

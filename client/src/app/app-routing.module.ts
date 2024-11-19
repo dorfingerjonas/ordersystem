@@ -1,41 +1,41 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
-import { AuthGuard } from './services/auth-guard/auth.guard';
+import { authGuard } from './services/guard/auth.guard';
 
 const routes: Routes = [
   {
-    path: 'signin',
-    loadChildren: () => import('./views/signin/signin.module').then(m => m.SigninModule)
+    path: 'login',
+    loadChildren: () => import('./views/login/login.module').then(m => m.LoginModule)
   },
   {
     path: 'tables',
     loadChildren: () => import('./views/tables/tables.module').then(m => m.TablesModule),
-    canActivate: [ AuthGuard ]
+    canActivate: [ authGuard ]
   },
   {
     path: 'order/:tableNr',
     loadChildren: () => import('./views/order/order.module').then(m => m.OrderModule),
-    canActivate: [ AuthGuard ]
+    canActivate: [ authGuard ]
   },
   {
     path: 'pay',
     loadChildren: () => import('./views/pay/pay.module').then(m => m.PayModule),
-    canActivate: [ AuthGuard ]
+    canActivate: [ authGuard ]
   },
   {
-    path: 'edit',
-    loadChildren: () => import('./views/edit/edit.module').then(m => m.EditModule),
-    canActivate: [ AuthGuard ]
-  },
-  {
-    path: '',
-    pathMatch: 'full',
-    redirectTo: 'tables'
+    path: 'dashboard',
+    loadChildren: () => import('./views/dashboard/dashboard.module').then(m => m.DashboardModule),
+    canActivate: [ authGuard ]
   },
   {
     path: '**',
-    pathMatch: 'full',
-    redirectTo: 'tables'
+    redirectTo: 'tables',
+    pathMatch: 'full'
+  },
+  {
+    path: '',
+    redirectTo: 'tables',
+    pathMatch: 'full'
   }
 ];
 

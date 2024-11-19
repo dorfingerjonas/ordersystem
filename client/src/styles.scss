@@ -1,3 +1,51 @@
+@use '@angular/material' as mat;
+
+@include mat.core();
+
+$ordersystem-primary: (
+  50 : #000,
+  100 : #fccf89,
+  200 : #fccf89,
+  300 : #000,
+  400 : #ffc063,
+  500 : #faaf40,
+  600 : #000,
+  700 : #000,
+  800 : #000,
+  900 : #000,
+  A100 : #000,
+  A200 : #000,
+  A400 : #000,
+  A700 : #000,
+  contrast: (
+    50 : #000000,
+    100 : #000000,
+    200 : #000000,
+    300 : #000000,
+    400 : #000000,
+    500 : #000000,
+    600 : #000000,
+    700 : #000000,
+    800 : #000000,
+    900 : #ffffff,
+    A100 : #000000,
+    A200 : #000000,
+    A400 : #000000,
+    A700 : #000000,
+  )
+);
+$ordersystem-accent: mat.define-palette($ordersystem-primary, A200, A100, A400);
+$ordersystem-warn: mat.define-palette(mat.$red-palette);
+
+$ordersystem-theme: mat.define-light-theme((
+  color: (
+    primary: mat.define-palette($ordersystem-primary),
+    accent: $ordersystem-accent,
+    warn: $ordersystem-warn
+  )));
+
+@include mat.all-component-themes($ordersystem-theme);
+
 @import url('https://fonts.googleapis.com/css2?family=Open+Sans&display=swap');
 
 :root {
@@ -18,15 +66,15 @@
 
 body {
   width: 100vw;
-  overflow: hidden scroll;
+  overflow: hidden;
   font-family: 'Open Sans', sans-serif;
   margin: 0 auto;
 }
 
 // general style
 .button {
-  padding: 3% 20px;
-  font-size: 3vw;
+  padding: 10px 20px;
+  font-size: 1em;
   border: none;
   border-radius: 3px;
   box-shadow: var(--box-shadow);
@@ -55,10 +103,19 @@ body {
 
 .error {
   color: var(--danger);
-  font-size: 3vw;
-  margin: .5vh 0 0 1vw;
+  font-size: .9em;
+  margin: .5vh 0 0 0;
 }
 
 .link {
   color: var(--link);
+}
+
+html, body {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: Roboto, "Helvetica Neue", sans-serif;
 }

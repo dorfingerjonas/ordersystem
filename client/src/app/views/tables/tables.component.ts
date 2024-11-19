@@ -1,9 +1,9 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Subscription } from 'rxjs';
-import { Table } from '../../models/models';
 import { HeaderService } from '../../services/header.service';
 import { LoadingService } from '../../services/loading.service';
-import { TableService } from '../../services/table.service';
+import { Table } from '../../models/models';
+import { DataService } from '../../services/data.service';
 
 @Component({
   selector: 'app-tables',
@@ -12,31 +12,31 @@ import { TableService } from '../../services/table.service';
 })
 export class TablesComponent implements OnInit, OnDestroy {
 
-  tables: Table[];
+  tables: Table[] | null;
   private subscriptions: Subscription[] = [];
 
   constructor(private header: HeaderService,
-              private tableService: TableService,
+              private data: DataService,
               private loading: LoadingService) {
-    this.tables = [];
+    this.tables = null;
+
+    this.data.fetchData();
 
     this.loading.activateLoading();
   }
 
-  ngOnInit(): void {
+  public ngOnInit(): void {
     setTimeout(() => this.header.text = 'Tischauswahl');
 
-    const sub = this.tableService.tables.subscribe(tables => {
-      this.tables = tables.sort((a, b) => a.nr.localeCompare(b.nr));
+    const sub = this.data.tables.subscribe(tables => {
+      this.tables = tables;
       this.loading.deactivateLoading();
     });
 
     this.subscriptions.push(sub);
   }
 
-  ngOnDestroy(): void {
-    this.subscriptions.forEach(value => {
-      value.unsubscribe();
-    });
+  public ngOnDestroy(): void {
+    this.subscriptions.forEach(value => value.unsubscribe());
   }
 }

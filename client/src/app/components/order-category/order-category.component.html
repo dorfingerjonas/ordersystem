@@ -1,0 +1,12 @@
+<div id="title-wrapper">
+  <span>{{ title }}</span>
+</div>
+
+<div id="item-wrapper">
+  <div (click)="changeItemAmount($event, item)" *ngFor="let item of items" class="item" matRipple>
+    <span class="amount">{{ item.amount }}</span>
+    <span class="name">{{ item.name }}</span>
+    <span *ngIf="showPrice" class="price">{{ formatPrice(item.price) }}€</span>
+    <mat-icon class="remove">remove</mat-icon>
+  </div>
+</div>

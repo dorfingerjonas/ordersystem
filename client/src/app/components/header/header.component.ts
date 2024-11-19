@@ -1,19 +1,19 @@
 import { Component, OnInit } from '@angular/core';
-import { IconProp } from '@fortawesome/fontawesome-svg-core';
-import { faBars } from '@fortawesome/free-solid-svg-icons';
 import { HeaderService } from '../../services/header.service';
+import { MatBottomSheet } from '@angular/material/bottom-sheet';
+import { MenuComponent } from '../menu/menu.component';
 
 @Component({
   selector: 'app-header',
   templateUrl: './header.component.html',
-  styleUrls: ['./header.component.scss']
+  styleUrls: [ './header.component.scss' ]
 })
 export class HeaderComponent implements OnInit {
 
-  text: string;
-  icon: IconProp = faBars;
+  public text: string;
 
-  constructor(private header: HeaderService) {
+  constructor(private readonly header: HeaderService,
+              private readonly bottomSheet: MatBottomSheet) {
     this.text = this.header.text;
   }
 
@@ -23,5 +23,9 @@ export class HeaderComponent implements OnInit {
         this.text = text;
       });
     });
+  }
+
+  public openBottomSheet(): void {
+    this.bottomSheet.open(MenuComponent);
   }
 }

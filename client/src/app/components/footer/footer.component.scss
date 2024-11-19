@@ -6,12 +6,29 @@
   align-items: center;
   background: var(--secondary);
 
-  fa-icon:first-child {
-    transform: rotateZ(180deg);
-  }
+  #icon-wrapper {
+    height: 100%;
+    width: 100%;
+    max-width: 600px;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
 
-  fa-icon::ng-deep svg {
-    width: auto;
-    height: 1.7em;
+    .icon {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+
+      span {
+        font-size: 3vw;
+        margin-top: .25em;
+      }
+
+      mat-icon {
+        transform: scale(1.3);
+        cursor: pointer;
+      }
+    }
   }
 }

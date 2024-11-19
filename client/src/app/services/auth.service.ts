@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
-import { AngularFireAuth } from '@angular/fire/auth';
-import firebase from 'firebase';
 import { Observable, Subject } from 'rxjs';
+import { AngularFireAuth } from '@angular/fire/compat/auth';
+import * as authType from 'firebase/auth';
 
 @Injectable({
   providedIn: 'root'
@@ -40,15 +40,13 @@ export class AuthService {
       .join(' ');
   }
 
-  signOut(): ReturnType<firebase.auth.Auth['signOut']> {
+  signOut(): ReturnType<authType.Auth['signOut']> {
     return this.auth.signOut();
   }
 
-  signInWithEmailAndPassword(email: string, password: string): ReturnType<firebase.auth.Auth['signInWithEmailAndPassword']> {
+  signInWithEmailAndPassword(email: string, password: string): Promise<authType.UserCredential> {
     return new Promise((resolve, reject) => {
-      this.auth.signInWithEmailAndPassword(email, password).catch(err => {
-        reject(this.getCustomizedErrorMessage(err));
-      });
+      this.auth.signInWithEmailAndPassword(email, password).catch(err => reject(this.getCustomizedErrorMessage(err)));
     });
   }
 

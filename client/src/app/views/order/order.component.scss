@@ -1,74 +1,36 @@
-:host {
+textarea {
+  width: 70%;
+  height: 15%;
+  resize: none;
+  outline: none;
+  margin: 10% 15% 0 15%;
+  font-family: Roboto, "Helvetica Neue", sans-serif;
+  border: 2px solid var(--table-accent);
+  border-radius: 5px;
+  transition: border-color 150ms ease-in-out;
+  font-size: 4vw;
+
+  &:focus {
+    border-color: var(--accent);
+  }
+}
+
+#cart-wrapper {
   width: 100%;
-  display: flex;
-  flex-direction: column;
+  box-sizing: border-box;
+  padding: 0 20% 20% 20%;
 
-  .category {
-    > span {
-      width: 100%;
-      display: block;
-      background: var(--accent);
-      font-size: 4vw;
-      color: var(--dark-gray);
-      font-weight: bolder;
-      padding: 1% 2%;
-      box-sizing: border-box;
-    }
-
-    .item {
-      padding: 3% 1%;
-      box-sizing: border-box;
-      font-size: 3.5vw;
-      display: flex;
-      flex-direction: row;
-      z-index: 99;
-
-      &:nth-child(2n - 1) {
-        background: var(--table-accent);
-      }
-
-      .amount {
-        width: 10%;
-        display: flex;
-        justify-content: center;
-      }
-
-      .name {
-        width: 60%;
-        display: flex;
-        justify-content: flex-start;
-      }
-
-      .price {
-        width: 10%;
-        display: flex;
-        justify-content: center;
-      }
-
-      .minus {
-        width: 20%;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        z-index: 101;
-
-        > span {
-          width: 4vw;
-          height: 4vw;
-          background: var(--dark-gray);
-          color: var(--white);
-          display: flex;
-          justify-content: center;
-          align-items: center;
-          border-radius: 50%;
-        }
-      }
-    }
+  h2 {
+    text-align: center;
   }
 
-  .button {
-    width: 80%;
-    margin: 15% 10%;
-    transition: all 300ms ease-in-out;
+  button {
+    width: 100%;
+    margin-top: 3vh;
+  }
+
+  .error {
+    display: block;
+    text-align: center;
   }
 }

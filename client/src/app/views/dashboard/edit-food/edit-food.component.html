@@ -1,0 +1,28 @@
+<div *ngIf="foodHashed !== hash(food)" class="button btn-danger" id="unsaved">
+  <mat-icon>warning</mat-icon>
+  Ungespeicherte Änderungen
+</div>
+
+<div id="button-wrapper">
+  <div (click)="create()" class="button btn-primary" matRipple>Speise hinzufügen</div>
+  <div (click)="save()" class="button btn-ok" matRipple>Speichern</div>
+</div>
+
+<div *ngFor="let f of food" class="food">
+  <span>{{ f.name }}</span>
+  <span>{{ formatPrice(f.price | number : '1.2-2') }}€</span>
+
+  <div class="icon-wrapper">
+    <button (click)="edit(f)" mat-icon-button>
+      <mat-icon color="primary">edit</mat-icon>
+    </button>
+
+    <button (click)="delete(f)" mat-icon-button>
+      <mat-icon color="warn">delete</mat-icon>
+    </button>
+  </div>
+</div>
+
+<span *ngIf="food.length === 0 && loaded" class="error">Es sind noch keine Speisen vorhanden</span>
+
+<div class="button btn-danger" matRipple routerLink="/dashboard">Zurück</div>

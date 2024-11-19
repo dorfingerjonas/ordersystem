@@ -1,6 +1,4 @@
-import { Component, OnInit } from '@angular/core';
-import { IconProp } from '@fortawesome/fontawesome-svg-core';
-import { faCashRegister, faHome, faSignOutAlt } from '@fortawesome/free-solid-svg-icons';
+import { Component } from '@angular/core';
 import { AuthService } from '../../services/auth.service';
 
 @Component({
@@ -8,25 +6,22 @@ import { AuthService } from '../../services/auth.service';
   templateUrl: './footer.component.html',
   styleUrls: [ './footer.component.scss' ]
 })
-export class FooterComponent implements OnInit {
+export class FooterComponent {
 
-  faSignOutAlt = faSignOutAlt;
-
-  icons: { url: string, icon: IconProp }[] = [
+  icons: { url: string, icon: string, displayText: string }[] = [
     {
       url: 'tables',
-      icon: faHome
+      icon: 'table_restaurant',
+      displayText: 'Tischauswahl'
     },
     {
       url: 'pay',
-      icon: faCashRegister
+      icon: 'local_atm',
+      displayText: 'Bezahlen'
     }
   ];
 
   constructor(private auth: AuthService) {
-  }
-
-  ngOnInit(): void {
   }
 
   signOut(): void {

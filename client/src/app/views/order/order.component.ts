@@ -1,126 +1,98 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
-import { Router } from '@angular/router';
-import { faMinus as minusIcon } from '@fortawesome/free-solid-svg-icons';
-import { Subscription } from 'rxjs';
-import { Drink, Food, Order } from '../../models/models';
-import { AuthService } from '../../services/auth.service';
-import { DrinkService } from '../../services/drink.service';
-import { FoodService } from '../../services/food.service';
+import { Component } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
+import { Order, OrderableItem, Table } from '../../models/models';
+import { DataService } from '../../services/data.service';
 import { HeaderService } from '../../services/header.service';
-import { LoadingService } from '../../services/loading.service';
-import { OrderService } from '../../services/order.service';
+import { MatSnackBar } from '@angular/material/snack-bar';
+import { AuthService } from '../../services/auth.service';
 
 @Component({
   selector: 'app-order',
   templateUrl: './order.component.html',
   styleUrls: [ './order.component.scss' ]
 })
-export class OrderComponent implements OnInit, OnDestroy {
+export class OrderComponent {
 
-  displayTable: { title: string; items: Drink[] | Food[] } [];
-  minusIcon = minusIcon;
-  tableNr: string;
-  private drinks: Drink[];
-  private food: Food[];
-  private subscriptions: Subscription[] = [];
+  public readonly selectedTableNr: string;
+  public alcoholDrinks: OrderableItem[] | null;
+  public antiDrinks: OrderableItem[] | null;
+  public food: OrderableItem[] | null;
+  public orderNotes: string | undefined;
 
-  constructor(private router: Router,
-              private loading: LoadingService,
-              private header: HeaderService,
-              private drinkService: DrinkService,
-              private foodService: FoodService,
-              private orderService: OrderService,
-              private auth: AuthService) {
-    this.displayTable = [];
-    this.drinks = [];
-    this.food = [];
-    this.tableNr = this.router.url.replace('/order/', '');
-  }
+  constructor(private readonly route: ActivatedRoute,
+              private readonly data: DataService,
+              private readonly header: HeaderService,
+              private readonly snackBar: MatSnackBar,
+              private readonly auth: AuthService) {
+    this.selectedTableNr = this.route.snapshot.params['tableNr'];
 
-  ngOnInit(): void {
-    setTimeout(() => this.header.text = `Tisch: ${ this.tableNr }`);
+    this.header.text = `Tisch ${ this.selectedTableNr }`;
 
-    let sub = this.drinkService.drinks.subscribe(drinks => {
-      this.drinks = drinks;
+    this.data.fetchData();
 
-      this.buildDisplayTable();
+    this.alcoholDrinks = null;
+    this.antiDrinks = null;
+    this.food = null;
+
+    this.data.food.subscribe(food => {
+      this.food = food.map(f => {
+        return { ...f, amount: 0 };
+      });
     });
 
-    this.subscriptions.push(sub);
+    this.data.drinks.subscribe(drinks => {
+      this.alcoholDrinks = [];
+      this.antiDrinks = [];
 
-    sub = this.foodService.food.subscribe(food => {
-      this.food = food;
-
-      this.buildDisplayTable();
-    });
-
-    this.subscriptions.push(sub);
-  }
-
-  ngOnDestroy(): void {
-    this.subscriptions.forEach(value => {
-      value.unsubscribe();
-    });
-  }
-
-  increaseAmount(event: any, item: Drink | Food): void {
-    if (![ 'svg', 'fa-icon', 'path' ].includes(event.target.localName)) {
-      item.amount = (item.amount || 0) + 1;
-    }
-  }
-
-  decreaseAmount(item: Drink | Food): void {
-    if (item.amount && item.amount > 0) {
-      item.amount = item.amount - 1;
-    }
-  }
-
-  order(): void {
-    const order: Order = {
-      id: Date.now(),
-      drinks: this.drinks.filter(drink => (drink.amount || 0) > 0),
-      food: this.food.filter(food => (food.amount || 0) > 0),
-      table: {
-        nr: this.tableNr
-      },
-      timestamp: Date.now(),
-      waiter: this.auth.username
-    };
-
-    this.loading.activateLoading();
-
-    this.orderService.persist(order).then(() => {
-      this.loading.deactivateLoading();
-
-      this.router.navigateByUrl('/tables');
-    }).catch(reason => {
-      this.loading.deactivateLoading();
-    });
-  }
-
-  isOrderValid(): boolean {
-    const drinks = this.drinks.filter(drink => (drink.amount || 0) > 0);
-    const food = this.food.filter(f => (f.amount || 0) > 0);
-
-    return drinks.length > 0 || food.length > 0;
-  }
-
-  private buildDisplayTable(): void {
-    this.displayTable = [
-      {
-        title: 'alkoholische Getränke',
-        items: this.drinks.filter(drink => drink.category === 'alcohol')
-      },
-      {
-        title: 'alkoholfreie Getränke',
-        items: this.drinks.filter(drink => drink.category === 'anti')
-      },
-      {
-        title: 'Speisen',
-        items: this.food
+      for (const drink of drinks) {
+        if (drink.category === 'alcohol') {
+          this.alcoholDrinks.push({ ...drink, amount: 0 });
+        } else if (drink.category === 'anti') {
+          this.antiDrinks.push({ ...drink, amount: 0 });
+        } else {
+          throw new Error('Invalid Drink category' + drink.category);
+        }
       }
-    ];
+    });
+  }
 
-    this.loading.deactivateLoading();
+  public getOrderDetails(): Order | null {
+    if (this.antiDrinks === null || this.alcoholDrinks === null || this.food === null) {
+      return null;
+    }
+
+    return {
+      drinks: [
+        ...this.alcoholDrinks.filter(d => (d.amount || 0) > 0),
+        ...this.antiDrinks.filter(d => (d.amount || 0) > 0)
+      ],
+      food: this.food.filter(f => (f.amount || 0) > 0),
+      table: {
+        nr: this.selectedTableNr
+      } as Table,
+      waiter: this.auth.username,
+      timestamp: Date.now(),
+      id: Date.now(),
+      note: this.orderNotes || ''
+    } as Order;
+  }
+
+  public order(): void {
+    const order = this.getOrderDetails();
+
+    if (!order) return;
+
+    this.data.createOrder(order).then(ref => {
+      // order completed successfully
+      this.food?.forEach(f => f.amount = 0);
+      this.alcoholDrinks?.forEach(d => d.amount = 0);
+      this.antiDrinks?.forEach(d => d.amount = 0);
+      this.orderNotes = undefined;
+      document.getElementsByClassName('page-container')[0].scrollTop = 0;
+      this.snackBar.open('Bestellung erfolgreich aufgegeben.', 'X', { duration: 2500 });
+    }).catch(err => {
+      this.snackBar.open('Es ist ein Fehler aufgetreten.', 'X', { duration: 2500 });
+      console.log(err);
+    });
   }
 }

@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
-import { ActivatedRoute, Router, UrlTree } from '@angular/router';
 import { Observable } from 'rxjs';
+import { ActivatedRoute, Router, UrlTree } from '@angular/router';
 import { AuthService } from './services/auth.service';
 import { LoadingService } from './services/loading.service';
 
@@ -29,22 +29,22 @@ export class AppComponent implements OnInit {
 
       if (state) {
         this.route.queryParams.subscribe(value => {
-          if (value.redirectUrl) {
-            redirectUrl = value.redirectUrl;
+          if (value['redirectUrl']) {
+            redirectUrl = value['redirectUrl'];
           }
         });
       } else {
         this.route.queryParams.subscribe(value => {
-          if (value.redirectUrl) {
+          if (value['redirectUrl']) {
             redirectUrl = this.router.createUrlTree(
-              [ '/signin' ], {
+              [ '/login' ], {
                 queryParams: {
-                  redirectUrl: value.redirectUrl
+                  redirectUrl: value['redirectUrl']
                 }
               }
             );
           } else {
-            redirectUrl = '/signin';
+            redirectUrl = '/login';
           }
         });
       }
