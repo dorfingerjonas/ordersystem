@@ -41,8 +41,6 @@ export class DataService {
           openItems: tableOrders.filter(i => !i.paid)
         };
 
-        console.log(order);
-
         if (order.openItems.length > 0) {
           openOrders.push(order);
         }

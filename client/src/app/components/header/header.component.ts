@@ -1,5 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { HeaderService } from '../../services/header.service';
+import { MatBottomSheet } from '@angular/material/bottom-sheet';
+import { MenuComponent } from '../menu/menu.component';
 
 @Component({
   selector: 'app-header',
@@ -10,7 +12,8 @@ export class HeaderComponent implements OnInit {
 
   public text: string;
 
-  constructor(private header: HeaderService) {
+  constructor(private readonly header: HeaderService,
+              private readonly bottomSheet: MatBottomSheet) {
     this.text = this.header.text;
   }
 
@@ -22,4 +25,7 @@ export class HeaderComponent implements OnInit {
     });
   }
 
+  public openBottomSheet(): void {
+    this.bottomSheet.open(MenuComponent);
+  }
 }

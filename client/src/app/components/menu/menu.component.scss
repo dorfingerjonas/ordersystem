@@ -1,0 +1,25 @@
+img {
+  width: 70%;
+  margin-top: 5vh;
+  margin-bottom: 2vh;
+  margin-left: 15%;
+}
+
+#button-wrapper {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  flex-direction: column;
+  align-items: center;
+}
+
+button {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 1em 0;
+
+  mat-icon {
+    margin-right: 1vw;
+  }
+}

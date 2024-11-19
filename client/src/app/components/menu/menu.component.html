@@ -1,0 +1,15 @@
+<img alt="orderystem logo" src="assets/images/ordersystem-clipped.svg">
+
+<h2>Hallo, {{ username }}!</h2>
+
+<div id="button-wrapper">
+  <button (click)="close()" class="button btn-primary" matRipple routerLink="/dashboard">
+    <mat-icon>dashboard</mat-icon>
+    Dashboard öffnen
+  </button>
+
+  <button (click)="logout()" class="button btn-danger" matRipple>
+    <mat-icon>logout</mat-icon>
+    Abmelden
+  </button>
+</div>
