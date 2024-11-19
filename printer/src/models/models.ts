@@ -24,4 +24,5 @@ export interface Order {
   table: Table;
   waiter: string;
   timestamp: number;
+  note?: string;
 }

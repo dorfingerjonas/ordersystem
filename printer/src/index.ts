@@ -1,9 +1,8 @@
 import admin, { database } from 'firebase-admin';
 import { Order } from './models/models';
-import { config } from './config';
+import { config, PrinterConfig, printerKuecheConfig } from './config';
 import { CharacterSet, PrinterTypes, ThermalPrinter } from 'node-thermal-printer';
 import { firebaseServiceAccount } from './firebase-api-key';
-import * as os from 'os';
 import DataSnapshot = database.DataSnapshot;
 
 admin.initializeApp({
@@ -14,22 +13,8 @@ admin.initializeApp({
 const db = admin.database();
 const pendingOrdersRef = db.ref('pending-orders');
 
-let scriptRunning = true;
-
-db.ref(`status/${ config.path }`).set({
-    scriptRunning,
-    name: config.name
-});
-
-let printer: ThermalPrinter | null = null;
-
-setInterval(async () => {
-    await db.ref(`status/${ config.path }`).update({
-        scriptRunning,
-        printerConnected: await (printer?.isPrinterConnected() || false),
-        ip: getIPAddress()
-    });
-}, config.controlInterval * 1000);
+let printerAusschank: ThermalPrinter | null = null;
+let printerKueche: ThermalPrinter | null = null;
 
 function printPendingOrders(): void {
     pendingOrdersRef.get().then((data: DataSnapshot) => {
@@ -37,26 +22,58 @@ function printPendingOrders(): void {
 
         if (value) {
             data.forEach(a => {
-                printReceipt(a.val() as Order, a.key);
+                handleOrder(a.val() as Order, a.key);
+                // printReceipt(a.val() as Order, a.key);
             });
         }
     });
 }
 
-connectPrinter().then(device => {
+connectPrinter(config).then(device => {
     if (device) {
         printPendingOrders();
-        printer = device;
+        printerAusschank = device;
     }
 });
+
+connectPrinter(printerKuecheConfig).then(device => {
+    if (device) {
+        printPendingOrders();
+        printerKueche = device;
+    }
+});
+
+async function handleOrder(order: Order, key: string | null): Promise<void> {
+    if (!order) return;
+
+    if (order.drinks && order.drinks.length > 0) {
+        if (printerAusschank && (await printerAusschank.isPrinterConnected())) {
+            printReceipt({ ...order, food: [] }, key, printerAusschank);
+            return;
+        }
+
+        return;
+    }
+
+    if (order.food && order.food.length > 0) {
+        if (printerKueche && (await printerKueche.isPrinterConnected())) {
+            printReceipt({ ...order, drinks: [] }, key, printerKueche);
+            return;
+
+        }
+
+        return;
+    }
+
+}
 
 pendingOrdersRef.on('child_added', (snapshot: DataSnapshot) => {
     const order: Order = snapshot.val();
 
-    printReceipt(order, snapshot.key);
+    handleOrder(order, snapshot.key);
 });
 
-function connectPrinter(): Promise<any | null> {
+function connectPrinter(config: PrinterConfig): Promise<any | null> {
     return new Promise<any | null>((resolve, reject) => {
         const printer = new ThermalPrinter({
             type: PrinterTypes.STAR,
@@ -80,19 +97,8 @@ function connectPrinter(): Promise<any | null> {
     });
 }
 
-async function printReceipt(order: Order, key: string | null): Promise<void> {
-    if (!printer) return;
-    if (!(await printer.isPrinterConnected())) return;
-
-    if (config.path === 'drinks') {
-        order.food = [];
-        if (!order.drinks) return;
-    } else if (config.path === 'food') {
-        order.drinks = [];
-        if (!order.food) return;
-    }
-
-    buildReceiptData(order);
+async function printReceipt(order: Order, key: string | null, printer: ThermalPrinter): Promise<void> {
+    buildReceiptData(order, printer);
     printer.cut();
 
     const executeRes = await printer.execute({ waitForResponse: true });
@@ -124,14 +130,14 @@ async function printReceipt(order: Order, key: string | null): Promise<void> {
         }
     });
 
-    db.ref(`completed-orders/${ order.table.nr }/`).set(currentOrders);
+    await db.ref(`completed-orders/${ order.table.nr }/`).set(currentOrders);
 
     if (key) {
-        pendingOrdersRef.child(key).remove();
+        await pendingOrdersRef.child(key).remove();
     }
 }
 
-function buildReceiptData(order: Order): void {
+function buildReceiptData(order: Order, printer: ThermalPrinter): void {
     if (!printer) return;
     printer.drawLine();
     printer.newLine();
@@ -146,7 +152,6 @@ function buildReceiptData(order: Order): void {
 
     printer.setTextDoubleHeight();
 
-
     printer.newLine();
 
     if (order.drinks) {
@@ -155,6 +160,11 @@ function buildReceiptData(order: Order): void {
 
     if (order.food) {
         order.food.forEach(food => printer!.println(`${ food.amount }x ${ food.name }`));
+    }
+
+    if (order.note && order.note.trim().length > 0) {
+        printer.newLine();
+        printer.println(`Anm: ${ order.note }`);
     }
 
     printer.setTextNormal();
@@ -166,22 +176,4 @@ function formatDate(timestamp: number): string {
     return new Date(timestamp)
         .toLocaleString()
         .replace(/\//gm, '.');
-}
-
-function getIPAddress(): string | undefined {
-    const networkInterfaces = os.networkInterfaces();
-
-    for (const interfaceName in networkInterfaces) {
-        const interfaceInfo = networkInterfaces[interfaceName];
-
-        if (interfaceInfo) {
-            for (const info of interfaceInfo) {
-                if (info.family === 'IPv4' && !info.internal) {
-                    return info.address;
-                }
-            }
-        }
-    }
-
-    return undefined;
 }
