@@ -43,7 +43,14 @@ jobs:
         with:
           name: dist
       - name: debug
-        run: ls -lah
+        run: |
+        ls -lah
+        cd ordersystem
+        ls -lah
+        cd ordersystem
+        ls -lah
+        cd dist
+        ls -lah
       - name: Deploy to GitHub Pages
         uses: JamesIves/github-pages-deploy-action@releases/v3
         with:
