@@ -1,58 +1,22 @@
 # Ordersystem - Printer
 
+test on node version v18.18.0
+
+install printer package:
+
+(maybe you need ```--force```)
+
+```npm install printer --build-from-source```
+
 ## Create a Service Account for you DB
 
 Instructions can be found [here](https://developers.google.com/identity/protocols/OAuth2ServiceAccount).
 
 Rename ``firebase-api-key.json.template`` to ``firebase-api-key.json`` and paste your Service Account Key into it.
 
-## Start the server
-
-### Development mode
-
-#### Install dependencies
-
-```
-npm install
-```
-
-#### Start in development mode
-
-```
-npm run start:dev
-```
-
-### Production mode
-
-#### Install dependencies
-
-```
-npm install
-```
-
-#### Lint
-
-```
-npm run lint
-```
-
-#### Compile
-
-```
-npm run build
-```
-
-#### Start in production mode
-
-```
-npm start
-```
-
-
-
 <hr>
 
-Copyright © 2021, Jonas Dorfinger. This software is [MIT licensed](../LICENSE).
+Copyright © 2021 - 2024, Jonas Dorfinger. This software is [MIT licensed](../LICENSE).
 
 ## Add Driver for Linux:
 https://starmicronics.com/help-center/knowledge-base/how-to-install-star-ethernet-lan-printer-on-ubuntu-linux-os/ 
