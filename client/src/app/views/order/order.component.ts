@@ -18,6 +18,7 @@ export class OrderComponent {
   public antiDrinks: OrderableItem[] | null;
   public food: OrderableItem[] | null;
   public orderNotes: string | undefined;
+  private orderSent: boolean; // prevent send orders twice when dbl click the button
 
   constructor(private readonly route: ActivatedRoute,
               private readonly data: DataService,
@@ -33,6 +34,7 @@ export class OrderComponent {
     this.alcoholDrinks = null;
     this.antiDrinks = null;
     this.food = null;
+    this.orderSent = false;
 
     this.data.food.subscribe(food => {
       this.food = food.map(f => {
@@ -82,17 +84,26 @@ export class OrderComponent {
 
     if (!order) return;
 
+    if (this.orderSent) {
+      // prevent sending same order twice
+      return;
+    }
+
+    this.orderSent = true;
+
     this.data.createOrder(order).then(ref => {
       // order completed successfully
       this.food?.forEach(f => f.amount = 0);
       this.alcoholDrinks?.forEach(d => d.amount = 0);
       this.antiDrinks?.forEach(d => d.amount = 0);
       this.orderNotes = undefined;
+      this.orderSent = false;
       document.getElementsByClassName('page-container')[0].scrollTop = 0;
       this.snackBar.open('Bestellung erfolgreich aufgegeben.', 'X', { duration: 2500 });
     }).catch(err => {
       this.snackBar.open('Es ist ein Fehler aufgetreten.', 'X', { duration: 2500 });
       console.log(err);
+      this.orderSent = false;
     });
   }
 }
