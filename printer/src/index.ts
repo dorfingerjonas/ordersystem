@@ -122,6 +122,7 @@ async function printReceipt(order: Order, key: string | null, printer: ThermalPr
         }
     });
 
+    await db.ref('statistics').push(order);
     await db.ref(`completed-orders/${ order.table.nr }/`).set(currentOrders);
 
     if (key) {
