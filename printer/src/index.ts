@@ -48,20 +48,13 @@ async function handleOrder(order: Order, key: string | null): Promise<void> {
     if (order.drinks && order.drinks.length > 0) {
         if (printerAusschank && (await printerAusschank.isPrinterConnected())) {
             printReceipt({ ...order, food: [] }, key, printerAusschank);
-            return;
         }
-
-        return;
     }
 
     if (order.food && order.food.length > 0) {
         if (printerKueche && (await printerKueche.isPrinterConnected())) {
             printReceipt({ ...order, drinks: [] }, key, printerKueche);
-            return;
-
         }
-
-        return;
     }
 
 }
