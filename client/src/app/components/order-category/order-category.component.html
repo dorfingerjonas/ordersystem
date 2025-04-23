@@ -1,4 +1,4 @@
-<div id="title-wrapper">
+<div *ngIf="title.length > 0" id="title-wrapper">
   <span>{{ title }}</span>
 </div>
 
@@ -7,6 +7,6 @@
     <span class="amount">{{ item.amount }}</span>
     <span class="name">{{ item.name }}</span>
     <span *ngIf="showPrice" class="price">{{ formatPrice(item.price) }}€</span>
-    <mat-icon class="remove">remove</mat-icon>
+    <mat-icon class="remove">{{ getIcon(item) }}</mat-icon>
   </div>
 </div>

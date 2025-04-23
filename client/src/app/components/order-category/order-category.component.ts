@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { OrderableItem } from '../../models/models';
+import { OpenProduct, Product } from '../../models/models';
 
 @Component({
   selector: 'app-order-category',
@@ -9,17 +9,19 @@ import { OrderableItem } from '../../models/models';
 export class OrderCategoryComponent {
 
   @Input() title!: string;
-  @Input() items!: OrderableItem[];
+  @Input() items!: Product[];
   @Input() showPrice: boolean;
+  @Input() flipAmountAction: boolean;
 
-  @Output() itemsChange: EventEmitter<OrderableItem[]>;
+  @Output() itemsChange: EventEmitter<Product[]>;
 
   constructor() {
     this.itemsChange = new EventEmitter();
     this.showPrice = true;
+    this.flipAmountAction = false;
   }
 
-  public changeItemAmount(event: MouseEvent, item: OrderableItem): void {
+  public changeItemAmount(event: MouseEvent, item: Product): void {
     if (!item.amount) {
       item.amount = 0;
     }
@@ -27,9 +29,17 @@ export class OrderCategoryComponent {
     const localName = (event.target as any).localName.toString();
 
     if (localName === 'mat-icon') {
-      item.amount = Math.max(0, --item.amount);
+      if (this.flipAmountAction) {
+        item.amount = Math.min(item.amount + 1, (item as OpenProduct)?.dbIds?.length);
+      } else {
+        item.amount = Math.max(0, item.amount - 1);
+      }
     } else {
-      item.amount = item.amount + 1;
+      if (this.flipAmountAction) {
+        item.amount = Math.max(0, item.amount - 1);
+      } else {
+        item.amount++;
+      }
     }
 
     this.itemsChange.emit(this.items);
@@ -37,5 +47,19 @@ export class OrderCategoryComponent {
 
   public formatPrice(price: number): string {
     return price.toString().replace('.', ',');
+  }
+
+  public getIcon(item: Product): string {
+    if (this.flipAmountAction) {
+      const openAmount = (item as OpenProduct)?.dbIds?.length;
+
+      if ((item.amount || 0) - openAmount) {
+        return 'add';
+      }
+
+      return '';
+    } else {
+      return 'remove';
+    }
   }
 }
