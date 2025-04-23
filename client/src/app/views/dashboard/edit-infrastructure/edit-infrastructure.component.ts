@@ -84,7 +84,6 @@ export class EditInfrastructureComponent {
       categories: config.categories.map(c => c.id),
       printer: config.printer.id
     }).then(res => {
-      console.log(res);
       this.snackBar.open('Infrastruktur gespeichert', 'X', { duration: 2500 });
     });
   }
@@ -98,7 +97,6 @@ export class EditInfrastructureComponent {
     }
 
     this.data.delete('infrastructure', config.id).then(res => {
-      console.log(res);
       this.snackBar.open('Infrastruktur gelöscht', 'X', { duration: 2500 });
     });
   }

@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Observable, Subject } from 'rxjs';
-import { AngularFireAuth } from '@angular/fire/compat/auth';
-import * as authType from 'firebase/auth';
+import { AuthError } from '@supabase/supabase-js';
+import { supabase } from '../supabase/supabase';
 
 @Injectable({
   providedIn: 'root'
@@ -12,15 +12,15 @@ export class AuthService {
   private loggedIn: boolean;
   private email: string;
 
-  constructor(private auth: AngularFireAuth) {
+  constructor() {
     this.loggedInState = new Subject<boolean>();
     this.loggedIn = false;
     this.email = '';
 
-    this.auth.user.subscribe(user => {
-      this.loggedIn = !!user;
+    supabase.auth.onAuthStateChange((event, session) => {
+      this.loggedIn = !!session;
       this.loggedInState.next(this.loggedIn);
-      this.email = user?.email || '';
+      this.email = session?.user.email || '';
     });
   }
 
@@ -40,50 +40,19 @@ export class AuthService {
       .join(' ');
   }
 
-  signOut(): ReturnType<authType.Auth['signOut']> {
-    return this.auth.signOut();
+  public signOut(): Promise<{ error: AuthError | null }> {
+    return supabase.auth.signOut();
   }
 
-  signInWithEmailAndPassword(email: string, password: string): Promise<authType.UserCredential> {
+  public signInWithEmailAndPassword(email: string, password: string): Promise<void> {
     return new Promise((resolve, reject) => {
-      this.auth.signInWithEmailAndPassword(email, password).catch(err => reject(this.getCustomizedErrorMessage(err)));
+      supabase.auth.signInWithPassword({ email, password }).then(res => {
+        if (res.data) {
+          resolve();
+        }
+      }).catch(err => {
+        reject(err);
+      });
     });
-  }
-
-  protected getCustomizedErrorMessage(err: Error): Error {
-    const messages: { message: string; feedback: string }[] = [
-      {
-        message: 'The password is invalid or the user does not have a password.',
-        feedback: 'Ungültiges Passwort oder E-Mail.'
-      },
-      {
-        message: 'Too many unsuccessful login attempts.  Please include reCaptcha verification or try again later',
-        feedback: 'Der Anmelde Vorgang ist zu oft fehlgeschlagen, versuchen Sie es später erneut.'
-      },
-      {
-        message: 'Access to this account has been temporarily disabled due to many failed login attempts. You can immediately restore it by resetting your password or you can try again later.',
-        feedback: 'Der Anmelde Vorgang ist zu oft fehlgeschlagen, versuchen Sie es später erneut.'
-      },
-      {
-        message: 'There is no user record corresponding to this identifier. The user may have been deleted.',
-        feedback: 'Es wurde kein Account mit der E-Mail Adresse gefunden.'
-      },
-      {
-        message: 'A network error (such as timeout, interrupted connection or unreachable host) has occurred.',
-        feedback: 'Zeitüberschreitung. Versuchen Sie es später erneut.'
-      },
-      {
-        message: 'The email address is already in use by another account.',
-        feedback: 'Die angebene E-Mail Adresse wird bereits verwendet.'
-      }
-    ];
-
-    for (const message of messages) {
-      if (err.message === message.message) {
-        err.message = message.feedback;
-      }
-    }
-
-    return err;
   }
 }

@@ -59,7 +59,6 @@ export class DataService {
 
     return new Promise((resolve) => {
       supabase.from(relation).upsert([ element ]).then(r => {
-        console.log(r);
         resolve(r);
       });
     });
@@ -86,7 +85,6 @@ export class DataService {
           reject(r.error);
         } else {
           resolve(r);
-          console.log(r);
         }
       });
     });
@@ -98,7 +96,6 @@ export class DataService {
     if (error) {
       console.log(error.message);
     } else {
-      console.log('Fetched items:', data);
       collection.next(data as unknown as T);
     }
 

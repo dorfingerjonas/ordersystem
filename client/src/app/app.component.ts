@@ -23,7 +23,7 @@ export class AppComponent implements OnInit {
     this.isLoggedIn = auth.isLoggedInState;
   }
 
-  ngOnInit(): void {
+  public ngOnInit(): void {
     this.auth.isLoggedInState.subscribe(state => {
       let redirectUrl: string | UrlTree = '/tables';
 
@@ -49,15 +49,11 @@ export class AppComponent implements OnInit {
         });
       }
 
-      this.router.navigateByUrl(redirectUrl, { replaceUrl: true })
-        // .then(() => this.loading.deactivateLoading())
+      this.router.navigateByUrl(redirectUrl, { replaceUrl: true, skipLocationChange: false })
+        .then(() => this.loading.deactivateLoading())
         .catch(err => {
           console.error(err);
         });
     });
-  }
-
-  signOut(): void {
-    this.auth.signOut();
   }
 }

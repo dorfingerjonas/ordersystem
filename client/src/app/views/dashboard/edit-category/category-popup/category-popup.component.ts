@@ -32,7 +32,6 @@ export class CategoryPopupComponent {
     if (this.category.name.trim().length === 0) {
       this.dialogRef.close(null);
     } else {
-      console.log(this.category);
       this.dialogRef.close({ name: this.category.name.trim() });
     }
   }

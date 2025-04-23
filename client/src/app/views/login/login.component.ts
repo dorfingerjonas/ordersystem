@@ -25,11 +25,11 @@ export class LoginComponent implements OnInit {
     ]);
   }
 
-  ngOnInit(): void {
+  public ngOnInit(): void {
     this.loading.deactivateLoading();
   }
 
-  login(): void {
+  public login(): void {
     if (this.emailControl.valid && this.passwordControl.valid) {
       this.loading.activateLoading();
 

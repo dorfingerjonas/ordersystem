@@ -22,7 +22,7 @@
 <span *ngIf="responseError" class="error" id="responseError">{{ responseError }}</span>
 
 <div id="button-wrapper">
-  <button (click)="login()" (keydown.enter)="login()" [disabled]="!emailControl.valid || !passwordControl.valid"
+  <button (click)="login()" (keydown.enter)="login()" [disabled]="emailControl.invalid || passwordControl.invalid"
           class="button btn-primary">Anmelden
   </button>
 </div>

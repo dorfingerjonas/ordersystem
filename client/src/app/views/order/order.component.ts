@@ -44,7 +44,6 @@ export class OrderComponent {
     });
 
     this.data.tables.subscribe(tables => {
-      console.log('Tables', tables);
       this.tables = tables;
     });
 
@@ -54,9 +53,9 @@ export class OrderComponent {
         .sort((a, b) => a.ordering - b.ordering)
         .forEach(p => {
           if (this.products.has(p.category.id)) {
-            this.products.get(p.category.id)!.push(p);
+            this.products.get(p.category.id)!.push({ ...p, amount: 0 });
           } else {
-            this.products.set(p.category.id, [ p ]);
+            this.products.set(p.category.id, [ { ...p, amount: 0 } ]);
           }
         });
     });
@@ -90,8 +89,6 @@ export class OrderComponent {
     console.log({ order });
 
     if (!order) return;
-
-    console.log(order);
 
     if (this.orderSent) {
       // prevent sending same order twice
