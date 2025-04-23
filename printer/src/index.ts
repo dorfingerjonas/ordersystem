@@ -175,7 +175,6 @@ function connectPrinter(config: PrinterConfig): Promise<ThermalPrinter | null> {
       removeSpecialCharacters: false,
       lineCharacter: '*',
       width: 48,
-      driver: require('printer'),
       characterSet: CharacterSet.PC858_EURO
     });
 
