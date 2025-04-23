@@ -12,7 +12,7 @@ import { DataService } from '../../services/data.service';
 })
 export class TablesComponent implements OnInit, OnDestroy {
 
-  tables: Table[] | null;
+  public tables: Table[] | null;
   private subscriptions: Subscription[] = [];
 
   constructor(private header: HeaderService,
@@ -29,9 +29,11 @@ export class TablesComponent implements OnInit, OnDestroy {
     setTimeout(() => this.header.text = 'Tischauswahl');
 
     const sub = this.data.tables.subscribe(tables => {
-      this.tables = tables;
+      this.tables = tables.sort((a, b) => a.ordering - b.ordering);
       this.loading.deactivateLoading();
     });
+
+    this.data.fetchData();
 
     this.subscriptions.push(sub);
   }
