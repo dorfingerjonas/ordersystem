@@ -1,0 +1,46 @@
+<h2>Druckerliste</h2>
+<div *ngFor="let p of getAvailablePrinters()" class="printer">
+  <img alt="printer" src="/assets/images/{{ p.type.toLowerCase() }}.webp">
+
+  <div class="printer-content">
+    <h3>{{ p.name }} ({{ p.type }})</h3>
+    <span>{{ p.interface }}</span>
+
+    <div class="button-wrapper">
+      <button (click)="addInfrastructure(p)" class="button btn-primary" matRipple>zur Infrastruktur hinzufügen</button>
+    </div>
+  </div>
+</div>
+
+<span *ngIf="getAvailablePrinters().length === 0 && loaded" class="error">Es sind keine Drucker verfügbar oder alle eingebunden</span>
+
+<h2>Event-Infrastruktur</h2>
+<div *ngFor="let i of infrastructure" class="printer">
+  <h3 style="margin-bottom: 0">{{ i.printer.name }}</h3>
+  <span style="width: 100%; margin-bottom: .5em">{{ i.printer.interface }}</span>
+  <img alt="printer" src="/assets/images/{{ i.printer.type.toLowerCase() }}.webp">
+
+  <div class="printer-content">
+    <h3>Kategorien</h3>
+    <span *ngIf="i.categories.length === 0 && loaded"
+          class="error">Diesem Drucker sind keine Kategorien zugewiesen</span>
+    <ul>
+      <li *ngFor="let c of i.categories">{{ c.name }}</li>
+    </ul>
+  </div>
+
+  <mat-form-field appearance="outline">
+    <mat-select [(ngModel)]="i.categories" multiple>
+      <mat-option *ngFor="let c of categories" [value]="c">{{ c.name }}</mat-option>
+    </mat-select>
+  </mat-form-field>
+
+  <div class="button-wrapper">
+    <button (click)="saveInfrastructureConfig(i)" class="button btn-ok" matRipple>Speichern</button>
+    <button (click)="deleteInfrastructureConfig(i)" class="button btn-danger" matRipple>Löschen</button>
+  </div>
+</div>
+
+<span *ngIf="infrastructure.length === 0 && loaded" class="error">Es ist noch keine Infrastruktur vorhanden</span>
+
+<div class="button btn-danger" matRipple routerLink="/dashboard">Zurück</div>
