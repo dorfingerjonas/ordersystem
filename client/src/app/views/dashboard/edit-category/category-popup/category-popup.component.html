@@ -1,0 +1,16 @@
+<h1>Kategorie {{ isEdit ? 'bearbeiten' : 'hinzufügen' }}</h1>
+
+<mat-form-field appearance="outline">
+  <mat-label>Name</mat-label>
+  <input [(ngModel)]="category.name" matInput>
+</mat-form-field>
+
+<div id="button-wrapper">
+  <div [mat-dialog-close]="null" class="button btn-danger" matRipple>
+    Abbrechen
+  </div>
+
+  <div (click)="save()" class="button btn-ok" matRipple>
+    Speichern
+  </div>
+</div>
