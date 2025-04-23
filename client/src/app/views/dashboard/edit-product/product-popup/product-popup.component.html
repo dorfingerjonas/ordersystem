@@ -1,4 +1,4 @@
-<h1>Speise {{ isEdit ? 'bearbeiten' : 'hinzufügen' }}</h1>
+<h1>Getränk {{ isEdit ? 'bearbeiten' : 'hinzufügen' }}</h1>
 
 <mat-form-field appearance="outline">
   <mat-label>Bezeichnung</mat-label>
@@ -6,8 +6,15 @@
 </mat-form-field>
 
 <mat-form-field appearance="outline">
+  <mat-label>Kategorie</mat-label>
+  <mat-select [(ngModel)]="product.category">
+    <mat-option *ngFor="let c of categories" [value]="c">{{ c.name }}</mat-option>
+  </mat-select>
+</mat-form-field>
+
+<mat-form-field appearance="outline">
   <mat-label>Preis</mat-label>
-  <input [(ngModel)]="food.price" matInput type="number">
+  <input [(ngModel)]="product.price" matInput type="number">
 </mat-form-field>
 
 <div id="button-wrapper">
@@ -16,6 +23,6 @@
   </div>
 
   <div (click)="save()" class="button btn-ok" matRipple>
-    Bestätigen
+    Speichern
   </div>
 </div>

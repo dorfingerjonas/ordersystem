@@ -1,28 +1,40 @@
-export interface Table {
-  nr: number;
+export interface WithId {
+  id: number;
 }
 
-export interface Drink {
-  id: number;
+export interface Table extends WithId {
+  nr: string;
+  ordering: number; // used to sort tables
+}
+
+export interface Product extends WithId {
   name: string;
   price: number;
-  category: 'alcohol' | 'anti';
-  amount?: number;
+  amount: number;
+  category: Category;
+  ordering: number; // used to sort products
 }
 
-export interface Food {
-  id: number;
-  name: string;
-  price: number;
-  amount?: number;
+export interface OrderDTO extends WithId {
+  products: { id: number, amount: number }[];
+  table: number;
+  waiter: string;
+  timestamp: number;
+  note?: string;
+  printed: boolean;
 }
 
-export interface Order {
-  id: number;
-  drinks: Drink[];
-  food: Food[];
+export interface Order extends WithId {
+  products: Product[];
   table: Table;
   waiter: string;
   timestamp: number;
   note?: string;
+  printed: boolean;
 }
+
+export interface Category extends WithId {
+  name: string;
+  ordering: number;
+}
+

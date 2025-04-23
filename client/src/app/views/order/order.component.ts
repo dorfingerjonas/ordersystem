@@ -1,6 +1,6 @@
 import { Component } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { Order, OrderableItem, Table } from '../../models/models';
+import { Category, Order, Product, Table } from '../../models/models';
 import { DataService } from '../../services/data.service';
 import { HeaderService } from '../../services/header.service';
 import { MatSnackBar } from '@angular/material/snack-bar';
@@ -14,9 +14,9 @@ import { AuthService } from '../../services/auth.service';
 export class OrderComponent {
 
   public readonly selectedTableNr: string;
-  public alcoholDrinks: OrderableItem[] | null;
-  public antiDrinks: OrderableItem[] | null;
-  public food: OrderableItem[] | null;
+  public products: Map<number, Product[]>;
+  public categories: Category[];
+  public tables: Table[];
   public orderNotes: string | undefined;
   private orderSent: boolean; // prevent send orders twice when dbl click the button
 
@@ -27,60 +27,66 @@ export class OrderComponent {
               private readonly auth: AuthService) {
     this.selectedTableNr = this.route.snapshot.params['tableNr'];
 
+    this.products = new Map();
+    this.categories = [];
+    this.tables = [];
+
     this.header.text = `Tisch ${ this.selectedTableNr }`;
 
-    this.data.fetchData();
+    this.data.categories.subscribe(categories => {
+      this.categories = categories.sort((a, b) => a.ordering - b.ordering);
 
-    this.alcoholDrinks = null;
-    this.antiDrinks = null;
-    this.food = null;
-    this.orderSent = false;
-
-    this.data.food.subscribe(food => {
-      this.food = food.map(f => {
-        return { ...f, amount: 0 };
+      this.categories.forEach(category => {
+        if (!this.products.has(category.id)) {
+          this.products.set(category.id, []);
+        }
       });
     });
 
-    this.data.drinks.subscribe(drinks => {
-      this.alcoholDrinks = [];
-      this.antiDrinks = [];
-
-      for (const drink of drinks) {
-        if (drink.category === 'alcohol') {
-          this.alcoholDrinks.push({ ...drink, amount: 0 });
-        } else if (drink.category === 'anti') {
-          this.antiDrinks.push({ ...drink, amount: 0 });
-        } else {
-          throw new Error('Invalid Drink category' + drink.category);
-        }
-      }
+    this.data.tables.subscribe(tables => {
+      this.tables = tables;
     });
+
+    this.data.products.subscribe(products => {
+      this.products.clear();
+      products
+        .sort((a, b) => a.ordering - b.ordering)
+        .forEach(p => {
+          if (this.products.has(p.category.id)) {
+            this.products.get(p.category.id)!.push({ ...p, amount: 0 });
+          } else {
+            this.products.set(p.category.id, [ { ...p, amount: 0 } ]);
+          }
+        });
+    });
+
+    this.data.fetchData();
+
+    this.orderSent = false;
   }
 
   public getOrderDetails(): Order | null {
-    if (this.antiDrinks === null || this.alcoholDrinks === null || this.food === null) {
-      return null;
-    }
+    const table = this.tables.find(t => t.nr === this.selectedTableNr);
+
+    if (!table) return null;
 
     return {
-      drinks: [
-        ...this.alcoholDrinks.filter(d => (d.amount || 0) > 0),
-        ...this.antiDrinks.filter(d => (d.amount || 0) > 0)
-      ],
-      food: this.food.filter(f => (f.amount || 0) > 0),
-      table: {
-        nr: this.selectedTableNr
-      } as Table,
+      products: this.getSelectedProducts().map(p => {
+        return {
+          id: p.id,
+          amount: p!.amount!
+        };
+      }),
+      table: table.id,
       waiter: this.auth.username,
-      timestamp: Date.now(),
-      id: Date.now(),
       note: this.orderNotes || ''
-    } as Order;
+    };
   }
 
   public order(): void {
-    const order = this.getOrderDetails();
+    const order: Order | null = this.getOrderDetails();
+
+    console.log({ order });
 
     if (!order) return;
 
@@ -93,9 +99,10 @@ export class OrderComponent {
 
     this.data.createOrder(order).then(ref => {
       // order completed successfully
-      this.food?.forEach(f => f.amount = 0);
-      this.alcoholDrinks?.forEach(d => d.amount = 0);
-      this.antiDrinks?.forEach(d => d.amount = 0);
+      this.products.forEach(product => {
+        product.forEach(p => p.amount = 0);
+      });
+
       this.orderNotes = undefined;
       this.orderSent = false;
       document.getElementsByClassName('page-container')[0].scrollTop = 0;
@@ -105,5 +112,19 @@ export class OrderComponent {
       console.log(err);
       this.orderSent = false;
     });
+  }
+
+  public getCategoriesWithProducts(): Category[] {
+    return this.categories.filter(c => (this.products.get(c.id)?.length || 0) > 0);
+  }
+
+  public getSelectedProducts(): Product[] {
+    const products: Product[] = [];
+
+    this.products.forEach(product => {
+      products.push(...product.filter(p => (p.amount || 0) > 0));
+    });
+
+    return products.sort((a, b) => a.category.ordering - b.category.ordering);
   }
 }

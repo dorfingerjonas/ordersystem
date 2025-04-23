@@ -2,7 +2,7 @@
 .idea
 **/node_modules/*
 **/.firebaserc
-src/firebase-api-key.ts
+src/environment.ts
 
 ### Firebase Patch ###
 .runtimeconfig.json

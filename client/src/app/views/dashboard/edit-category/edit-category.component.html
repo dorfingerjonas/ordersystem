@@ -1,25 +1,25 @@
 <div id="button-wrapper">
-  <div (click)="create()" class="button btn-primary" matRipple>Tisch hinzufügen</div>
+  <div (click)="create()" class="button btn-primary" matRipple>Kategorie hinzufügen</div>
 </div>
 
 <div (cdkDropListDropped)="drop($event)" cdkDropList id="table-wrapper">
-  <div *ngFor="let t of tables" cdkDrag class="table">
+  <div *ngFor="let c of categories" cdkDrag class="table">
     <mat-icon cdkDragHandle>drag_handle</mat-icon>
 
-    <span>{{ t.nr }}</span>
+    <span>{{ c.name }}</span>
 
     <div class="icon-wrapper">
-      <button (click)="edit(t)" mat-icon-button>
+      <button (click)="edit(c)" mat-icon-button>
         <mat-icon color="primary">edit</mat-icon>
       </button>
 
-      <button (click)="delete(t)" mat-icon-button>
+      <button (click)="delete(c.id)" mat-icon-button>
         <mat-icon color="warn">delete</mat-icon>
       </button>
     </div>
   </div>
 </div>
 
-<span *ngIf="tables.length === 0 && loaded" class="error">Es sind noch keine Tische vorhanden</span>
+<span *ngIf="categories.length === 0 && loaded" class="error">Es sind noch keine Tische vorhanden</span>
 
 <div class="button btn-danger" matRipple routerLink="/dashboard">Zurück</div>

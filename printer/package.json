@@ -7,13 +7,14 @@
     "lint": "eslint 'src/**/*.ts'",
     "build": "tsc",
     "start": "node dist/index.js",
-    "start:dev": "nodemon src/index.ts"
+    "start:dev": "nodemon src/index.ts",
+    "test": "nodemon src/test.ts"
   },
   "author": "Jonas Dorfinger",
   "license": "MIT",
   "dependencies": {
+    "@supabase/supabase-js": "^2.49.1",
     "@thiagoelg/node-printer": "^0.6.2",
-    "firebase-admin": "^11.0.1",
     "node-thermal-printer": "^4.1.2",
     "printer": "^0.4.0"
   },

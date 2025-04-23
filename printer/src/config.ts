@@ -1,20 +1,25 @@
-export const config: PrinterConfig = {
-    name: 'Printer Ausschank',
-    path: 'drinks', // drinks | food | *
-    controlInterval: 20, // in seconds
-    printerName: 'STAR_TSP143_AUSSCHANK'
-};
-
-export const printerKuecheConfig: PrinterConfig = {
-    name: 'Printer Küche',
-    path: 'food', // drinks | food | *
-    controlInterval: 20, // in seconds
-    printerName: 'STAR_TSP143_KUECHE'
-};
+import { PrinterTypes } from 'node-thermal-printer';
 
 export interface PrinterConfig {
-    name: string,
-    path: 'drinks' | 'food' | '*', // drinks | food | *
-    controlInterval: number, // in seconds
-    printerName: string
+  printerType: PrinterTypes;
+  name: string;
+  categories: number[];
+  controlInterval: number; // in seconds
+  printerName: string;
+  interface: string;
+}
+
+export interface InfrastructureConfigDTO {
+  id: number;
+  printer: Printer;
+  categories: number[];
+  lastPing: number;
+}
+
+export interface Printer {
+  id: number;
+  type: PrinterTypes;
+  name: string;
+  interface: string;
+  controlInterval: number;
 }

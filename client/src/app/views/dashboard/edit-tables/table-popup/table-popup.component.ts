@@ -21,7 +21,9 @@ export class TablePopupComponent {
       this.isEdit = true;
     } else {
       this.table = {
-        nr: ''
+        id: -1,
+        nr: '',
+        ordering: Infinity
       };
     }
   }

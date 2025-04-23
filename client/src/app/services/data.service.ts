@@ -1,7 +1,17 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
-import { CompletedOrderDTO, CompletedOrderItem, Drink, Food, OpenOrder, Order, Table } from '../models/models';
-import { AngularFireDatabase } from '@angular/fire/compat/database';
+import {
+  Category,
+  InfrastructureConfigDTO,
+  Order,
+  OrderedItem,
+  Printer,
+  Product,
+  Table,
+  WithId
+} from '../models/models';
+import { supabase } from '../supabase/supabase';
+import { PostgrestSingleResponse } from '@supabase/supabase-js';
 
 @Injectable({
   providedIn: 'root'
@@ -9,77 +19,129 @@ import { AngularFireDatabase } from '@angular/fire/compat/database';
 export class DataService {
 
   public tables: BehaviorSubject<Table[]>;
-  public drinks: BehaviorSubject<Drink[]>;
-  public food: BehaviorSubject<Food[]>;
-  public orders: BehaviorSubject<CompletedOrderItem[]>;
-  public openOrders: BehaviorSubject<OpenOrder[]>;
+  public categories: BehaviorSubject<Category[]>;
+  public products: BehaviorSubject<Product[]>;
+  public orderedItems: BehaviorSubject<OrderedItem[]>;
+  public printers: BehaviorSubject<Printer[]>;
+  public infrastructure: BehaviorSubject<InfrastructureConfigDTO[]>;
 
-  constructor(private db: AngularFireDatabase) {
+  constructor() {
     this.tables = new BehaviorSubject<Table[]>([]);
-    this.drinks = new BehaviorSubject<Drink[]>([]);
-    this.food = new BehaviorSubject<Food[]>([]);
-    this.orders = new BehaviorSubject<CompletedOrderItem[]>([]);
-    this.openOrders = new BehaviorSubject<OpenOrder[]>([]);
+    this.categories = new BehaviorSubject<Category[]>([]);
+    this.products = new BehaviorSubject<Product[]>([]);
+    this.orderedItems = new BehaviorSubject<OrderedItem[]>([]);
+    this.printers = new BehaviorSubject<Printer[]>([]);
+    this.infrastructure = new BehaviorSubject<InfrastructureConfigDTO[]>([]);
 
-    this.db.list<Table>('tables').valueChanges().subscribe(t => this.tables.next(t || []));
-    this.db.list<Drink>('drinks').valueChanges().subscribe(d => this.drinks.next(d || []));
-    this.db.list<Food>('food').valueChanges().subscribe(f => this.food.next(f || []));
-    this.db.list<CompletedOrderItem[]>('completed-orders').valueChanges().subscribe(o => this.orders.next((o || []).flat(5)));
-    this.db.object<CompletedOrderDTO[]>('completed-orders').valueChanges().subscribe(o => {
-      if (!o) return;
-
-      const openOrders: OpenOrder[] = [];
-      for (const tableNr in o) {
-        const tableOrders: CompletedOrderItem[] = [];
-
-        for (const key in o[tableNr]) {
-          tableOrders.push(o[tableNr][key] as CompletedOrderItem);
-        }
-
-        const order: OpenOrder = {
-          nr: tableNr.toString(),
-          openItems: tableOrders.filter(i => !i.paid)
-        };
-
-        if (order.openItems.length > 0) {
-          openOrders.push(order);
-        }
-
-        this.openOrders.next(openOrders);
-      }
-    });
+    this.initTableData('ordered_product', this.orderedItems, '*, table:table(*), item:product(*)');
+    this.initTableData('product', this.products, '*, category:category(*)');
+    this.initTableData('category', this.categories);
+    this.initTableData('tables', this.tables);
+    this.initTableData('printer', this.printers);
+    this.initTableData('infrastructure', this.infrastructure, '*, printer:printer(*)');
 
     this.fetchData();
   }
 
-  public createOrder(order: Order): Promise<firebase.default.database.Reference> {
-    return new Promise((resolve, reject) => {
-      this.db.list('pending-orders').push(order)
-        .then(res => resolve(res))
-        .catch(err => reject(err));
+  public fetchData(): void {
+    this.tables.next(this.tables.value);
+    this.products.next(this.products.value);
+    this.categories.next(this.categories.value);
+    this.orderedItems.next(this.orderedItems.value);
+    this.printers.next(this.printers.value);
+    this.infrastructure.next(this.infrastructure.value);
+  }
+
+  public upsert<T extends WithId>(relation: string, element: T): Promise<PostgrestSingleResponse<any>> {
+    if (element.id === -1) {
+      delete (element as never)['id'];
+    }
+
+    return new Promise((resolve) => {
+      supabase.from(relation).upsert([ element ]).then(r => {
+        resolve(r);
+      });
     });
   }
 
-  public persistTables(tables: Table[]): Promise<void> {
-    return this.db.object<Table[]>('tables').set(tables);
+  public delete(relation: string, id: number): Promise<unknown> {
+    return new Promise(async (resolve, reject) => {
+      const { data, error } = await supabase.from(relation).delete().eq('id', id);
+
+      if (error) {
+        reject(error);
+      } else {
+        resolve(data);
+      }
+    });
+
   }
 
-  public persistDrinks(drinks: Drink[]): Promise<void> {
-    return this.db.object<Drink[]>('drinks').set(drinks);
+  public createOrder(order: Order): Promise<PostgrestSingleResponse<any>> {
+    return new Promise((resolve, reject) => {
+      supabase.from('orders').insert([ order ]).then(r => {
+        if (r.error) {
+          console.error(r.error);
+          reject(r.error);
+        } else {
+          resolve(r);
+        }
+      });
+    });
   }
 
-  public persistFood(food: Food[]): Promise<void> {
-    return this.db.object<Food[]>('food').set(food);
-  }
+  private async initTableData<T extends WithId[]>(relation: string, collection: BehaviorSubject<T>, select: string = '*'): Promise<void> {
+    const { data, error } = await supabase.from(relation).select(select);
 
-  public persistCompletedOrderItem(tableNr: string, items: CompletedOrderItem[]): Promise<void> {
-    return this.db.object(`completed-orders/${ tableNr }`).set(items);
-  }
+    if (error) {
+      console.log(error.message);
+    } else {
+      collection.next(data as unknown as T);
+    }
 
-  public fetchData(): void {
-    this.tables.next(this.tables.value);
-    this.drinks.next(this.drinks.value);
-    this.food.next(this.food.value);
-    this.orders.next(this.orders.value);
+    supabase
+      .channel(`realtime-${ relation }`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: relation },
+        (payload) => {
+          console.log('Realtime Change:', payload);
+
+          const currentValue: T = collection.getValue();
+
+          switch (payload.eventType) {
+            case 'INSERT':
+              const newElement = payload.new as any;
+
+              if (newElement.category && !isNaN(Number(newElement.category))) {
+                const id = Number(newElement.category);
+                newElement.category = this.categories.getValue().find(c => c.id === id) || { id };
+              }
+
+              currentValue.push(newElement as T[0]);
+              collection.next(currentValue);
+              break;
+            case 'UPDATE':
+              const index = currentValue.findIndex(v => v.id === payload.old['id']);
+              const newElem = payload.new as any;
+
+              if (newElem.category && !isNaN(Number(newElem.category))) {
+                const id = Number(newElem.category);
+                newElem.category = this.categories.getValue().find(c => c.id === id) || { id };
+              }
+
+              if (index !== -1) {
+                currentValue[index] = newElem as T[0];
+
+                collection.next(currentValue);
+              }
+              break;
+            case 'DELETE':
+              collection.next(currentValue.filter(v => v.id !== payload.old['id']) as T);
+              break;
+          }
+        }
+      )
+      .subscribe();
   }
 }

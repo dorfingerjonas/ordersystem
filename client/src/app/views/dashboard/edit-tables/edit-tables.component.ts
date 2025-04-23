@@ -5,6 +5,7 @@ import { HeaderService } from '../../../services/header.service';
 import { MatDialog } from '@angular/material/dialog';
 import { TablePopupComponent } from './table-popup/table-popup.component';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { CdkDragDrop, moveItemInArray } from '@angular/cdk/drag-drop';
 
 @Component({
   selector: 'app-edit-tables',
@@ -14,7 +15,6 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 export class EditTablesComponent {
 
   public tables: Table[];
-  public tablesHashed: string;
   public loaded: boolean;
 
   constructor(private readonly data: DataService,
@@ -25,11 +25,9 @@ export class EditTablesComponent {
     this.loaded = false;
 
     this.data.tables.subscribe(tables => {
-      this.tables = tables;
-      this.tablesHashed = this.hash(tables);
+      this.tables = tables.sort((a, b) => a.ordering - b.ordering);
       this.loaded = true;
     });
-    this.tablesHashed = '';
 
     this.data.fetchData();
 
@@ -45,14 +43,14 @@ export class EditTablesComponent {
           this.snackBar.open(`Tisch ${ newTable.nr } existiert bereits`, 'X', { duration: 2500 });
         } else {
           // table does not exist => add
-          this.tables.push(newTable);
+          this.data.upsert<Table>('tables', { ...newTable });
         }
       }
     });
   }
 
   public delete(table: Table): void {
-    this.tables = this.tables.filter(t => t.nr != table.nr);
+    this.data.delete('tables', table.id);
   }
 
   public edit(table: Table): void {
@@ -64,25 +62,37 @@ export class EditTablesComponent {
           this.snackBar.open(`Tisch ${ newTable.nr } existiert bereits`, 'X', { duration: 2500 });
         } else {
           // table does not exist => edit
-          const index = this.tables.findIndex(t => t.nr === table.nr);
+          this.data.upsert('tables', { ...table, nr: newTable.nr }).then(res => {
+            const { data, error } = res;
 
-          // check if index is valid
-          if (index >= 0 && index < this.tables.length) {
-            this.tables[index] = newTable;
-          }
+            if (error) {
+              this.snackBar.open('Fehler beim Speichern', 'X', { duration: 2500 });
+            } else {
+              this.snackBar.open('Tisch gespeichert', 'X', { duration: 2500 });
+            }
+          });
         }
       }
     });
   }
 
-  public save(): void {
-    this.data.persistTables(this.tables).then(() => {
-      this.tablesHashed = this.hash(this.tables);
-      this.snackBar.open(`${ this.tables.length } Tische wurden gespeichert`, 'X', { duration: 2500 });
-    });
-  }
+  public drop(event: CdkDragDrop<any, any>): void {
+    moveItemInArray(this.tables, event.previousIndex, event.currentIndex);
 
-  public hash(tables: Table[]): string {
-    return btoa(JSON.stringify(tables));
+    const tablesToUpdate: Table[] = [];
+
+    this.tables = this.tables.map((t, i) => {
+      const newTable = { ...t, ordering: i + 1 };
+
+      if (t.ordering !== newTable.ordering) {
+        tablesToUpdate.push(newTable);
+      }
+
+      return newTable;
+    });
+
+    tablesToUpdate.forEach(t => {
+      this.data.upsert<Table>('tables', { ...t });
+    });
   }
 }

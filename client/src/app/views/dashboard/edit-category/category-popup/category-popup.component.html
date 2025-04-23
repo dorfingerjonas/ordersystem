@@ -1,8 +1,8 @@
-<h1>Tisch {{ isEdit ? 'bearbeiten' : 'hinzufügen' }}</h1>
+<h1>Kategorie {{ isEdit ? 'bearbeiten' : 'hinzufügen' }}</h1>
 
 <mat-form-field appearance="outline">
-  <mat-label>Tischnummer</mat-label>
-  <input [(ngModel)]="table.nr" matInput>
+  <mat-label>Name</mat-label>
+  <input [(ngModel)]="category.name" matInput>
 </mat-form-field>
 
 <div id="button-wrapper">
