@@ -24,29 +24,61 @@
   }
 }
 
-.table {
+#table-wrapper {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.table, .cdk-drag-preview {
   width: 100%;
   font-size: 4vw;
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: space-between;
+  background: #fff;
+
+  > mat-icon {
+    width: 5%;
+    cursor: grab;
+    margin-left: .75em;
+
+    &:active {
+      cursor: grabbing;
+    }
+  }
 
   span {
-    width: 65%;
+    width: 50%;
     text-align: left;
   }
 
   .icon-wrapper {
-    width: 15%;
-    display: flex;
-    justify-content: space-between;
+    width: 25%;
   }
 
-  &:nth-child(2n) {
+  &:nth-child(2n + 1) {
     background: var(--table-accent);
   }
 }
 
 .btn-danger {
   margin: 1em 0;
+}
+
+.cdk-drag-placeholder {
+  opacity: 0;
+}
+
+.cdk-drag-animating {
+  transition: transform 250ms cubic-bezier(0, 0, 0.2, 1);
+}
+
+.example-box:last-child {
+  border: none;
+}
+
+.example-list.cdk-drop-list-dragging .example-box:not(.cdk-drag-placeholder) {
+  transition: transform 250ms cubic-bezier(0, 0, 0.2, 1);
 }
