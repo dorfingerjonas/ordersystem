@@ -1,26 +1,40 @@
-import { Order, OrderDTO, Product, Table } from './models/models';
+import { Device, Order, OrderDTO, Product, Table } from './models/models';
 import { InfrastructureConfigDTO, PrinterConfig } from './config';
 import { CharacterSet, ThermalPrinter } from 'node-thermal-printer';
 
 import { createClient } from '@supabase/supabase-js';
 import { environment } from './environment';
+import { Logger } from './helpers/logger';
 
 const supabase = createClient(environment.supabaseUrl, environment.supabaseKey);
 const products: Product[] = [];
 const tables: Table[] = [];
+const devices: Device[] = [];
+const LOG = new Logger('ordersystem');
 const infrastructure: PrinterConfig[] = [];
 
 (async () => {
   await initData('tables');
   await initData('product');
   await initData('infrastructure');
+  await initData('device');
   getOutstandingOrders();
+
+  const serverDevice = devices.find(device => device.deviceType === 'SERVER');
+
+  if (serverDevice) {
+    LOG.info(`starting service status (${ serverDevice.controlInterval }s)`);
+    setInterval(async () => {
+      await supabase.from('status').upsert({ status: 'running', device: serverDevice.id, timestamp: Date.now() });
+      LOG.info('Server status updated');
+    }, serverDevice.controlInterval * 1000);
+  }
 })();
 
 function getOutstandingOrders(): void {
-  console.log('getting outstanding');
   supabase.from('orders').select('*, table:tables(*)').eq('printed', false).then(({ data }) => {
     if (data) {
+      LOG.info(`outstanding orders: ${ data.length }`);
       data.forEach(order => {
         order.products = order.products.map((p: {
           id: number,
@@ -39,16 +53,16 @@ function getOutstandingOrders(): void {
   });
 }
 
-function initData(type: 'product' | 'tables' | 'infrastructure'): Promise<void> {
+function initData(type: 'product' | 'tables' | 'infrastructure' | 'device'): Promise<void> {
   return new Promise((resolve, reject) => {
     if (type === 'product') {
       supabase.from('product').select('*, category:category(*)').then(({ data }) => {
         if (data) {
           products.push(...data as Product[]);
-          console.log('updated products');
+          LOG.info('updated products');
           resolve();
         } else {
-          console.error('Error fetching products');
+          LOG.error('Error fetching products');
           resolve();
         }
       });
@@ -56,17 +70,16 @@ function initData(type: 'product' | 'tables' | 'infrastructure'): Promise<void> 
       supabase.from('tables').select('*').then(({ data }) => {
         if (data) {
           tables.push(...data as Table[]);
-          console.log('updated tables');
+          LOG.info('updated tables');
           resolve();
         } else {
-          console.error('Error fetching tables');
+          LOG.error('Error fetching tables');
           resolve();
         }
       });
     } else if (type === 'infrastructure') {
-      supabase.from('infrastructure').select('*, printer:printer(*)').then(({ data }) => {
+      supabase.from('infrastructure').select('*, printer:device(*)').then(({ data }) => {
         if (data) {
-          console.log(data);
           infrastructure.length = 0;
 
           data = data.map((d: InfrastructureConfigDTO) => {
@@ -81,11 +94,22 @@ function initData(type: 'product' | 'tables' | 'infrastructure'): Promise<void> 
           });
 
           infrastructure.push(...data as PrinterConfig[]);
-          console.log('infrastructure', infrastructure);
-          console.log('updated infrastructure');
+          LOG.info('updated infrastructure');
           resolve();
         } else {
-          console.error('Error fetching infrastructure');
+          LOG.error('Error fetching infrastructure');
+          resolve();
+        }
+      });
+    } else if (type === 'device') {
+      supabase.from('device').select('*').then(({ data }) => {
+        if (data) {
+          LOG.info('updated devices');
+          devices.length = 0;
+          devices.push(...data as Device[]);
+          resolve();
+        } else {
+          LOG.error('Error fetching devices');
           resolve();
         }
       });
@@ -126,7 +150,6 @@ supabase.channel('realtime-orders')
     'postgres_changes',
     { event: 'INSERT', schema: 'public', table: 'orders', filter: 'printed=eq.false' },
     (payload) => {
-      console.log('Change received!', payload);
       const order = payload.new as OrderDTO;
 
       if (order) {
@@ -167,7 +190,6 @@ supabase.channel('realtime-infrastructure')
   .subscribe();
 
 function connectPrinter(config: PrinterConfig): Promise<ThermalPrinter | null> {
-  console.log(config);
   return new Promise<ThermalPrinter | null>((resolve, reject) => {
     const printer = new ThermalPrinter({
       type: config.printerType,
@@ -181,10 +203,10 @@ function connectPrinter(config: PrinterConfig): Promise<ThermalPrinter | null> {
 
     printer.isPrinterConnected().then((isConnected: boolean) => {
       if (isConnected) {
-        console.log(`Printer "${ config.printerName }" connected`);
+        LOG.info(`Printer "${ config.printerName }" connected`);
         resolve(printer);
       } else {
-        console.log(`Printer "${ config.printerName }" is not connected`);
+        LOG.warn(`Printer "${ config.printerName }" is not connected`);
         reject(null);
       }
     });
@@ -200,7 +222,7 @@ async function printReceipt(order: Order, printer: ThermalPrinter): Promise<void
 
     printer.clear();
   } catch (error) {
-    console.error('Error printing receipt', error);
+    LOG.error('Error printing receipt' + error);
   }
   return;
 }

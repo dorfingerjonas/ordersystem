@@ -1,3 +1,5 @@
+import { PrinterTypes } from 'node-thermal-printer';
+
 export interface WithId {
   id: number;
 }
@@ -38,3 +40,15 @@ export interface Category extends WithId {
   ordering: number;
 }
 
+export enum DeviceType {
+  PRINTER = 'PRINTER',
+  SERVER = 'SERVER'
+}
+
+export interface Device extends WithId {
+  type: PrinterTypes;
+  name: string;
+  interface: string;
+  controlInterval: number;
+  deviceType: DeviceType;
+}
