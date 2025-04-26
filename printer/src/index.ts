@@ -18,7 +18,12 @@ const infrastructure: PrinterConfig[] = [];
   await initData('product');
   await initData('infrastructure');
   await initData('device');
+
   getOutstandingOrders();
+
+  setInterval(() => {
+    getOutstandingOrders();
+  }, 10 * 1000);
 
   const serverDevice = devices.find(device => device.deviceType === 'SERVER');
 
@@ -121,16 +126,31 @@ function handleOrder(order: Order) {
   if (order.printed) return;
 
   infrastructure.forEach(async config => {
-    const printer = await connectPrinter(config);
+    connectPrinter(config).then(printer => {
+      if (printer) {
+        const drinks = order.products.filter(product => product.category.name.toLowerCase().includes('alk'));
+        const food = order.products.filter(product => product.category.name.toLowerCase().includes('spei'));
 
-    if (printer) {
-      const products = order.products.filter(product => config.categories.includes(product.category.id));
-      printReceipt({ ...order, products }, printer).then(() => {
-        // set printed to true
-        supabase.from('orders').update({ printed: true }).eq('id', order.id).then(() => {
-        });
-      });
-    }
+        if (drinks.length > 0) {
+          printReceipt({ ...order, products: drinks }, printer, 'AUSSCHANK').then(() => {
+            // set printed to true
+            supabase.from('orders').update({ printed: true }).eq('id', order.id).then(() => {
+            });
+          });
+        }
+
+        if (food.length > 0) {
+          printReceipt({ ...order, products: food }, printer, 'KÜCHE').then(() => {
+            // set printed to true
+            supabase.from('orders').update({ printed: true }).eq('id', order.id).then(() => {
+            });
+          });
+        }
+      }
+    }).catch(err => {
+      console.log(err);
+      LOG.error('Error connecting to printer ' + config.printerName);
+    });
   });
 }
 
@@ -197,8 +217,7 @@ function connectPrinter(config: PrinterConfig): Promise<ThermalPrinter | null> {
       removeSpecialCharacters: false,
       lineCharacter: '*',
       width: 48,
-      characterSet: CharacterSet.PC858_EURO,
-      driver: require('printer')
+      characterSet: CharacterSet.PC858_EURO
     });
 
     printer.isPrinterConnected().then((isConnected: boolean) => {
@@ -213,8 +232,19 @@ function connectPrinter(config: PrinterConfig): Promise<ThermalPrinter | null> {
   });
 }
 
-async function printReceipt(order: Order, printer: ThermalPrinter): Promise<void> {
+async function printReceipt(order: Order, printer: ThermalPrinter, header: string): Promise<void> {
   try {
+    printer.invert(true);
+    printer.setTextDoubleHeight();
+    printer.println('');
+    printer.alignCenter();
+    printer.println(header);
+    printer.println('');
+
+    printer.println('');
+    printer.setTextNormal();
+    printer.alignLeft();
+
     buildReceiptData(order, printer);
     printer.cut();
 
@@ -222,8 +252,9 @@ async function printReceipt(order: Order, printer: ThermalPrinter): Promise<void
 
     printer.clear();
   } catch (error) {
-    LOG.error('Error printing receipt' + error);
+    LOG.error('Error printing receipt ' + error);
   }
+
   return;
 }
 
