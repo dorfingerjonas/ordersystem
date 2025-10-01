@@ -9,7 +9,7 @@
 
 <span *ngIf="selectedTableNr" id="all-items-header">Alle Produkte</span>
 
-<app-order-category (itemsChange)="products.set(c.id, $event)"
+<app-order-category (itemsChange)="itemsChange(c.id, $event)"
                     *ngFor="let c of getCategoriesWithProducts()"
                     [items]="products.get(c.id) || []"
                     [title]="c.name"
@@ -26,6 +26,11 @@
   <span *ngIf="getSelectedProducts().length === 0" class="error">Der Warenkorb ist leer</span>
 
   <span *ngIf="getTotalPrice() > 0" id="sum">Summe: {{ formatPrice(getTotalPrice()) }}€</span>
+
+  <input (input)="amountReceivedChanged()" [(ngModel)]="amountReceived" min="0" placeholder="Betrag erhalten"
+         type="number">
+
+  <span id="return">Rückgeld: {{ formatPrice(returnAmount) }}€</span>
 
   <button (click)="complete()" class="button btn-ok" matRipple>Bezahlvorgang abschließen
   </button>
