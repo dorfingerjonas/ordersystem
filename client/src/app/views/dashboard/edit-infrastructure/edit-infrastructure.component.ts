@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { Category, InfrastructureConfig, Printer } from '../../../models/models';
+import { Category, Device, DeviceType, InfrastructureConfig } from '../../../models/models';
 import { DataService } from '../../../services/data.service';
 import { HeaderService } from '../../../services/header.service';
 import { MatDialog } from '@angular/material/dialog';
@@ -13,7 +13,7 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 export class EditInfrastructureComponent {
 
   public categories: Category[];
-  public printers: Printer[];
+  public printers: Device[];
   public infrastructure: InfrastructureConfig[];
   public loaded: boolean;
 
@@ -31,8 +31,8 @@ export class EditInfrastructureComponent {
       this.loaded = true;
     });
 
-    this.data.printers.subscribe(printers => {
-      this.printers = printers;
+    this.data.devices.subscribe(devices => {
+      this.printers = devices.filter(d => d.deviceType === DeviceType.PRINTER);
       this.loaded = true;
     });
 
@@ -44,7 +44,7 @@ export class EditInfrastructureComponent {
 
       this.infrastructure = infrastructure.map(i => {
         if (!isNaN(i.printer as never)) {
-          i.printer = this.printers.find(printer => printer.id === i.printer as never) as Printer;
+          i.printer = this.printers.find(printer => printer.id === i.printer as never) as Device;
         }
 
         return {
@@ -61,11 +61,11 @@ export class EditInfrastructureComponent {
     this.header.text = 'Infrastruktur bearbeiten';
   }
 
-  public getAvailablePrinters(): Printer[] {
+  public getAvailablePrinters(): Device[] {
     return this.printers.filter(p => !this.infrastructure.find(i => i.printer.id === p.id));
   }
 
-  public addInfrastructure(printer: Printer): void {
+  public addInfrastructure(printer: Device): void {
     this.infrastructure.push({
       id: NaN,
       categories: [],

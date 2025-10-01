@@ -2,10 +2,10 @@ import { Injectable } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
 import {
   Category,
+  Device,
   InfrastructureConfigDTO,
   Order,
   OrderedItem,
-  Printer,
   Product,
   Table,
   WithId
@@ -22,7 +22,7 @@ export class DataService {
   public categories: BehaviorSubject<Category[]>;
   public products: BehaviorSubject<Product[]>;
   public orderedItems: BehaviorSubject<OrderedItem[]>;
-  public printers: BehaviorSubject<Printer[]>;
+  public devices: BehaviorSubject<Device[]>;
   public infrastructure: BehaviorSubject<InfrastructureConfigDTO[]>;
 
   constructor() {
@@ -30,15 +30,15 @@ export class DataService {
     this.categories = new BehaviorSubject<Category[]>([]);
     this.products = new BehaviorSubject<Product[]>([]);
     this.orderedItems = new BehaviorSubject<OrderedItem[]>([]);
-    this.printers = new BehaviorSubject<Printer[]>([]);
+    this.devices = new BehaviorSubject<Device[]>([]);
     this.infrastructure = new BehaviorSubject<InfrastructureConfigDTO[]>([]);
 
     this.initTableData('ordered_product', this.orderedItems, '*, table:table(*), item:product(*)');
     this.initTableData('product', this.products, '*, category:category(*)');
     this.initTableData('category', this.categories);
     this.initTableData('tables', this.tables);
-    this.initTableData('printer', this.printers);
-    this.initTableData('infrastructure', this.infrastructure, '*, printer:printer(*)');
+    this.initTableData('device', this.devices);
+    this.initTableData('infrastructure', this.infrastructure, '*, printer:device(*)');
 
     this.fetchData();
   }
@@ -48,7 +48,7 @@ export class DataService {
     this.products.next(this.products.value);
     this.categories.next(this.categories.value);
     this.orderedItems.next(this.orderedItems.value);
-    this.printers.next(this.printers.value);
+    this.devices.next(this.devices.value);
     this.infrastructure.next(this.infrastructure.value);
   }
 
