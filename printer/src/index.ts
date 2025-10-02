@@ -12,6 +12,7 @@ const tables: Table[] = [];
 const devices: Device[] = [];
 const LOG = new Logger('ordersystem');
 const infrastructure: PrinterConfig[] = [];
+const printerConnections: Map<string, ThermalPrinter> = new Map<string, ThermalPrinter>();
 
 (async () => {
   await initData('tables');
@@ -99,6 +100,20 @@ function initData(type: 'product' | 'tables' | 'infrastructure' | 'device'): Pro
           });
 
           infrastructure.push(...data as PrinterConfig[]);
+
+          data.forEach(config => {
+            if (!printerConnections.has(config.printerName)) {
+              connectPrinter(config).then(printer => {
+                if (printer) {
+                  printerConnections.set(config.printerName, printer);
+                }
+              }).catch(err => {
+                console.log(err);
+                LOG.error('Error connecting to printer ' + config.printerName);
+              });
+            }
+          });
+
           LOG.info('updated infrastructure');
           resolve();
         } else {
@@ -125,32 +140,17 @@ function initData(type: 'product' | 'tables' | 'infrastructure' | 'device'): Pro
 function handleOrder(order: Order) {
   if (order.printed) return;
 
-  infrastructure.forEach(async config => {
-    connectPrinter(config).then(printer => {
-      if (printer) {
-        const drinks = order.products.filter(product => product.category.name.toLowerCase().includes('alk'));
-        const food = order.products.filter(product => product.category.name.toLowerCase().includes('spei'));
+  infrastructure.forEach(infra => {
+    const products = order.products.filter(p => infra.categories.includes(p.category.id));
+    const printer = printerConnections.get(infra.printerName);
 
-        if (drinks.length > 0) {
-          printReceipt({ ...order, products: drinks }, printer, 'AUSSCHANK').then(() => {
-            // set printed to true
-            supabase.from('orders').update({ printed: true }).eq('id', order.id).then(() => {
-            });
-          });
-        }
-
-        if (food.length > 0) {
-          printReceipt({ ...order, products: food }, printer, 'KÜCHE').then(() => {
-            // set printed to true
-            supabase.from('orders').update({ printed: true }).eq('id', order.id).then(() => {
-            });
-          });
-        }
-      }
-    }).catch(err => {
-      console.log(err);
-      LOG.error('Error connecting to printer ' + config.printerName);
-    });
+    if (products.length > 0 && printer) {
+      printReceipt({ ...order, products }, printer).then(() => {
+        // set printed to true
+        supabase.from('orders').update({ printed: true }).eq('id', order.id).then(() => {
+        });
+      });
+    }
   });
 }
 
@@ -232,19 +232,8 @@ function connectPrinter(config: PrinterConfig): Promise<ThermalPrinter | null> {
   });
 }
 
-async function printReceipt(order: Order, printer: ThermalPrinter, header: string): Promise<void> {
+async function printReceipt(order: Order, printer: ThermalPrinter): Promise<void> {
   try {
-    printer.invert(true);
-    printer.setTextDoubleHeight();
-    printer.println('');
-    printer.alignCenter();
-    printer.println(header);
-    printer.println('');
-
-    printer.println('');
-    printer.setTextNormal();
-    printer.alignLeft();
-
     buildReceiptData(order, printer);
     printer.cut();
 
