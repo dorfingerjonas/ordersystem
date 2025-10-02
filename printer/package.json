@@ -8,15 +8,16 @@
     "build": "tsc",
     "start": "node dist/index.js",
     "start:dev": "nodemon src/index.ts",
+    "start:prod": "pm2 start dist/index.js -f --name ordersystem-server",
     "test": "nodemon src/test.ts"
   },
   "author": "Jonas Dorfinger",
   "license": "MIT",
   "dependencies": {
     "@supabase/supabase-js": "^2.49.1",
-    "@thiagoelg/node-printer": "^0.6.2",
     "node-thermal-printer": "^4.1.2",
-    "printer": "^0.4.0"
+    "rotating-file-stream": "^3.2.6",
+    "tslog": "^4.9.3"
   },
   "devDependencies": {
     "@types/node": "^10.9.1",

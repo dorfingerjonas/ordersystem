@@ -38,21 +38,22 @@ export interface OpenProduct extends Product {
   paid: boolean;
 }
 
-export interface Printer extends WithId {
+export interface Device extends WithId {
   type: PrinterType;
   name: string;
   interface: string;
   controlInterval: number;
+  deviceType: DeviceType;
 }
 
 export interface InfrastructureConfig extends WithId {
-  printer: Printer;
+  printer: Device;
   categories: Category[];
   lastPing: number;
 }
 
 export interface InfrastructureConfigDTO extends WithId {
-  printer: Printer;
+  printer: Device;
   categories: number[];
   lastPing: number;
 }
@@ -60,4 +61,9 @@ export interface InfrastructureConfigDTO extends WithId {
 export enum PrinterType {
   EPSON = 'EPSON',
   STAR = 'STAR',
+}
+
+export enum DeviceType {
+  SERVER = 'SERVER',
+  PRINTER = 'PRINTER',
 }

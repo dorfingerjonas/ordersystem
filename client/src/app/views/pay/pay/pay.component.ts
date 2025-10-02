@@ -17,6 +17,8 @@ export class PayComponent {
   public openItems: OpenProduct[];
   public categories: Category[];
   public selectedOpenProducts: OpenProduct[];
+  public returnAmount: number;
+  public amountReceived: number;
   private tables: Table[];
 
   constructor(private header: HeaderService,
@@ -31,6 +33,8 @@ export class PayComponent {
     this.openItems = [];
     this.tables = [];
     this.selectedOpenProducts = [];
+    this.returnAmount = 0;
+    this.amountReceived = NaN;
 
     this.data.categories.subscribe(categories => {
       this.categories = categories.sort((a, b) => a.ordering - b.ordering);
@@ -188,5 +192,14 @@ export class PayComponent {
 
   public openItemsChange(products: Product[]): void {
     this.selectedOpenProducts = products as OpenProduct[];
+  }
+
+  public amountReceivedChanged(): void {
+    this.returnAmount = (this.amountReceived || 0) - this.getTotalPrice();
+  }
+
+  public itemsChange(id: number, event: Product[]): void {
+    this.products.set(id, event);
+    this.amountReceivedChanged();
   }
 }

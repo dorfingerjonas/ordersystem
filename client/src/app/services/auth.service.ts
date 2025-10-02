@@ -44,11 +44,13 @@ export class AuthService {
     return supabase.auth.signOut();
   }
 
-  public signInWithEmailAndPassword(email: string, password: string): Promise<void> {
+  public signInWithEmailAndPassword(email: string, password: string): Promise<string> {
     return new Promise((resolve, reject) => {
       supabase.auth.signInWithPassword({ email, password }).then(res => {
-        if (res.data) {
-          resolve();
+        if (res.data.user) {
+          resolve('logged in ');
+        } else {
+          reject(res.error);
         }
       }).catch(err => {
         reject(err);

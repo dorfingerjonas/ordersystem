@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { FormControl, Validators } from '@angular/forms';
+import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { AuthService } from '../../services/auth.service';
 import { LoadingService } from '../../services/loading.service';
 
@@ -10,19 +10,19 @@ import { LoadingService } from '../../services/loading.service';
 })
 export class LoginComponent implements OnInit {
 
-  emailControl: FormControl;
-  passwordControl: FormControl;
+  formGroup: FormGroup;
   responseError: string | undefined;
 
   constructor(private auth: AuthService,
               private loading: LoadingService) {
-    this.emailControl = new FormControl('', [
-      Validators.required
-    ]);
-
-    this.passwordControl = new FormControl('', [
-      Validators.required
-    ]);
+    this.formGroup = new FormGroup({
+      email: new FormControl('', [
+        Validators.required
+      ]),
+      password: new FormControl('', [
+        Validators.required
+      ])
+    });
   }
 
   public ngOnInit(): void {
@@ -30,10 +30,12 @@ export class LoginComponent implements OnInit {
   }
 
   public login(): void {
-    if (this.emailControl.valid && this.passwordControl.valid) {
+    if (this.formGroup.valid) {
       this.loading.activateLoading();
 
-      this.auth.signInWithEmailAndPassword(this.emailControl.value, this.passwordControl.value)
+      const { email, password } = this.formGroup.value;
+
+      this.auth.signInWithEmailAndPassword(email, password)
         .catch(err => {
           this.loading.deactivateLoading();
           this.responseError = err.message;

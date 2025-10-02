@@ -1,28 +1,29 @@
 <img alt="Ordersystem Banner" src="assets/images/ordersystem.svg">
 
-<form>
+<form [formGroup]="formGroup">
   <div class="input-wrapper">
     <label>E-Mail Adresse</label>
-    <input (keydown.enter)="login()" [class.invalid]="emailControl.errors && emailControl.touched"
-           [formControl]="emailControl" name="email"
+    <input (keydown.enter)="login()" [class.invalid]="formGroup.get('email')?.errors && formGroup.get('email')?.touched"
+           formControlName="email" name="email"
            placeholder="E-Mail Adresse" type="email">
-    <span *ngIf="emailControl.hasError('required') && emailControl.touched"
+    <span *ngIf="formGroup.get('email')?.hasError('required') && formGroup.get('email')?.touched"
           class="error">Email Adresse ist erforderlich</span>
   </div>
 
   <div class="input-wrapper">
     <label>Passwort</label>
-    <input (keydown.enter)="login()" [class.invalid]="passwordControl.errors && passwordControl.touched"
-           [formControl]="passwordControl" name="password"
+    <input (keydown.enter)="login()"
+           [class.invalid]="formGroup.get('password')?.errors && formGroup.get('password')?.touched"
+           formControlName="password" name="password"
            placeholder="Passwort" type="password">
-    <span *ngIf="passwordControl.hasError('required') && passwordControl.touched" class="error">Passwort ist erforderlich</span>
+    <span *ngIf="formGroup.get('password')?.hasError('required') && formGroup.get('password')?.touched" class="error">Passwort ist erforderlich</span>
   </div>
 </form>
 
 <span *ngIf="responseError" class="error" id="responseError">{{ responseError }}</span>
 
 <div id="button-wrapper">
-  <button (click)="login()" (keydown.enter)="login()" [disabled]="emailControl.invalid || passwordControl.invalid"
+  <button (click)="login()" (keydown.enter)="login()" [disabled]="formGroup.invalid"
           class="button btn-primary">Anmelden
   </button>
 </div>
