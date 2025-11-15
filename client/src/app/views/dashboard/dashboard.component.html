@@ -1,5 +1,13 @@
 <div class="dashboard-item">
-  Umsatz: {{ 0 }}€
+  Warenwert unbezahlt: {{ revenueUnPaid | currency:'EUR':'symbol':'1.2-2' }}
+</div>
+
+<div class="dashboard-item">
+  Warenwert bezahlt: {{ revenuePaid | currency:'EUR':'symbol':'1.2-2' }}
+</div>
+
+<div class="dashboard-item">
+  Umsatz: {{ revenue | currency:'EUR':'symbol':'1.2-2' }}
 </div>
 
 <div class="button btn-primary" matRipple routerLink="edit/tables">
