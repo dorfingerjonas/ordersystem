@@ -2,10 +2,10 @@
   <div (click)="create()" class="button btn-primary" matRipple>Produkt hinzufügen</div>
 </div>
 
-<div (cdkDropListDropped)="drop($event)" *ngFor="let c of categories" cdkDropList class="category">
+<div (cdkDropListDropped)="drop($event, i)" *ngFor="let c of displayData; let  i = index" cdkDropList class="category">
   <span class="category-header">{{ c.name }}</span>
   <span *ngIf="getFilteredProducts(c.id).length === 0 && loaded" class="error">Es sind noch keine Produkte in dieser Kategorie vorhanden</span>
-  <div *ngFor="let p of getFilteredProducts(c.id)" cdkDrag class="product">
+  <div *ngFor="let p of c.products" cdkDrag class="product">
     <mat-icon cdkDragHandle>drag_handle</mat-icon>
     <span>{{ p.name }}</span>
     <span>{{ formatPrice(p.price | number : '1.2-2') }}€</span>

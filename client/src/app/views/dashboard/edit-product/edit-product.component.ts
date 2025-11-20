@@ -17,6 +17,7 @@ export class EditProductComponent {
   public products: Product[];
   public categories: Category[];
   public loaded: boolean;
+  public displayData: { name: string; id: number; products: Product[] }[];
 
   constructor(private readonly data: DataService,
               private readonly header: HeaderService,
@@ -25,16 +26,19 @@ export class EditProductComponent {
     this.products = [];
     this.categories = [];
     this.loaded = false;
+    this.displayData = [];
 
     setTimeout(() => this.header.text = 'Produkte bearbeiten');
 
     this.data.products.subscribe(products => {
       this.products = products;
       this.loaded = true;
+      this.mapDisplayData();
     });
 
     this.data.categories.subscribe(categories => {
       this.categories = categories.sort((a, b) => a.ordering - b.ordering);
+      this.mapDisplayData();
     });
 
     this.data.fetchData();
@@ -85,12 +89,12 @@ export class EditProductComponent {
     });
   }
 
-  public drop(event: CdkDragDrop<any, any>): void {
-    moveItemInArray(this.products, event.previousIndex, event.currentIndex);
+  public drop(event: CdkDragDrop<any, any>, categoryIndex: number): void {
+    moveItemInArray(this.displayData[categoryIndex].products, event.previousIndex, event.currentIndex);
 
     const productsToUpdate: Product[] = [];
 
-    this.products = this.products.map((t, i) => {
+    this.displayData[categoryIndex].products = this.displayData[categoryIndex].products.map((t, i) => {
       const newProduct = { ...t, ordering: i + 1 };
 
       if (t.ordering !== newProduct.ordering) {
@@ -116,4 +120,13 @@ export class EditProductComponent {
     return price.replace('.', ',');
   }
 
+  private mapDisplayData(): void {
+    if (!this.loaded || this.categories.length === 0) return;
+
+    this.displayData = this.categories.map(c => ({
+      name: c.name,
+      id: c.id,
+      products: this.getFilteredProducts(c.id)
+    }));
+  }
 }
