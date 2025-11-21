@@ -3,6 +3,7 @@ import { Observable } from 'rxjs';
 import { ActivatedRoute, Router, UrlTree } from '@angular/router';
 import { AuthService } from './services/auth.service';
 import { LoadingService } from './services/loading.service';
+import { SwUpdate } from '@angular/service-worker';
 
 @Component({
   selector: 'app-root',
@@ -19,7 +20,8 @@ export class AppComponent implements OnInit {
               private route: ActivatedRoute,
               private auth: AuthService,
               private ngZone: NgZone,
-              private loading: LoadingService) {
+              private loading: LoadingService,
+              private swUpdate: SwUpdate) {
     this.loadingState = loading.loadingState;
     this.isLoggedIn = auth.isLoggedInState;
   }
@@ -58,5 +60,13 @@ export class AppComponent implements OnInit {
           });
       });
     });
+
+    if (this.swUpdate.isEnabled) {
+      this.swUpdate.versionUpdates.subscribe(event => {
+        if (event.type === 'VERSION_READY') {
+          this.swUpdate.activateUpdate().then(() => location.reload());
+        }
+      });
+    }
   }
 }
