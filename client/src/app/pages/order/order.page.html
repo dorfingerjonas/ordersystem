@@ -142,7 +142,7 @@
               <div class="note-edit">
                 <label for="note-input">Notiz für {{ l.product.name }}</label>
                 <div class="note-input-row">
-                  <input pInputText id="note-input" type="text" placeholder="z. B. ohne Eis"
+                  <input pInputText id="note-input" type="text"
                          [value]="noteDraft()" (input)="noteDraft.set($any($event.target).value)"
                          (keydown.enter)="commitNote()" enterkeyhint="done" autocomplete="off">
                   <button type="button" class="done-btn" (click)="commitNote()">Fertig</button>
@@ -179,7 +179,7 @@
     @if (orderNoteOpen() || orderNote()) {
       <div class="field">
         <label for="order-note">Notiz zur ganzen Bestellung</label>
-        <textarea pTextarea id="order-note" rows="2" [autoResize]="true" placeholder="z. B. alles gemeinsam bringen"
+        <textarea pTextarea id="order-note" rows="2" [autoResize]="true"
                   [value]="orderNote()" (input)="setOrderNote($any($event.target).value)"></textarea>
       </div>
     } @else {
