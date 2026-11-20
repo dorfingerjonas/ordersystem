@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { HeaderService } from '../../services/header.service';
 import { MatBottomSheet } from '@angular/material/bottom-sheet';
 import { MenuComponent } from '../menu/menu.component';
@@ -7,6 +7,7 @@ import { MenuComponent } from '../menu/menu.component';
     selector: 'app-header',
     templateUrl: './header.component.html',
     styleUrls: ['./header.component.scss'],
+  changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class HeaderComponent implements OnInit {

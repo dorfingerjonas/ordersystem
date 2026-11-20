@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { Table } from '../../../models/models';
 import { HeaderService } from '../../../services/header.service';
 import { DataService } from '../../../services/data.service';
@@ -8,6 +8,7 @@ import { LoadingService } from '../../../services/loading.service';
     selector: 'app-pay-tables',
     templateUrl: './pay-tables.component.html',
     styleUrls: ['./pay-tables.component.scss'],
+  changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class PayTablesComponent implements OnInit {

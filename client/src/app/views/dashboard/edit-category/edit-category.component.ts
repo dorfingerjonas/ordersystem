@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, ChangeDetectionStrategy } from '@angular/core';
 import { Category, Product } from '../../../models/models';
 import { DataService } from '../../../services/data.service';
 import { HeaderService } from '../../../services/header.service';
@@ -11,6 +11,7 @@ import { CategoryPopupComponent } from './category-popup/category-popup.componen
     selector: 'app-edit-category',
     templateUrl: './edit-category.component.html',
     styleUrls: ['./edit-category.component.scss'],
+  changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class EditCategoryComponent {

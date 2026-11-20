@@ -1,4 +1,4 @@
-import { Component, OnDestroy } from '@angular/core';
+import { Component, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { HeaderService } from '../../services/header.service';
 import { LoadingService } from '../../services/loading.service';
@@ -10,6 +10,7 @@ import { Router } from '@angular/router';
     selector: 'app-tables',
     templateUrl: './tables.component.html',
     styleUrls: ['./tables.component.scss'],
+  changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class TablesComponent implements OnDestroy {

@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, ChangeDetectionStrategy } from '@angular/core';
 import { Category, Device, DeviceType, InfrastructureConfig } from '../../../models/models';
 import { DataService } from '../../../services/data.service';
 import { HeaderService } from '../../../services/header.service';
@@ -9,6 +9,7 @@ import { MatSnackBar } from '@angular/material/snack-bar';
     selector: 'app-edit-infrastructure',
     templateUrl: './edit-infrastructure.component.html',
     styleUrls: ['./edit-infrastructure.component.scss'],
+  changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class EditInfrastructureComponent {

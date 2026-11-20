@@ -1,10 +1,11 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, Output, ChangeDetectionStrategy } from '@angular/core';
 import { OpenProduct, Product } from '../../models/models';
 
 @Component({
     selector: 'app-order-category',
     templateUrl: './order-category.component.html',
     styleUrls: ['./order-category.component.scss'],
+  changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class OrderCategoryComponent {

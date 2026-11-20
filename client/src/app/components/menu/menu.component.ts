@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, ChangeDetectionStrategy } from '@angular/core';
 import { AuthService } from '../../services/auth.service';
 import { MatBottomSheetRef } from '@angular/material/bottom-sheet';
 
@@ -6,6 +6,7 @@ import { MatBottomSheetRef } from '@angular/material/bottom-sheet';
     selector: 'app-menu',
     templateUrl: './menu.component.html',
     styleUrls: ['./menu.component.scss'],
+  changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class MenuComponent {

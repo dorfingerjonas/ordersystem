@@ -1,4 +1,4 @@
-import { Component, Inject } from '@angular/core';
+import { Component, Inject, ChangeDetectionStrategy } from '@angular/core';
 import { Category, Product } from '../../../../models/models';
 import { FormControl, Validators } from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
@@ -8,6 +8,7 @@ import { DataService } from '../../../../services/data.service';
     selector: 'app-product-popup',
     templateUrl: './product-popup.component.html',
     styleUrls: ['./product-popup.component.scss'],
+  changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class ProductPopupComponent {

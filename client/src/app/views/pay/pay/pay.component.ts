@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, ChangeDetectionStrategy } from '@angular/core';
 import { HeaderService } from '../../../services/header.service';
 import { DataService } from '../../../services/data.service';
 import { ActivatedRoute } from '@angular/router';
@@ -9,6 +9,7 @@ import { MatSnackBar } from '@angular/material/snack-bar';
     selector: 'app-pay',
     templateUrl: './pay.component.html',
     styleUrls: ['./pay.component.scss'],
+  changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class PayComponent {

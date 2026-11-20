@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, ChangeDetectionStrategy } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { Category, Order, Product, Table } from '../../models/models';
 import { DataService } from '../../services/data.service';
@@ -10,6 +10,7 @@ import { AuthService } from '../../services/auth.service';
     selector: 'app-order',
     templateUrl: './order.component.html',
     styleUrls: ['./order.component.scss'],
+  changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class OrderComponent {

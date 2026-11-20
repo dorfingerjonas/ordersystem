@@ -1,4 +1,4 @@
-import { Component, Inject } from '@angular/core';
+import { Component, Inject, ChangeDetectionStrategy } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { Table } from '../../../../models/models';
 
@@ -6,6 +6,7 @@ import { Table } from '../../../../models/models';
     selector: 'app-table-popup',
     templateUrl: './table-popup.component.html',
     styleUrls: ['./table-popup.component.scss'],
+  changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class TablePopupComponent {

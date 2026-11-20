@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, ChangeDetectionStrategy } from '@angular/core';
 import { Category, Product } from '../../../models/models';
 import { DataService } from '../../../services/data.service';
 import { HeaderService } from '../../../services/header.service';
@@ -11,6 +11,7 @@ import { CdkDragDrop, moveItemInArray } from '@angular/cdk/drag-drop';
     selector: 'app-edit-product',
     templateUrl: './edit-product.component.html',
     styleUrls: ['./edit-product.component.scss'],
+  changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class EditProductComponent {
