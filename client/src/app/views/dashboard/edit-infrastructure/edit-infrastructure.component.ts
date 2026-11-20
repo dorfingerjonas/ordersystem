@@ -6,9 +6,10 @@ import { MatDialog } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
 
 @Component({
-  selector: 'app-edit-infrastructure',
-  templateUrl: './edit-infrastructure.component.html',
-  styleUrls: [ './edit-infrastructure.component.scss' ]
+    selector: 'app-edit-infrastructure',
+    templateUrl: './edit-infrastructure.component.html',
+    styleUrls: ['./edit-infrastructure.component.scss'],
+    standalone: false
 })
 export class EditInfrastructureComponent {
 

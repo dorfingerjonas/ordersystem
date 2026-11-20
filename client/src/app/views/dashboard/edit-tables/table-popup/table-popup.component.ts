@@ -3,9 +3,10 @@ import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { Table } from '../../../../models/models';
 
 @Component({
-  selector: 'app-table-popup',
-  templateUrl: './table-popup.component.html',
-  styleUrls: [ './table-popup.component.scss' ]
+    selector: 'app-table-popup',
+    templateUrl: './table-popup.component.html',
+    styleUrls: ['./table-popup.component.scss'],
+    standalone: false
 })
 export class TablePopupComponent {
 

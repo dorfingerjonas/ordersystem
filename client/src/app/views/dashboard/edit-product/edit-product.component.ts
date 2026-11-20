@@ -8,9 +8,10 @@ import { ProductPopupComponent } from './product-popup/product-popup.component';
 import { CdkDragDrop, moveItemInArray } from '@angular/cdk/drag-drop';
 
 @Component({
-  selector: 'app-edit-product',
-  templateUrl: './edit-product.component.html',
-  styleUrls: [ './edit-product.component.scss' ]
+    selector: 'app-edit-product',
+    templateUrl: './edit-product.component.html',
+    styleUrls: ['./edit-product.component.scss'],
+    standalone: false
 })
 export class EditProductComponent {
 

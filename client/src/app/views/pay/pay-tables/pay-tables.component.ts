@@ -5,9 +5,10 @@ import { DataService } from '../../../services/data.service';
 import { LoadingService } from '../../../services/loading.service';
 
 @Component({
-  selector: 'app-pay-tables',
-  templateUrl: './pay-tables.component.html',
-  styleUrls: [ './pay-tables.component.scss' ]
+    selector: 'app-pay-tables',
+    templateUrl: './pay-tables.component.html',
+    styleUrls: ['./pay-tables.component.scss'],
+    standalone: false
 })
 export class PayTablesComponent implements OnInit {
 

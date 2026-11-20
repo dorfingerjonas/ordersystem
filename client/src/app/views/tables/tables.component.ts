@@ -7,9 +7,10 @@ import { DataService } from '../../services/data.service';
 import { Router } from '@angular/router';
 
 @Component({
-  selector: 'app-tables',
-  templateUrl: './tables.component.html',
-  styleUrls: [ './tables.component.scss' ]
+    selector: 'app-tables',
+    templateUrl: './tables.component.html',
+    styleUrls: ['./tables.component.scss'],
+    standalone: false
 })
 export class TablesComponent implements OnDestroy {
 

@@ -8,9 +8,10 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 import { CdkDragDrop, moveItemInArray } from '@angular/cdk/drag-drop';
 
 @Component({
-  selector: 'app-edit-tables',
-  templateUrl: './edit-tables.component.html',
-  styleUrls: [ './edit-tables.component.scss' ]
+    selector: 'app-edit-tables',
+    templateUrl: './edit-tables.component.html',
+    styleUrls: ['./edit-tables.component.scss'],
+    standalone: false
 })
 export class EditTablesComponent {
 
