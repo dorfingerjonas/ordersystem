@@ -1,26 +1,36 @@
 name: deploy to gh-pages
 
+# NOTE: the new UI (feature/new-ui) is deployed for now – master does NOT deploy
+# until the new UI is merged. Switch the branch back to 'master' afterwards.
 on:
   push:
     branches:
-      - 'master'
+      - 'feature/new-ui'
     paths:
       - 'client/**'
       - '.github/**'
 
   workflow_dispatch:
 
+concurrency:
+  group: gh-pages-deploy
+  cancel-in-progress: true
+
 jobs:
   build:
     name: Build ⚙
     runs-on: ubuntu-latest
+    # manual runs are only allowed from the new UI branch as well
+    if: github.ref == 'refs/heads/feature/new-ui'
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Use Node 22
+      - name: Use Node 24
         uses: actions/setup-node@v4
         with:
-          node-version: '22'
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: client/package-lock.json
       - name: Install dependencies
         run: npm ci
         working-directory: client
