@@ -1,0 +1,130 @@
+<div class="screen">
+  <header class="page-header">
+    <a class="icon-btn" routerLink="/more" aria-label="Zurück zur Verwaltung">
+      <i class="pi pi-chevron-left" aria-hidden="true"></i>
+    </a>
+    <div class="titles">
+      <h1>Tische</h1>
+      <span class="subtitle">Tisch antippen zum Bearbeiten</span>
+    </div>
+  </header>
+
+  <main class="page-main">
+    @for (section of data.tablesByArea(); track section.label) {
+      <section class="area">
+        <div class="area-head">
+          <h2 class="section-title">{{ section.label }}</h2>
+          @if (section.area; as area) {
+            <button type="button" class="icon-btn" (click)="openArea(area)" [attr.aria-label]="'Bereich ' + area.name + ' bearbeiten'">
+              <i class="pi pi-pencil" aria-hidden="true"></i>
+            </button>
+          }
+        </div>
+        <div class="grid">
+          @for (t of section.tables; track t.id) {
+            <button type="button" class="t" (click)="openTable(t, t.area)" [attr.aria-label]="'Tisch ' + t.nr + ' bearbeiten'">{{ t.nr }}</button>
+          }
+          <button type="button" class="t add" (click)="openTable(null, section.area?.id ?? null)"
+                  [attr.aria-label]="'Tisch zu ' + section.label + ' hinzufügen'">
+            <i class="pi pi-plus" aria-hidden="true"></i>
+          </button>
+        </div>
+      </section>
+    } @empty {
+      <div class="empty">
+        <i class="pi pi-th-large" aria-hidden="true"></i>
+        <strong>Noch keine Bereiche</strong>
+        <span>Lege zuerst einen Bereich an, z. B. „Reihe 1“ oder „Garten“.</span>
+      </div>
+    }
+  </main>
+
+  <footer class="page-footer">
+    <button type="button" class="cta dark" (click)="openArea(null)">
+      <i class="pi pi-plus" aria-hidden="true"></i> Neuer Bereich
+    </button>
+  </footer>
+</div>
+
+<!-- table dialog -->
+<p-dialog [(visible)]="tableDialog" [modal]="true" [header]="editingTable() ? 'Tisch ' + editingTable()!.nr : 'Neuer Tisch'"
+          [style]="{ width: 'calc(100vw - 32px)', maxWidth: '420px' }" [draggable]="false" [dismissableMask]="true">
+  <form class="dialog-form" (ngSubmit)="saveTable()">
+    <div class="field">
+      <label for="table-nr">Tischnummer</label>
+      <input pInputText id="table-nr" name="nr" [ngModel]="tableNr()" (ngModelChange)="tableNr.set($event)" required
+             autocomplete="off" [pAutoFocus]="true">
+      @if (duplicateNr()) {
+        <span class="warn">Diese Tischnummer gibt es schon.</span>
+      }
+    </div>
+
+    <fieldset class="field" style="border: none; padding: 0; margin: 0">
+      <legend class="label" style="margin-bottom: 6px">Bereich</legend>
+      <div class="chips">
+        @for (a of data.areas(); track a.id) {
+          <button type="button" class="chip" [attr.aria-pressed]="tableArea() === a.id" (click)="tableArea.set(a.id)">{{ a.name }}</button>
+        }
+        <button type="button" class="chip" [attr.aria-pressed]="tableArea() === null" (click)="tableArea.set(null)">Ohne</button>
+      </div>
+    </fieldset>
+
+    @if (editingTable()) {
+      @let pos = tableIndex();
+      <div class="field">
+        <span class="label">Position im Bereich</span>
+        <div class="move">
+          <button type="button" class="btn-ghost" (click)="moveTable(-1)" [disabled]="pos.index <= 0">
+            <i class="pi pi-arrow-left" aria-hidden="true"></i> Nach vorne
+          </button>
+          <button type="button" class="btn-ghost" (click)="moveTable(1)" [disabled]="pos.index >= pos.count - 1">
+            Nach hinten <i class="pi pi-arrow-right" aria-hidden="true"></i>
+          </button>
+        </div>
+      </div>
+
+      <button type="button" class="btn-ghost danger" (click)="deleteTable()">
+        <i class="pi pi-trash" aria-hidden="true"></i> Tisch löschen
+      </button>
+    }
+  </form>
+  <ng-template #footer>
+    <p-button label="Abbrechen" severity="secondary" (onClick)="tableDialog.set(false)" />
+    <p-button label="Speichern" severity="contrast" [loading]="saving()" [disabled]="!tableNr().trim() || duplicateNr()" (onClick)="saveTable()" />
+  </ng-template>
+</p-dialog>
+
+<!-- area dialog -->
+<p-dialog [(visible)]="areaDialog" [modal]="true" [header]="editingArea() ? 'Bereich bearbeiten' : 'Neuer Bereich'"
+          [style]="{ width: 'calc(100vw - 32px)', maxWidth: '420px' }" [draggable]="false" [dismissableMask]="true">
+  <form class="dialog-form" (ngSubmit)="saveArea()">
+    <div class="field">
+      <label for="area-name">Name</label>
+      <input pInputText id="area-name" name="name" [ngModel]="areaName()" (ngModelChange)="areaName.set($event)" required
+             autocomplete="off" placeholder="z. B. Reihe 1, Garten" [pAutoFocus]="true">
+    </div>
+
+    @if (editingArea()) {
+      @let pos = areaIndex();
+      <div class="field">
+        <span class="label">Position</span>
+        <div class="move">
+          <button type="button" class="btn-ghost" (click)="moveArea(-1)" [disabled]="pos.index <= 0">
+            <i class="pi pi-arrow-up" aria-hidden="true"></i> Nach oben
+          </button>
+          <button type="button" class="btn-ghost" (click)="moveArea(1)" [disabled]="pos.index >= pos.count - 1">
+            <i class="pi pi-arrow-down" aria-hidden="true"></i> Nach unten
+          </button>
+        </div>
+      </div>
+
+      <button type="button" class="btn-ghost danger" (click)="deleteArea()">
+        <i class="pi pi-trash" aria-hidden="true"></i> Bereich löschen
+      </button>
+    }
+  </form>
+  <ng-template #footer>
+    <p-button label="Abbrechen" severity="secondary" (onClick)="areaDialog.set(false)" />
+    <p-button label="Speichern" severity="contrast" [loading]="saving()" [disabled]="!areaName().trim()" (onClick)="saveArea()" />
+  </ng-template>
+</p-dialog>

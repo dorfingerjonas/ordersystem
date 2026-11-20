@@ -1,0 +1,164 @@
+<div class="screen">
+  <header class="page-header">
+    <a class="icon-btn" [routerLink]="direct() ? '/pay' : ['/order', id()]"
+       [attr.aria-label]="direct() ? 'Zurück zur Tischauswahl' : 'Zurück zu Tisch ' + (table()?.nr ?? '')">
+      <i class="pi pi-chevron-left" aria-hidden="true"></i>
+    </a>
+    <div class="titles">
+      @if (direct()) {
+        <h1>Direktverkauf</h1>
+        <span class="subtitle">Ohne Tisch</span>
+      } @else {
+        <h1>Tisch {{ table()?.nr ?? '…' }} kassieren</h1>
+        <span class="subtitle">Offen am Tisch {{ eur(openCents() / 100) }}</span>
+      }
+    </div>
+  </header>
+
+  <main class="page-main">
+    @if (!data.loaded()) {
+      <p-skeleton height="200px" />
+    } @else {
+      @if (!direct()) {
+        <div class="list-head">
+          <span>Vom Tisch – tippen zum Auswählen</span>
+          @if (open().length > 0) {
+            <button type="button" class="btn-ghost small" (click)="toggleAll()">{{ allSelected() ? 'Keine' : 'Alles' }}</button>
+          }
+        </div>
+
+        <div class="card">
+          @for (g of open(); track g.product.id) {
+            @let on = g.selected > 0;
+            <div class="pay-row" [class.on]="on">
+              <button type="button" class="pay-toggle" (click)="toggle(g)" [attr.aria-pressed]="on"
+                      [attr.aria-label]="g.product.name + ', ' + g.selected + ' von ' + g.ids.length + ' ausgewählt'">
+                <span class="check" aria-hidden="true">
+                  @if (on) {
+                    <i class="pi pi-check"></i>
+                  }
+                </span>
+                <span class="row-main">
+                  <span class="row-title">
+                    @if (g.ids.length > 1) {
+                      <span class="times">{{ g.ids.length }}×</span>
+                    }
+                    {{ g.product.name }}
+                  </span>
+                  <span class="row-sub">{{ eur(g.product.price) }}{{ g.ids.length > 1 ? ' / Stück' : '' }}</span>
+                </span>
+                @if (!(on && g.ids.length > 1)) {
+                  <span class="row-price">{{ eur(g.product.price * (on ? g.selected : g.ids.length)) }}</span>
+                }
+              </button>
+
+              @if (on && g.ids.length > 1) {
+                <span class="stepper">
+                  <button type="button" class="step-btn" (click)="step(g, -1, $event)"
+                          [attr.aria-label]="g.product.name + ' eins weniger kassieren'">
+                    <i class="pi pi-minus" aria-hidden="true"></i>
+                  </button>
+                  <span class="qty small">{{ g.selected }}/{{ g.ids.length }}</span>
+                  <button type="button" class="step-btn plus" [disabled]="g.selected === g.ids.length"
+                          (click)="step(g, 1, $event)" [attr.aria-label]="g.product.name + ' eins mehr kassieren'">
+                    <i class="pi pi-plus" aria-hidden="true"></i>
+                  </button>
+                </span>
+              }
+            </div>
+          } @empty {
+            <div class="empty small">
+              <i class="pi pi-check-circle" aria-hidden="true"></i>
+              <span>Am Tisch ist nichts offen.</span>
+            </div>
+          }
+        </div>
+      }
+
+      <span class="list-head">{{ direct() ? 'Produkte' : 'Zusätzlich (nicht am Tisch)' }}</span>
+      <div class="card">
+        @for (x of extraLines(); track x.product.id) {
+          <div class="row extra">
+            <span class="row-main">
+              <span class="row-title">{{ x.product.name }}</span>
+              <span class="row-sub">{{ eur(x.product.price * x.amount) }}</span>
+            </span>
+            <span class="stepper">
+              <button type="button" class="step-btn" (click)="addExtra(x.product, -1)" [attr.aria-label]="x.product.name + ' eins weniger'">
+                <i class="pi pi-minus" aria-hidden="true"></i>
+              </button>
+              <span class="qty">{{ x.amount }}</span>
+              <button type="button" class="step-btn plus" (click)="addExtra(x.product, 1)" [attr.aria-label]="x.product.name + ' eins mehr'">
+                <i class="pi pi-plus" aria-hidden="true"></i>
+              </button>
+            </span>
+          </div>
+        }
+        <button type="button" class="add-more" (click)="pickerOpen.set(true)">
+          <i class="pi pi-plus" aria-hidden="true"></i>
+          {{ extraLines().length || !direct() ? 'Weitere Produkte' : 'Produkte auswählen' }}
+        </button>
+      </div>
+
+      @if (selectedCount() > 0) {
+        <div class="cash">
+          <span class="cash-title">Erhalten</span>
+          <div class="cash-grid">
+            <button type="button" class="cash-btn" [attr.aria-pressed]="received() === 'exact'" (click)="setReceived('exact')">Passend</button>
+            @for (c of cashOptions(); track c) {
+              <button type="button" class="cash-btn" [attr.aria-pressed]="received() === c" (click)="setReceived(c)">{{ c }} €</button>
+            }
+            <button type="button" class="cash-btn" [attr.aria-pressed]="customOpen() || customValue() !== null"
+                    (click)="customOpen.set(!customOpen())" aria-label="Anderen Betrag eingeben">
+              <i class="pi pi-pencil" aria-hidden="true"></i>
+            </button>
+          </div>
+
+          @if (customOpen()) {
+            <div class="field">
+              <label for="custom-cash">Anderer Betrag</label>
+              <p-inputnumber inputId="custom-cash" mode="currency" currency="EUR" locale="de-DE" [min]="0"
+                             [ngModelOptions]="{ standalone: true }" [ngModel]="customValue()"
+                             (onInput)="setCustom($any($event.value))" [autofocus]="true" inputmode="decimal" />
+            </div>
+          }
+
+          @if (change() !== null) {
+            @if (change()! >= 0) {
+              <div class="change ok" aria-live="polite">
+                <span>Rückgeld</span>
+                <strong>{{ eur(change()!) }}</strong>
+              </div>
+            } @else {
+              <div class="change missing" aria-live="polite">
+                <span>Fehlt noch</span>
+                <strong>{{ eur(-change()!) }}</strong>
+              </div>
+            }
+          }
+        </div>
+      }
+    }
+  </main>
+
+  <footer class="page-footer">
+    <button type="button" class="cta" (click)="pay()" [disabled]="selectedCount() === 0 || paying()">
+      @if (paying()) {
+        <i class="pi pi-spin pi-spinner" aria-hidden="true"></i> Wird verbucht …
+      } @else {
+        <i class="pi pi-check" aria-hidden="true"></i>
+        {{ selectedCount() === 0 ? 'Produkte auswählen' : eur(total()) + ' kassieren' }}
+      }
+    </button>
+    @if (!direct() && selectedCount() > 0) {
+      <span class="footer-hint">Danach bleiben am Tisch {{ eur(remaining()) }} offen</span>
+    }
+  </footer>
+</div>
+
+<p-drawer [(visible)]="pickerOpen" position="bottom" [blockScroll]="true" header="Produkt hinzufügen">
+  <app-product-picker [quantities]="extras()" (pick)="addExtra($event)" />
+  <button type="button" class="cta dark done" (click)="pickerOpen.set(false)">
+    Fertig{{ extraLines().length ? ' · ' + eur(total()) : '' }}
+  </button>
+</p-drawer>

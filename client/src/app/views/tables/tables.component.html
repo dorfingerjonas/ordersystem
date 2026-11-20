@@ -1,8 +1,0 @@
-<div id="table-wrapper">
-  @if (tables?.length === 0) {
-    <span class="error">Keine Tische gefunden</span>
-  }
-  @for (t of tables; track t.id) {
-    <span class="table" matRipple routerLink="/order/{{ t.nr }}">{{ t.nr }}</span>
-  }
-</div>

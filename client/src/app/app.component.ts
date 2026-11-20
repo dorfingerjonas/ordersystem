@@ -1,64 +1,40 @@
-import { Component, NgZone, OnInit, ChangeDetectionStrategy } from '@angular/core';
-import { Observable } from 'rxjs';
-import { ActivatedRoute, Router, UrlTree } from '@angular/router';
+import { ChangeDetectionStrategy, Component, effect, inject } from '@angular/core';
+import { Router, RouterOutlet } from '@angular/router';
+import { ToastModule } from 'primeng/toast';
+import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { AuthService } from './services/auth.service';
-import { LoadingService } from './services/loading.service';
+import { UpdateService } from './services/update.service';
+import { DataService } from './services/data.service';
 
 @Component({
-    selector: 'app-root',
-    templateUrl: './app.component.html',
-    styleUrls: ['./app.component.scss'],
-  changeDetection: ChangeDetectionStrategy.Eager,
-    standalone: false
+  selector: 'app-root',
+  imports: [ RouterOutlet, ToastModule, ConfirmDialogModule ],
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  template: `
+    <router-outlet />
+    <p-toast position="top-center" [preventOpenDuplicates]="true" />
+    <p-confirmdialog [style]="{ width: 'calc(100vw - 32px)', maxWidth: '420px' }" [closable]="false" />
+  `
 })
-export class AppComponent implements OnInit {
+export class AppComponent {
 
-  title = 'ordersystem';
-  loadingState: Observable<boolean>;
-  isLoggedIn: Observable<boolean>;
+  private readonly auth = inject(AuthService);
+  private readonly router = inject(Router);
 
-  constructor(private router: Router,
-              private route: ActivatedRoute,
-              private auth: AuthService,
-              private ngZone: NgZone,
-              private loading: LoadingService) {
-    this.loadingState = loading.loadingState;
-    this.isLoggedIn = auth.isLoggedInState;
-  }
+  constructor() {
+    inject(UpdateService);
+    inject(DataService);
 
-  public ngOnInit(): void {
-    this.auth.isLoggedInState.subscribe(state => {
-      this.ngZone.run(() => {
-        let redirectUrl: string | UrlTree = '/tables';
+    // logged out (also in another tab / token expired) -> back to login
+    let wasLoggedIn = false;
+    effect(() => {
+      const loggedIn = this.auth.isLoggedIn();
 
-        if (state) {
-          const value = this.route.snapshot.queryParams;
+      if (wasLoggedIn && !loggedIn) {
+        void this.router.navigate([ '/login' ]);
+      }
 
-          if (value['redirectUrl']) {
-            redirectUrl = value['redirectUrl'];
-          }
-        } else {
-          const value = this.route.snapshot.queryParams;
-
-          if (value['redirectUrl']) {
-            redirectUrl = this.router.createUrlTree(
-              [ '/login' ], {
-                queryParams: {
-                  redirectUrl: value['redirectUrl']
-                }
-              }
-            );
-          } else {
-            redirectUrl = '/login';
-          }
-        }
-
-        this.router.navigateByUrl(redirectUrl, { replaceUrl: true, skipLocationChange: false })
-          .then(() => this.loading.deactivateLoading())
-          .catch(err => {
-            console.error(err);
-          });
-      });
+      wasLoggedIn = loggedIn;
     });
   }
 }

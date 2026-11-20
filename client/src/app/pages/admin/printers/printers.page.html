@@ -1,0 +1,131 @@
+<div class="screen">
+  <header class="page-header">
+    <a class="icon-btn" routerLink="/more" aria-label="Zurück zur Verwaltung">
+      <i class="pi pi-chevron-left" aria-hidden="true"></i>
+    </a>
+    <div class="titles">
+      <h1>Drucker</h1>
+      <span class="subtitle">Was wird wo gedruckt?</span>
+    </div>
+  </header>
+
+  <main class="page-main">
+    @if (data.loaded() && unassigned().length > 0) {
+      <p-message severity="warn" icon="pi pi-exclamation-triangle">
+        Wird nirgends gedruckt: <strong>{{ unassignedNames() }}</strong>
+      </p-message>
+    }
+
+    @for (p of data.printers(); track p.infrastructure.id) {
+      <section class="card printer">
+        <div class="p-head">
+          <span class="status-dot" [class.online]="p.online" [class.offline]="!p.online" aria-hidden="true"></span>
+          <div class="row-main">
+            <span class="row-title">{{ p.device?.name ?? 'Unbekanntes Gerät' }}</span>
+            <span class="row-sub">
+              @if (p.online) {
+                <span class="online-text">Online</span>
+              } @else if (p.infrastructure.lastPing) {
+                <span class="offline-text">Offline</span> · zuletzt {{ p.infrastructure.lastPing | date: 'dd.MM. HH:mm' }}
+              } @else {
+                <span class="offline-text">Noch nie verbunden</span>
+              }
+              · {{ p.device?.type }} · {{ p.device?.interface }}
+            </span>
+          </div>
+          @if (p.device; as device) {
+            <button type="button" class="icon-btn" (click)="openEdit(device)" [attr.aria-label]="device.name + ' bearbeiten'">
+              <i class="pi pi-pencil" aria-hidden="true"></i>
+            </button>
+          }
+        </div>
+
+        <div class="p-body">
+          <span class="p-label">Druckt diese Kategorien</span>
+          <div class="chips">
+            @for (c of data.categories(); track c.id) {
+              @let on = hasCategory(p, c.id);
+              <button type="button" class="chip" [attr.aria-pressed]="on" (click)="toggleCategory(p, c.id)">
+                @if (on) {
+                  <i class="pi pi-check" aria-hidden="true"></i>
+                }
+                {{ c.name }}
+              </button>
+            }
+          </div>
+        </div>
+
+        <div class="p-actions">
+          @let busy = testing().has(p.device?.id ?? -1);
+          <button type="button" class="btn-ghost" (click)="testPrint(p)" [disabled]="busy || !p.device">
+            <i class="pi" [class.pi-print]="!busy" [class.pi-spinner]="busy" [class.pi-spin]="busy" aria-hidden="true"></i>
+            {{ busy ? 'Druckt …' : 'Testdruck' }}
+          </button>
+          <button type="button" class="btn-ghost danger" (click)="remove(p)">
+            <i class="pi pi-times" aria-hidden="true"></i> Entfernen
+          </button>
+        </div>
+      </section>
+    } @empty {
+      <div class="empty">
+        <i class="pi pi-print" aria-hidden="true"></i>
+        <strong>Noch kein Drucker eingebunden</strong>
+        <span>Ohne Drucker werden Bestellungen nicht gedruckt.</span>
+      </div>
+    }
+  </main>
+
+  <footer class="page-footer">
+    <button type="button" class="cta dark" (click)="openAdd()">
+      <i class="pi pi-plus" aria-hidden="true"></i> Drucker hinzufügen
+    </button>
+  </footer>
+</div>
+
+<p-dialog [(visible)]="dialogOpen" [modal]="true" [header]="editingDevice() ? 'Drucker bearbeiten' : 'Drucker hinzufügen'"
+          [style]="{ width: 'calc(100vw - 32px)', maxWidth: '420px' }" [draggable]="false" [dismissableMask]="true">
+  <form class="dialog-form" (ngSubmit)="saveDevice()">
+    @if (!editingDevice() && unusedDevices().length > 0) {
+      <fieldset class="field">
+        <legend class="label">Gerät</legend>
+        <div class="chips">
+          @for (d of unusedDevices(); track d.id) {
+            <button type="button" class="chip" [attr.aria-pressed]="pickDevice() === d.id" (click)="pickDevice.set(d.id)">{{ d.name }}</button>
+          }
+          <button type="button" class="chip" [attr.aria-pressed]="pickDevice() === 'new'" (click)="pickDevice.set('new')">
+            <i class="pi pi-plus" aria-hidden="true"></i> Neues Gerät
+          </button>
+        </div>
+      </fieldset>
+    }
+
+    @if (editingDevice() || pickDevice() === 'new') {
+      <div class="field">
+        <label for="dev-name">Name</label>
+        <input pInputText id="dev-name" name="name" [ngModel]="devName()" (ngModelChange)="devName.set($event)"
+               placeholder="z. B. epson-bar" autocomplete="off" required>
+      </div>
+
+      <fieldset class="field">
+        <legend class="label">Typ</legend>
+        <div class="chips">
+          @for (t of printerTypes; track t) {
+            <button type="button" class="chip" [attr.aria-pressed]="devType() === t" (click)="devType.set(t)">{{ t }}</button>
+          }
+        </div>
+      </fieldset>
+
+      <div class="field">
+        <label for="dev-if">Schnittstelle</label>
+        <input pInputText id="dev-if" name="interface" [ngModel]="devInterface()" (ngModelChange)="devInterface.set($event)"
+               placeholder="tcp://192.168.1.100" autocomplete="off" autocapitalize="off" required>
+        <span class="hint">Netzwerkdrucker: tcp://IP-Adresse (Port 9100 ist Standard)</span>
+      </div>
+    }
+  </form>
+  <ng-template #footer>
+    <p-button label="Abbrechen" severity="secondary" (onClick)="dialogOpen.set(false)" />
+    <p-button [label]="editingDevice() ? 'Speichern' : 'Hinzufügen'" severity="contrast" [loading]="saving()"
+              [disabled]="!dialogValid()" (onClick)="saveDevice()" />
+  </ng-template>
+</p-dialog>

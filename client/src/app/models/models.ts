@@ -2,24 +2,15 @@ export interface WithId {
   id: number;
 }
 
+export interface Area extends WithId {
+  name: string;
+  ordering: number;
+}
+
 export interface Table extends WithId {
   nr: string;
-  ordering: number; // used to sort tables
-}
-
-export interface Product extends WithId {
-  name: string;
-  price: number;
-  amount?: number;
-  category: Category;
-  ordering: number; // used to sort products
-}
-
-export interface Order {
-  products: { id: number, amount: number }[];
-  table: number;
-  waiter: string;
-  note?: string;
+  ordering: number;
+  area: number | null;
 }
 
 export interface Category extends WithId {
@@ -27,35 +18,33 @@ export interface Category extends WithId {
   ordering: number;
 }
 
-export interface OrderedItem extends WithId {
-  item: Product;
-  paid: boolean;
-  table: Table;
-}
-
-export interface OpenProduct extends Product {
-  dbIds: number[];
-  paid: boolean;
-}
-
-export interface Device extends WithId {
-  type: PrinterType;
+export interface Product extends WithId {
   name: string;
-  interface: string;
-  controlInterval: number;
-  deviceType: DeviceType;
+  price: number;
+  category: number;
+  ordering: number;
+  available: boolean;
 }
 
-export interface InfrastructureConfig extends WithId {
-  printer: Device;
-  categories: Category[];
-  lastPing: number;
+/** One entry of orders.products (jsonb). Same product may appear several times with different notes. */
+export interface OrderLineDTO {
+  id: number;
+  amount: number;
+  note?: string;
 }
 
-export interface InfrastructureConfigDTO extends WithId {
-  printer: Device;
-  categories: number[];
-  lastPing: number;
+export interface NewOrder {
+  products: OrderLineDTO[];
+  table: number;
+  waiter: string;
+  note?: string;
+}
+
+export interface OrderedProduct {
+  id: string; // uuid
+  item: number | null;
+  paid: boolean;
+  table: number | null;
 }
 
 export enum PrinterType {
@@ -66,4 +55,29 @@ export enum PrinterType {
 export enum DeviceType {
   SERVER = 'SERVER',
   PRINTER = 'PRINTER',
+}
+
+export interface Device extends WithId {
+  type: PrinterType;
+  name: string;
+  interface: string;
+  controlInterval: number;
+  deviceType: DeviceType;
+}
+
+export interface Infrastructure extends WithId {
+  printer: number;
+  categories: number[] | null;
+  lastPing: number | null;
+}
+
+export type PrintJobStatus = 'PENDING' | 'DONE' | 'FAILED';
+
+export interface PrintJob extends WithId {
+  created_at: string;
+  device: number;
+  type: 'TEST';
+  status: PrintJobStatus;
+  message: string | null;
+  finished_at: string | null;
 }
