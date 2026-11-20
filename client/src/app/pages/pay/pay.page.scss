@@ -82,25 +82,13 @@
 .empty.small { padding: 20px; }
 
 .cash { display: flex; flex-direction: column; gap: 8px; margin-top: 4px; }
-.cash-title { font-size: 14px; font-weight: 600; }
+.cash-title { font-size: 14px; font-weight: 600; color: var(--os-text) !important; }
 
-.cash-grid {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr)) 52px;
-  gap: 8px;
-}
+.cash-input {
+  position: relative;
 
-.cash-btn {
-  height: 48px;
-  border-radius: 12px;
-  border: 1.5px solid var(--os-border-strong);
-  background: var(--os-card);
-  font-size: 15px;
-  font-weight: 600;
-  color: var(--os-text);
-  cursor: pointer;
-
-  &[aria-pressed='true'] { background: var(--os-text); border-color: var(--os-text); color: #fff; font-weight: 700; }
+  input { width: 100%; padding-right: 36px; font-size: 20px !important; font-weight: 700; }
+  .cash-unit { position: absolute; right: 14px; top: 50%; transform: translateY(-50%); font-size: 18px; font-weight: 700; color: var(--os-muted); }
 }
 
 .change {

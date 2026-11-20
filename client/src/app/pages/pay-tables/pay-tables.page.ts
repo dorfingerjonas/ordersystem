@@ -28,7 +28,7 @@ import { eur } from '../../utils/format';
           <span class="nav-icon"><i class="pi pi-shopping-bag" aria-hidden="true"></i></span>
           <span class="row-main">
             <span class="row-title">Direktverkauf</span>
-            <span class="row-sub">Ohne Tisch verkaufen und kassieren</span>
+            <span class="row-sub">Ohne Tisch und ohne Bon sofort kassieren</span>
           </span>
           <i class="pi pi-chevron-right chev" aria-hidden="true"></i>
         </a>

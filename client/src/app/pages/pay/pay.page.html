@@ -7,7 +7,7 @@
     <div class="titles">
       @if (direct()) {
         <h1>Direktverkauf</h1>
-        <span class="subtitle">Ohne Tisch</span>
+        <span class="subtitle">Ohne Tisch · ohne Bon · sofort bezahlt</span>
       } @else {
         <h1>Tisch {{ table()?.nr ?? '…' }} kassieren</h1>
         <span class="subtitle">Offen am Tisch {{ eur(openCents() / 100) }}</span>
@@ -75,7 +75,13 @@
         </div>
       }
 
-      <span class="list-head">{{ direct() ? 'Produkte' : 'Zusätzlich (nicht am Tisch)' }}</span>
+      @if (direct()) {
+        <!-- direct sale: products right away, tap = +1 -->
+        <app-product-picker [quantities]="extras()" (pick)="addExtra($event)" />
+      }
+
+      @if (!direct() || extraLines().length > 0) {
+      <span class="list-head">{{ direct() ? 'Ausgewählt' : 'Zusätzlich (nicht am Tisch)' }}</span>
       <div class="card">
         @for (x of extraLines(); track x.product.id) {
           <div class="row extra">
@@ -94,34 +100,24 @@
             </span>
           </div>
         }
-        <button type="button" class="add-more" (click)="pickerOpen.set(true)">
-          <i class="pi pi-plus" aria-hidden="true"></i>
-          {{ extraLines().length || !direct() ? 'Weitere Produkte' : 'Produkte auswählen' }}
-        </button>
+        @if (!direct()) {
+          <button type="button" class="add-more" (click)="pickerOpen.set(true)">
+            <i class="pi pi-plus" aria-hidden="true"></i> Weitere Produkte
+          </button>
+        }
       </div>
+      }
 
       @if (selectedCount() > 0) {
         <div class="cash">
-          <span class="cash-title">Erhalten</span>
-          <div class="cash-grid">
-            <button type="button" class="cash-btn" [attr.aria-pressed]="received() === 'exact'" (click)="setReceived('exact')">Passend</button>
-            @for (c of cashOptions(); track c) {
-              <button type="button" class="cash-btn" [attr.aria-pressed]="received() === c" (click)="setReceived(c)">{{ c }} €</button>
-            }
-            <button type="button" class="cash-btn" [attr.aria-pressed]="customOpen() || customValue() !== null"
-                    (click)="customOpen.set(!customOpen())" aria-label="Anderen Betrag eingeben">
-              <i class="pi pi-pencil" aria-hidden="true"></i>
-            </button>
-          </div>
-
-          @if (customOpen()) {
-            <div class="field">
-              <label for="custom-cash">Anderer Betrag</label>
-              <p-inputnumber inputId="custom-cash" mode="currency" currency="EUR" locale="de-DE" [min]="0"
-                             [ngModelOptions]="{ standalone: true }" [ngModel]="customValue()"
-                             (onInput)="setCustom($any($event.value))" [autofocus]="true" inputmode="decimal" />
+          <div class="field">
+            <label for="received-cash" class="cash-title">Erhalten</label>
+            <div class="cash-input">
+              <input pInputText id="received-cash" type="text" inputmode="decimal" autocomplete="off"
+                     [value]="receivedText()" (input)="setReceived($any($event.target).value)">
+              <span class="cash-unit" aria-hidden="true">€</span>
             </div>
-          }
+          </div>
 
           @if (change() !== null) {
             @if (change()! >= 0) {

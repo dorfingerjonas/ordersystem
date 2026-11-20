@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, effect, inject, input, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { DrawerModule } from 'primeng/drawer';
-import { InputNumberModule } from 'primeng/inputnumber';
+import { InputTextModule } from 'primeng/inputtext';
 import { SkeletonModule } from 'primeng/skeleton';
 import { FormsModule } from '@angular/forms';
 import { DataService } from '../../services/data.service';
@@ -18,7 +18,7 @@ interface OpenGroup {
 
 @Component({
   selector: 'app-pay',
-  imports: [ FormsModule, RouterLink, DrawerModule, InputNumberModule, SkeletonModule, ProductPickerComponent ],
+  imports: [ FormsModule, RouterLink, DrawerModule, InputTextModule, SkeletonModule, ProductPickerComponent ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './pay.page.html',
   styleUrl: './pay.page.scss'
@@ -40,9 +40,14 @@ export class PayPage {
   protected readonly selection = signal<Map<number, number>>(new Map());
   /** product id -> amount sold additionally (not ordered at the table) */
   protected readonly extras = signal<Map<number, number>>(new Map());
-  /** 'exact' = Passend, number = cash received in €, null = not entered */
-  protected readonly received = signal<number | 'exact' | null>(null);
-  protected readonly customOpen = signal(false);
+  /** raw text of the "Erhalten" field */
+  protected readonly receivedText = signal('');
+  /** cash received in €, null = not entered */
+  protected readonly received = computed(() => {
+    const text = this.receivedText().replace(/[€\s]/g, '').replace(',', '.');
+    const value = Number(text);
+    return text && Number.isFinite(value) && value > 0 ? value : null;
+  });
   protected readonly pickerOpen = signal(false);
   protected readonly paying = signal(false);
 
@@ -95,32 +100,14 @@ export class PayPage {
   protected readonly remaining = computed(() =>
     (this.openCents() - this.open().reduce((s, g) => s + cents(g.product.price) * g.selected, 0)) / 100);
 
-  /** quick cash buttons: next 5 / 10 / 20 / 50 / 100 above the total */
-  protected readonly cashOptions = computed(() => {
-    const total = this.total();
-    const options = new Set<number>();
-
-    [ 5, 10, 20, 50, 100 ].forEach(step => {
-      const value = Math.max(step, Math.ceil(total / step) * step);
-      if (value > total) options.add(value);
-    });
-
-    return [ ...options ].sort((a, b) => a - b).slice(0, 3);
-  });
-
   protected readonly receivedCents = computed(() => {
     const r = this.received();
-    return r === 'exact' ? this.totalCents() : r === null ? null : cents(r);
+    return r === null ? null : cents(r);
   });
 
   protected readonly change = computed(() => {
     const r = this.receivedCents();
     return r === null ? null : (r - this.totalCents()) / 100;
-  });
-
-  protected readonly customValue = computed(() => {
-    const r = this.received();
-    return typeof r === 'number' && !this.cashOptions().includes(r) ? r : null;
   });
 
   constructor() {
@@ -175,13 +162,8 @@ export class PayPage {
 
   // ---------- cash ----------
 
-  protected setReceived(value: number | 'exact' | null): void {
-    this.received.set(this.received() === value ? null : value);
-    this.customOpen.set(false);
-  }
-
-  protected setCustom(value: number | null): void {
-    this.received.set(value && value > 0 ? value : null);
+  protected setReceived(text: string): void {
+    this.receivedText.set(text);
   }
 
   // ---------- pay ----------
@@ -209,8 +191,7 @@ export class PayPage {
 
       this.selection.set(new Map());
       this.extras.set(new Map());
-      this.received.set(null);
-      this.customOpen.set(false);
+      this.receivedText.set('');
 
       if (!this.direct() && remaining <= 0) {
         await this.router.navigate([ '/pay' ]);
