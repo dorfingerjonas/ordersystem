@@ -4,9 +4,10 @@ import { MatBottomSheet } from '@angular/material/bottom-sheet';
 import { MenuComponent } from '../menu/menu.component';
 
 @Component({
-  selector: 'app-header',
-  templateUrl: './header.component.html',
-  styleUrls: [ './header.component.scss' ]
+    selector: 'app-header',
+    templateUrl: './header.component.html',
+    styleUrls: ['./header.component.scss'],
+    standalone: false
 })
 export class HeaderComponent implements OnInit {
 

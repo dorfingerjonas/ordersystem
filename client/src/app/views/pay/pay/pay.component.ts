@@ -6,9 +6,10 @@ import { Category, OpenProduct, Product, Table } from '../../../models/models';
 import { MatSnackBar } from '@angular/material/snack-bar';
 
 @Component({
-  selector: 'app-pay',
-  templateUrl: './pay.component.html',
-  styleUrls: [ './pay.component.scss' ]
+    selector: 'app-pay',
+    templateUrl: './pay.component.html',
+    styleUrls: ['./pay.component.scss'],
+    standalone: false
 })
 export class PayComponent {
 

@@ -2,24 +2,28 @@
   <div (click)="create()" class="button btn-primary" matRipple>Produkt hinzufügen</div>
 </div>
 
-<div (cdkDropListDropped)="drop($event, i)" *ngFor="let c of displayData; let  i = index" cdkDropList class="category">
-  <span class="category-header">{{ c.name }}</span>
-  <span *ngIf="getFilteredProducts(c.id).length === 0 && loaded" class="error">Es sind noch keine Produkte in dieser Kategorie vorhanden</span>
-  <div *ngFor="let p of c.products" cdkDrag class="product">
-    <mat-icon cdkDragHandle>drag_handle</mat-icon>
-    <span>{{ p.name }}</span>
-    <span>{{ formatPrice(p.price | number : '1.2-2') }}€</span>
-
-    <div class="icon-wrapper">
-      <button (click)="edit(p)" mat-icon-button>
-        <mat-icon color="primary">edit</mat-icon>
-      </button>
-
-      <button (click)="delete(p.id)" mat-icon-button>
-        <mat-icon color="warn">delete</mat-icon>
-      </button>
-    </div>
+@for (c of displayData; track c.id; let i = $index) {
+  <div (cdkDropListDropped)="drop($event, i)" cdkDropList class="category">
+    <span class="category-header">{{ c.name }}</span>
+    @if (getFilteredProducts(c.id).length === 0 && loaded) {
+      <span class="error">Es sind noch keine Produkte in dieser Kategorie vorhanden</span>
+    }
+    @for (p of c.products; track p.id) {
+      <div cdkDrag class="product">
+        <mat-icon cdkDragHandle>drag_handle</mat-icon>
+        <span>{{ p.name }}</span>
+        <span>{{ formatPrice(p.price | number : '1.2-2') }}€</span>
+        <div class="icon-wrapper">
+          <button (click)="edit(p)" mat-icon-button>
+            <mat-icon color="primary">edit</mat-icon>
+          </button>
+          <button (click)="delete(p.id)" mat-icon-button>
+            <mat-icon color="warn">delete</mat-icon>
+          </button>
+        </div>
+      </div>
+    }
   </div>
-</div>
+}
 
 <div class="button btn-danger" matRipple routerLink="/dashboard">Zurück</div>

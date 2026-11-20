@@ -2,9 +2,10 @@ import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { OpenProduct, Product } from '../../models/models';
 
 @Component({
-  selector: 'app-order-category',
-  templateUrl: './order-category.component.html',
-  styleUrls: [ './order-category.component.scss' ]
+    selector: 'app-order-category',
+    templateUrl: './order-category.component.html',
+    styleUrls: ['./order-category.component.scss'],
+    standalone: false
 })
 export class OrderCategoryComponent {
 

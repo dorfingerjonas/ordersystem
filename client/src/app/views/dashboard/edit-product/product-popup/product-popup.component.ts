@@ -5,9 +5,10 @@ import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { DataService } from '../../../../services/data.service';
 
 @Component({
-  selector: 'app-product-popup',
-  templateUrl: './product-popup.component.html',
-  styleUrls: [ './product-popup.component.scss' ]
+    selector: 'app-product-popup',
+    templateUrl: './product-popup.component.html',
+    styleUrls: ['./product-popup.component.scss'],
+    standalone: false
 })
 export class ProductPopupComponent {
 

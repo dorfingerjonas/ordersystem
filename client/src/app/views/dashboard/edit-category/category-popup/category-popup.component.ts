@@ -3,9 +3,10 @@ import { Category } from '../../../../models/models';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 
 @Component({
-  selector: 'app-category-popup',
-  templateUrl: './category-popup.component.html',
-  styleUrls: [ './category-popup.component.scss' ]
+    selector: 'app-category-popup',
+    templateUrl: './category-popup.component.html',
+    styleUrls: ['./category-popup.component.scss'],
+    standalone: false
 })
 export class CategoryPopupComponent {
 

@@ -1,25 +1,32 @@
-<app-order-category (itemsChange)="products.set(c.id, $event)"
-                    *ngFor="let c of getCategoriesWithProducts()"
-                    [items]="products.get(c.id) || []"
-                    [title]="c.name"
-></app-order-category>
+@for (c of getCategoriesWithProducts(); track c.id) {
+  <app-order-category (itemsChange)="products.set(c.id, $event)"
+    [items]="products.get(c.id) || []"
+    [title]="c.name"
+  ></app-order-category>
+}
 
 <textarea [(ngModel)]="orderNotes" matInput placeholder="Anmerkung/Notiz"></textarea>
 
 <div id="cart-wrapper">
   <h2>Warenkorb</h2>
 
-  <div *ngFor="let p of getSelectedProducts()" class="item">
-    <span>{{ p.amount }} x {{ p.name }}</span>
-  </div>
+  @for (p of getSelectedProducts(); track p.id) {
+    <div class="item">
+      <span>{{ p.amount }} x {{ p.name }}</span>
+    </div>
+  }
 
-  <span *ngIf="orderNotes && orderNotes.length > 0">Notiz: {{ orderNotes }}</span>
+  @if (orderNotes && orderNotes.length > 0) {
+    <span>Notiz: {{ orderNotes }}</span>
+  }
 
-  <span *ngIf="getSelectedProducts().length === 0 && !orderNotes" class="error">Der Warenkorb ist leer</span>
+  @if (getSelectedProducts().length === 0 && !orderNotes) {
+    <span class="error">Der Warenkorb ist leer</span>
+  }
 
   <button (click)="order()" [disabled]="getSelectedProducts().length === 0 && !orderNotes"
-          class="button btn-ok"
-          [matRippleDisabled]="getSelectedProducts().length === 0 && !orderNotes"
-          matRipple>Bestellen
+    class="button btn-ok"
+    [matRippleDisabled]="getSelectedProducts().length === 0 && !orderNotes"
+    matRipple>Bestellen
   </button>
 </div>
