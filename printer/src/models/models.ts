@@ -9,35 +9,47 @@ export interface Table extends WithId {
   ordering: number; // used to sort tables
 }
 
+export interface Category extends WithId {
+  name: string;
+  ordering: number;
+}
+
 export interface Product extends WithId {
   name: string;
   price: number;
-  amount: number;
   category: Category;
   ordering: number; // used to sort products
 }
 
+/** product line of an order; the same product can appear several times with different notes */
+export interface OrderLine extends Product {
+  amount: number;
+  note?: string;
+}
+
+/** one entry of orders.products (jsonb) */
+export interface OrderLineDTO {
+  id: number;
+  amount: number;
+  note?: string;
+}
+
 export interface OrderDTO extends WithId {
-  products: { id: number, amount: number }[];
+  products: OrderLineDTO[];
   table: number;
   waiter: string;
-  timestamp: number;
+  timestamp: string | number;
   note?: string;
   printed: boolean;
 }
 
 export interface Order extends WithId {
-  products: Product[];
+  products: OrderLine[];
   table: Table;
   waiter: string;
   timestamp: number;
   note?: string;
   printed: boolean;
-}
-
-export interface Category extends WithId {
-  name: string;
-  ordering: number;
 }
 
 export enum DeviceType {
@@ -51,4 +63,13 @@ export interface Device extends WithId {
   interface: string;
   controlInterval: number;
   deviceType: DeviceType;
+}
+
+export interface PrintJob extends WithId {
+  created_at: string;
+  device: number;
+  type: 'TEST';
+  status: 'PENDING' | 'DONE' | 'FAILED';
+  message: string | null;
+  finished_at: string | null;
 }

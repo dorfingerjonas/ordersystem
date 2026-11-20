@@ -1,6 +1,8 @@
 import { PrinterTypes } from 'node-thermal-printer';
 
 export interface PrinterConfig {
+  infrastructureId: number;
+  deviceId: number;
   printerType: PrinterTypes;
   name: string;
   categories: number[];
@@ -12,8 +14,8 @@ export interface PrinterConfig {
 export interface InfrastructureConfigDTO {
   id: number;
   printer: Printer;
-  categories: number[];
-  lastPing: number;
+  categories: number[] | null;
+  lastPing: number | null;
 }
 
 export interface Printer {

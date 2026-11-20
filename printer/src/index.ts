@@ -1,4 +1,4 @@
-import { Device, Order, OrderDTO, Product, Table } from './models/models';
+import { Category, Device, DeviceType, Order, OrderDTO, OrderLine, PrintJob, Product, Table } from './models/models';
 import { InfrastructureConfigDTO, PrinterConfig } from './config';
 import { CharacterSet, ThermalPrinter } from 'node-thermal-printer';
 
@@ -7,26 +7,51 @@ import { environment } from './environment';
 import { Logger } from './helpers/logger';
 
 const supabase = createClient(environment.supabaseUrl, environment.supabaseKey);
+const LOG = new Logger('ordersystem');
+
 const products: Product[] = [];
+const categories: Category[] = [];
 const tables: Table[] = [];
 const devices: Device[] = [];
-const LOG = new Logger('ordersystem');
 const infrastructure: PrinterConfig[] = [];
-const printerConnections: Map<string, ThermalPrinter> = new Map<string, ThermalPrinter>();
+
+/** cached printer instances, key = infrastructure id */
+const printerConnections = new Map<number, ThermalPrinter>();
+
+/** orders currently being printed (realtime + polling must not print twice) */
+const ordersInFlight = new Set<number>();
+/** order id -> infrastructure ids that already printed their part (retry only the missing ones) */
+const printedParts = new Map<number, Set<number>>();
+const jobsInFlight = new Set<number>();
+
+const POLL_INTERVAL = 10 * 1000;
+const PING_INTERVAL = 10 * 1000;
+const JOB_MAX_AGE = 2 * 60 * 1000;
+
+let ready = false;
 
 (async () => {
   await initData('tables');
+  await initData('category');
   await initData('product');
-  await initData('infrastructure');
   await initData('device');
+  await initData('infrastructure');
+
+  ready = true;
+  LOG.info('initial data loaded');
 
   getOutstandingOrders();
+  getPendingPrintJobs();
+  void pingPrinters();
 
   setInterval(() => {
     getOutstandingOrders();
-  }, 10 * 1000);
+    getPendingPrintJobs();
+  }, POLL_INTERVAL);
 
-  const serverDevice = devices.find(device => device.deviceType === 'SERVER');
+  setInterval(() => void pingPrinters(), PING_INTERVAL);
+
+  const serverDevice = devices.find(device => device.deviceType === DeviceType.SERVER);
 
   if (serverDevice) {
     LOG.info(`starting service status (${ serverDevice.controlInterval }s)`);
@@ -37,133 +62,367 @@ const printerConnections: Map<string, ThermalPrinter> = new Map<string, ThermalP
   }
 })();
 
-function getOutstandingOrders(): void {
-  supabase.from('orders').select('*, table:tables(*)').eq('printed', false).then(({ data }) => {
+// ---------------------------------------------------------------------
+// data
+// ---------------------------------------------------------------------
+
+async function initData(type: 'product' | 'category' | 'tables' | 'infrastructure' | 'device'): Promise<void> {
+  if (type === 'product') {
+    const { data } = await supabase.from('product').select('*, category:category(*)');
     if (data) {
-      LOG.info(`outstanding orders: ${ data.length }`);
-      data.forEach(order => {
-        order.products = order.products.map((p: {
-          id: number,
-          amount: number
-        }) => {
-
-          return {
-            ...products.find(product => product.id === p.id),
-            amount: p.amount
-          } as Product;
-        });
-
-        handleOrder(order);
-      });
+      products.length = 0;
+      products.push(...data as Product[]);
+      LOG.info('updated products');
+    } else {
+      LOG.error('Error fetching products');
     }
-  });
-}
-
-function initData(type: 'product' | 'tables' | 'infrastructure' | 'device'): Promise<void> {
-  return new Promise((resolve, reject) => {
-    if (type === 'product') {
-      supabase.from('product').select('*, category:category(*)').then(({ data }) => {
-        if (data) {
-          products.push(...data as Product[]);
-          LOG.info('updated products');
-          resolve();
-        } else {
-          LOG.error('Error fetching products');
-          resolve();
-        }
-      });
-    } else if (type === 'tables') {
-      supabase.from('tables').select('*').then(({ data }) => {
-        if (data) {
-          tables.push(...data as Table[]);
-          LOG.info('updated tables');
-          resolve();
-        } else {
-          LOG.error('Error fetching tables');
-          resolve();
-        }
-      });
-    } else if (type === 'infrastructure') {
-      supabase.from('infrastructure').select('*, printer:device(*)').then(({ data }) => {
-        if (data) {
-          infrastructure.length = 0;
-
-          data = data.map((d: InfrastructureConfigDTO) => {
-            return {
-              categories: d.categories,
-              interface: d.printer.interface,
-              printerType: d.printer.type,
-              printerName: d.printer.name,
-              name: d.printer.name,
-              controlInterval: d.printer.controlInterval
-            } as PrinterConfig;
-          });
-
-          infrastructure.push(...data as PrinterConfig[]);
-
-          data.forEach(config => {
-            if (!printerConnections.has(config.printerName)) {
-              connectPrinter(config).then(printer => {
-                if (printer) {
-                  printerConnections.set(config.printerName, printer);
-                }
-              }).catch(err => {
-                console.log(err);
-                LOG.error('Error connecting to printer ' + config.printerName);
-              });
-            }
-          });
-
-          LOG.info('updated infrastructure');
-          resolve();
-        } else {
-          LOG.error('Error fetching infrastructure');
-          resolve();
-        }
-      });
-    } else if (type === 'device') {
-      supabase.from('device').select('*').then(({ data }) => {
-        if (data) {
-          LOG.info('updated devices');
-          devices.length = 0;
-          devices.push(...data as Device[]);
-          resolve();
-        } else {
-          LOG.error('Error fetching devices');
-          resolve();
-        }
-      });
+  } else if (type === 'category') {
+    const { data } = await supabase.from('category').select('*');
+    if (data) {
+      categories.length = 0;
+      categories.push(...data as Category[]);
+      LOG.info('updated categories');
+    } else {
+      LOG.error('Error fetching categories');
     }
-  });
-}
-
-function handleOrder(order: Order) {
-  if (order.printed) return;
-
-  infrastructure.forEach(infra => {
-    const products = order.products.filter(p => infra.categories.includes(p.category.id));
-    const printer = printerConnections.get(infra.printerName);
-
-    if (products.length > 0 && printer) {
-      printReceipt({ ...order, products }, printer).then(() => {
-        // set printed to true
-        supabase.from('orders').update({ printed: true }).eq('id', order.id).then(() => {
-        });
-      });
+  } else if (type === 'tables') {
+    const { data } = await supabase.from('tables').select('*');
+    if (data) {
+      tables.length = 0;
+      tables.push(...data as Table[]);
+      LOG.info('updated tables');
+    } else {
+      LOG.error('Error fetching tables');
     }
-  });
+  } else if (type === 'device') {
+    const { data } = await supabase.from('device').select('*');
+    if (data) {
+      devices.length = 0;
+      devices.push(...data as Device[]);
+      LOG.info('updated devices');
+    } else {
+      LOG.error('Error fetching devices');
+    }
+  } else if (type === 'infrastructure') {
+    const { data } = await supabase.from('infrastructure').select('*, printer:device(*)');
+    if (data) {
+      infrastructure.length = 0;
+      infrastructure.push(...(data as InfrastructureConfigDTO[])
+        .filter(d => d.printer)
+        .map(d => ({
+          infrastructureId: d.id,
+          deviceId: d.printer.id,
+          categories: d.categories ?? [],
+          interface: d.printer.interface,
+          printerType: d.printer.type,
+          printerName: d.printer.name,
+          name: d.printer.name,
+          controlInterval: d.printer.controlInterval
+        } as PrinterConfig)));
+
+      // interface/type could have changed -> recreate printer instances lazily
+      printerConnections.clear();
+      LOG.info(`updated infrastructure (${ infrastructure.length } printers)`);
+    } else {
+      LOG.error('Error fetching infrastructure');
+    }
+  }
 }
 
 function mapOrderDTO(orderDTO: OrderDTO): Order {
   return {
     ...orderDTO,
-    products: orderDTO.products
-      .map(p => ({ ...products.find(product => product.id === p.id), amount: p.amount }))
-      .filter(p => p !== undefined && p.amount > 0) as Product[],
-    table: tables.find(table => table.id === orderDTO.table) as Table,
+    products: (orderDTO.products ?? [])
+      .map(line => {
+        const product = products.find(p => p.id === line.id);
+        return product ? { ...product, amount: line.amount, note: line.note?.trim() || undefined } as OrderLine : null;
+      })
+      .filter((p): p is OrderLine => p !== null && p.amount > 0),
+    // unknown table (created after our last refresh) -> placeholder, resolved in handleOrder
+    table: tables.find(table => table.id === orderDTO.table) ?? { id: orderDTO.table, nr: '?', ordering: 0 },
     timestamp: new Date(orderDTO.timestamp).getTime()
   };
 }
+
+// ---------------------------------------------------------------------
+// orders
+// ---------------------------------------------------------------------
+
+function getOutstandingOrders(): void {
+  if (!ready) return;
+
+  supabase.from('orders').select('*').eq('printed', false).then(({ data, error }) => {
+    if (error) {
+      LOG.error('Error fetching outstanding orders ' + error.message);
+      return;
+    }
+
+    if (data && data.length > 0) {
+      LOG.info(`outstanding orders: ${ data.length }`);
+      data.forEach(order => void handleOrder(mapOrderDTO(order as OrderDTO)));
+    }
+  });
+}
+
+async function handleOrder(order: Order): Promise<void> {
+  if (!ready || order.printed || ordersInFlight.has(order.id)) return;
+
+  if (infrastructure.length === 0) {
+    LOG.warn(`order ${ order.id }: no printers configured, waiting`);
+    return;
+  }
+
+  if (order.table.nr === '?') {
+    await initData('tables');
+    order.table = tables.find(t => t.id === order.table.id) ?? order.table;
+  }
+
+  ordersInFlight.add(order.id);
+
+  try {
+    const done = printedParts.get(order.id) ?? new Set<number>();
+    printedParts.set(order.id, done);
+
+    const unmapped = order.products.filter(p => !infrastructure.some(i => i.categories.includes(p.category?.id)));
+    if (unmapped.length > 0) {
+      LOG.warn(`order ${ order.id }: no printer for ${ unmapped.map(p => p.name).join(', ') }`);
+    }
+
+    let allPrinted = true;
+
+    for (const infra of infrastructure) {
+      if (done.has(infra.infrastructureId)) continue;
+
+      const lines = order.products.filter(p => infra.categories.includes(p.category?.id));
+      if (lines.length === 0) continue;
+
+      try {
+        await printReceipt({ ...order, products: lines }, getPrinter(infra));
+        done.add(infra.infrastructureId);
+        LOG.info(`order ${ order.id } printed on ${ infra.printerName }`);
+      } catch (error) {
+        allPrinted = false;
+        printerConnections.delete(infra.infrastructureId);
+        LOG.error(`order ${ order.id }: printing on ${ infra.printerName } failed (will retry) ${ error }`);
+      }
+    }
+
+    if (allPrinted) {
+      const { error } = await supabase.from('orders').update({ printed: true }).eq('id', order.id);
+
+      if (error) {
+        LOG.error(`order ${ order.id }: could not set printed ${ error.message }`);
+      } else {
+        printedParts.delete(order.id);
+      }
+    }
+  } finally {
+    ordersInFlight.delete(order.id);
+  }
+}
+
+// ---------------------------------------------------------------------
+// printers
+// ---------------------------------------------------------------------
+
+function createPrinter(type: PrinterConfig['printerType'], iface: string): ThermalPrinter {
+  return new ThermalPrinter({
+    type,
+    interface: iface,
+    removeSpecialCharacters: false,
+    lineCharacter: '*',
+    width: 48,
+    characterSet: CharacterSet.PC858_EURO,
+    options: { timeout: 5000 }
+  });
+}
+
+function getPrinter(config: PrinterConfig): ThermalPrinter {
+  let printer = printerConnections.get(config.infrastructureId);
+
+  if (!printer) {
+    printer = createPrinter(config.printerType, config.interface);
+    printerConnections.set(config.infrastructureId, printer);
+  }
+
+  return printer;
+}
+
+/** updates infrastructure.lastPing for every reachable printer (shown as online in the app) */
+async function pingPrinters(): Promise<void> {
+  await Promise.all(infrastructure.map(async infra => {
+    try {
+      const connected = await getPrinter(infra).isPrinterConnected();
+
+      if (connected) {
+        await supabase.from('infrastructure').update({ lastPing: Date.now() }).eq('id', infra.infrastructureId);
+      } else {
+        LOG.warn(`Printer "${ infra.printerName }" is not connected`);
+      }
+    } catch (error) {
+      LOG.warn(`Printer "${ infra.printerName }" ping failed ${ error }`);
+    }
+  }));
+}
+
+async function printReceipt(order: Order, printer: ThermalPrinter): Promise<void> {
+  printer.clear();
+
+  try {
+    buildReceiptData(order, printer);
+    printer.cut();
+    await printer.execute();
+  } finally {
+    printer.clear();
+  }
+}
+
+function buildReceiptData(order: Order, printer: ThermalPrinter): void {
+  printer.drawLine();
+  printer.newLine();
+
+  printer.setTextDoubleHeight();
+  printer.println(`Tisch: ${ order.table?.nr ?? '?' }`);
+  printer.setTextNormal();
+
+  printer.println(`Datum: ${ formatDate(order.timestamp) }`);
+  printer.println(`Besteller: ${ order.waiter }`);
+
+  printer.newLine();
+
+  order.products.forEach(product => {
+    printer.setTextDoubleHeight();
+    printer.println(`${ product.amount }x ${ product.name }`);
+
+    if (product.note) {
+      printer.setTextNormal();
+      printer.bold(true);
+      printer.println(`    -> ${ product.note }`);
+      printer.bold(false);
+    }
+  });
+
+  printer.setTextNormal();
+
+  if (order.note && order.note.trim().length > 0) {
+    printer.newLine();
+    printer.setTextDoubleHeight();
+    printer.println(`Anm: ${ order.note.trim() }`);
+    printer.setTextNormal();
+  }
+
+  printer.newLine();
+  printer.drawLine();
+}
+
+function formatDate(timestamp: number): string {
+  return new Date(timestamp).toLocaleString('de-AT').replace(/\//gm, '.');
+}
+
+// ---------------------------------------------------------------------
+// print jobs (test print from the admin UI)
+// ---------------------------------------------------------------------
+
+function getPendingPrintJobs(): void {
+  if (!ready) return;
+
+  supabase.from('print_job').select('*').eq('status', 'PENDING').then(({ data, error }) => {
+    if (error) {
+      // table might not exist yet (migration not run)
+      LOG.warn('Error fetching print jobs ' + error.message);
+      return;
+    }
+
+    (data as PrintJob[] | null)?.forEach(job => void handlePrintJob(job));
+  });
+}
+
+async function finishJob(job: PrintJob, status: 'DONE' | 'FAILED', message: string | null): Promise<void> {
+  const { error } = await supabase.from('print_job')
+    .update({ status, message, finished_at: new Date().toISOString() })
+    .eq('id', job.id);
+
+  if (error) LOG.error(`print job ${ job.id }: could not update status ${ error.message }`);
+}
+
+async function handlePrintJob(job: PrintJob): Promise<void> {
+  if (!ready || job.status !== 'PENDING' || jobsInFlight.has(job.id)) return;
+
+  jobsInFlight.add(job.id);
+
+  try {
+    if (Date.now() - new Date(job.created_at).getTime() > JOB_MAX_AGE) {
+      await finishJob(job, 'FAILED', 'Auftrag abgelaufen (Druckservice war nicht erreichbar).');
+      return;
+    }
+
+    const infra = infrastructure.find(i => i.deviceId === job.device);
+    const device = devices.find(d => d.id === job.device);
+
+    if (!infra && !device) {
+      await finishJob(job, 'FAILED', 'Gerät ist dem Druckservice unbekannt.');
+      return;
+    }
+
+    const name = infra?.printerName ?? device!.name;
+    const iface = infra?.interface ?? device!.interface;
+    const printer = infra ? getPrinter(infra) : createPrinter(device!.type, device!.interface);
+
+    const connected = await printer.isPrinterConnected().catch(() => false);
+
+    if (!connected) {
+      await finishJob(job, 'FAILED', `Drucker ${ name } (${ iface }) ist nicht erreichbar. Strom, Papier und Netzwerk prüfen.`);
+      return;
+    }
+
+    const categoryNames = (infra?.categories ?? [])
+      .map(id => categories.find(c => c.id === id)?.name)
+      .filter(Boolean)
+      .join(', ');
+
+    printer.clear();
+
+    try {
+      printer.drawLine();
+      printer.alignCenter();
+      printer.setTextDoubleHeight();
+      printer.bold(true);
+      printer.println('TESTDRUCK');
+      printer.bold(false);
+      printer.setTextNormal();
+      printer.newLine();
+      printer.alignLeft();
+      printer.println(`Drucker: ${ name }`);
+      printer.println(`Schnittstelle: ${ iface }`);
+      printer.println(`Kategorien: ${ categoryNames || '(keine)' }`);
+      printer.println(`Datum: ${ formatDate(Date.now()) }`);
+      printer.newLine();
+      printer.println('Umlaute: äöü ÄÖÜ ß  Euro: €');
+      printer.newLine();
+      printer.alignCenter();
+      printer.println('Der Drucker funktioniert.');
+      printer.alignLeft();
+      printer.drawLine();
+      printer.cut();
+
+      await printer.execute();
+    } finally {
+      printer.clear();
+    }
+
+    LOG.info(`test print on ${ name } done`);
+    await finishJob(job, 'DONE', null);
+  } catch (error) {
+    LOG.error(`print job ${ job.id } failed ${ error }`);
+    await finishJob(job, 'FAILED', `Druckfehler: ${ error }`);
+  } finally {
+    jobsInFlight.delete(job.id);
+  }
+}
+
+// ---------------------------------------------------------------------
+// realtime
+// ---------------------------------------------------------------------
 
 supabase.channel('realtime-orders')
   .on(
@@ -173,111 +432,50 @@ supabase.channel('realtime-orders')
       const order = payload.new as OrderDTO;
 
       if (order) {
-        handleOrder(mapOrderDTO(order));
+        void handleOrder(mapOrderDTO(order));
       }
     }
+  )
+  .subscribe();
+
+supabase.channel('realtime-print-jobs')
+  .on(
+    'postgres_changes',
+    { event: 'INSERT', schema: 'public', table: 'print_job' },
+    (payload) => void handlePrintJob(payload.new as PrintJob)
   )
   .subscribe();
 
 supabase.channel('realtime-products')
-  .on(
-    'postgres_changes',
-    { event: '*', schema: 'public', table: 'product' },
-    (payload) => {
-      initData('product');
-    }
-  )
+  .on('postgres_changes', { event: '*', schema: 'public', table: 'product' }, () => void initData('product'))
+  .subscribe();
+
+supabase.channel('realtime-categories')
+  .on('postgres_changes', { event: '*', schema: 'public', table: 'category' }, () => {
+    void initData('category').then(() => initData('product'));
+  })
   .subscribe();
 
 supabase.channel('realtime-tables')
-  .on(
-    'postgres_changes',
-    { event: '*', schema: 'public', table: 'tables' },
-    (payload) => {
-      initData('tables');
-    }
-  )
+  .on('postgres_changes', { event: '*', schema: 'public', table: 'tables' }, () => void initData('tables'))
   .subscribe();
 
 supabase.channel('realtime-infrastructure')
-  .on(
-    'postgres_changes',
-    { event: '*', schema: 'public', table: 'infrastructure' },
-    (payload) => {
-      initData('infrastructure');
-    }
-  )
+  .on('postgres_changes', { event: '*', schema: 'public', table: 'infrastructure' }, (payload) => {
+    // our own lastPing updates must not trigger a reload every 10 seconds
+    const row = payload.new as { id: number; printer: number; categories: number[] | null };
+    const cached = infrastructure.find(i => i.infrastructureId === row?.id);
+    const changed = payload.eventType !== 'UPDATE'
+      || !cached
+      || cached.deviceId !== row.printer
+      || JSON.stringify([ ...cached.categories ].sort()) !== JSON.stringify([ ...(row.categories ?? []) ].sort());
+
+    if (changed) void initData('infrastructure');
+  })
   .subscribe();
 
-function connectPrinter(config: PrinterConfig): Promise<ThermalPrinter | null> {
-  return new Promise<ThermalPrinter | null>((resolve, reject) => {
-    const printer = new ThermalPrinter({
-      type: config.printerType,
-      interface: config.interface,
-      removeSpecialCharacters: false,
-      lineCharacter: '*',
-      width: 48,
-      characterSet: CharacterSet.PC858_EURO
-    });
-
-    printer.isPrinterConnected().then((isConnected: boolean) => {
-      if (isConnected) {
-        LOG.info(`Printer "${ config.printerName }" connected`);
-        resolve(printer);
-      } else {
-        LOG.warn(`Printer "${ config.printerName }" is not connected`);
-        reject(null);
-      }
-    });
-  });
-}
-
-async function printReceipt(order: Order, printer: ThermalPrinter): Promise<void> {
-  try {
-    buildReceiptData(order, printer);
-    printer.cut();
-
-    await printer.execute();
-
-    printer.clear();
-  } catch (error) {
-    LOG.error('Error printing receipt ' + error);
-  }
-
-  return;
-}
-
-function buildReceiptData(order: Order, printer: ThermalPrinter): void {
-  if (!printer) return;
-  printer.drawLine();
-  printer.newLine();
-
-  printer.setTextDoubleHeight();
-
-  printer.println(`Tisch: ${ order.table.nr }`);
-  printer.setTextNormal();
-
-  printer.println(`Datum: ${ formatDate(order.timestamp) }`);
-  printer.println(`Besteller: ${ order.waiter }`);
-
-  printer.setTextDoubleHeight();
-
-  printer.newLine();
-
-  order.products.forEach(product => printer!.println(`${ product.amount }x ${ product.name }`));
-
-  if (order.note && order.note.trim().length > 0) {
-    printer.newLine();
-    printer.println(`Anm: ${ order.note }`);
-  }
-
-  printer.setTextNormal();
-  printer.newLine();
-  printer.drawLine();
-}
-
-function formatDate(timestamp: number): string {
-  return new Date(timestamp)
-    .toLocaleString()
-    .replace(/\//gm, '.');
-}
+supabase.channel('realtime-devices')
+  .on('postgres_changes', { event: '*', schema: 'public', table: 'device' }, () => {
+    void initData('device').then(() => initData('infrastructure'));
+  })
+  .subscribe();
