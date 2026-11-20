@@ -26,5 +26,22 @@
         ]
       }
     }
+  ],
+  "appData": {
+    "description": "new ui"
+  },
+  "dataGroups": [
+    {
+      "name": "google-fonts",
+      "urls": [
+        "https://fonts.googleapis.com/**",
+        "https://fonts.gstatic.com/**"
+      ],
+      "cacheConfig": {
+        "strategy": "performance",
+        "maxSize": 30,
+        "maxAge": "365d"
+      }
+    }
   ]
 }

@@ -1,8 +1,8 @@
 {
-  "name": "ordersystem",
-  "short_name": "ordersystem",
-  "theme_color": "#1976d2",
-  "background_color": "#fafafa",
+  "name": "Ordersystem",
+  "short_name": "Ordersystem",
+  "theme_color": "#f6f5f2",
+  "background_color": "#f6f5f2",
   "display": "standalone",
   "scope": "./",
   "start_url": "./",
@@ -55,5 +55,8 @@
       "type": "image/png",
       "purpose": "maskable any"
     }
-  ]
+  ],
+  "description": "Bestellen & Kassieren",
+  "orientation": "portrait",
+  "lang": "de"
 }
