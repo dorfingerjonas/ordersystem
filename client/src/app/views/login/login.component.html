@@ -4,26 +4,32 @@
   <div class="input-wrapper">
     <label>E-Mail Adresse</label>
     <input (keydown.enter)="login()" [class.invalid]="formGroup.get('email')?.errors && formGroup.get('email')?.touched"
-           formControlName="email" name="email"
-           placeholder="E-Mail Adresse" type="email">
-    <span *ngIf="formGroup.get('email')?.hasError('required') && formGroup.get('email')?.touched"
-          class="error">Email Adresse ist erforderlich</span>
-  </div>
+      formControlName="email" name="email"
+      placeholder="E-Mail Adresse" type="email">
+      @if (formGroup.get('email')?.hasError('required') && formGroup.get('email')?.touched) {
+        <span
+        class="error">Email Adresse ist erforderlich</span>
+      }
+    </div>
 
-  <div class="input-wrapper">
-    <label>Passwort</label>
-    <input (keydown.enter)="login()"
-           [class.invalid]="formGroup.get('password')?.errors && formGroup.get('password')?.touched"
-           formControlName="password" name="password"
-           placeholder="Passwort" type="password">
-    <span *ngIf="formGroup.get('password')?.hasError('required') && formGroup.get('password')?.touched" class="error">Passwort ist erforderlich</span>
-  </div>
-</form>
+    <div class="input-wrapper">
+      <label>Passwort</label>
+      <input (keydown.enter)="login()"
+        [class.invalid]="formGroup.get('password')?.errors && formGroup.get('password')?.touched"
+        formControlName="password" name="password"
+        placeholder="Passwort" type="password">
+        @if (formGroup.get('password')?.hasError('required') && formGroup.get('password')?.touched) {
+          <span class="error">Passwort ist erforderlich</span>
+        }
+      </div>
+    </form>
 
-<span *ngIf="responseError" class="error" id="responseError">{{ responseError }}</span>
+    @if (responseError) {
+      <span class="error" id="responseError">{{ responseError }}</span>
+    }
 
-<div id="button-wrapper">
-  <button (click)="login()" (keydown.enter)="login()" [disabled]="formGroup.invalid"
-          class="button btn-primary">Anmelden
-  </button>
-</div>
+    <div id="button-wrapper">
+      <button (click)="login()" (keydown.enter)="login()" [disabled]="formGroup.invalid"
+        class="button btn-primary">Anmelden
+      </button>
+    </div>

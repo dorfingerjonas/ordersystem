@@ -1,9 +1,15 @@
-<app-header *ngIf="isLoggedIn | async"></app-header>
+@if (isLoggedIn | async) {
+  <app-header></app-header>
+}
 
 <div class="page-container">
   <router-outlet></router-outlet>
 </div>
 
-<app-footer *ngIf="isLoggedIn | async"></app-footer>
+@if (isLoggedIn | async) {
+  <app-footer></app-footer>
+}
 
-<app-loading *ngIf="loadingState | async"></app-loading>
+@if (loadingState | async) {
+  <app-loading></app-loading>
+}

@@ -1,12 +1,18 @@
-<div *ngIf="title.length > 0" id="title-wrapper">
-  <span>{{ title }}</span>
-</div>
+@if (title.length > 0) {
+  <div id="title-wrapper">
+    <span>{{ title }}</span>
+  </div>
+}
 
 <div id="item-wrapper">
-  <div (click)="changeItemAmount($event, item)" *ngFor="let item of items" class="item" matRipple>
-    <span class="amount">{{ item.amount }}</span>
-    <span class="name">{{ item.name }}</span>
-    <span *ngIf="showPrice" class="price">{{ formatPrice(item.price) }}€</span>
-    <mat-icon class="remove">{{ getIcon(item) }}</mat-icon>
-  </div>
+  @for (item of items; track item.id) {
+    <div (click)="changeItemAmount($event, item)" class="item" matRipple>
+      <span class="amount">{{ item.amount }}</span>
+      <span class="name">{{ item.name }}</span>
+      @if (showPrice) {
+        <span class="price">{{ formatPrice(item.price) }}€</span>
+      }
+      <mat-icon class="remove">{{ getIcon(item) }}</mat-icon>
+    </div>
+  }
 </div>

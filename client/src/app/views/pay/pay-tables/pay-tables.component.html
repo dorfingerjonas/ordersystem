@@ -1,6 +1,10 @@
 <div id="table-wrapper">
   <span class="table wide" routerLink="/pay/cart">ohne Tisch kassieren</span>
   <p id="category-header">offene Tische</p>
-  <span *ngIf="openTables?.length === 0" class="error">Keine offenen Tische</span>
-  <span *ngFor="let t of openTables" class="table" matRipple routerLink="/pay/cart/{{ t.nr }}">{{ t.nr }}</span>
+  @if (openTables?.length === 0) {
+    <span class="error">Keine offenen Tische</span>
+  }
+  @for (t of openTables; track t.id) {
+    <span class="table" matRipple routerLink="/pay/cart/{{ t.nr }}">{{ t.nr }}</span>
+  }
 </div>

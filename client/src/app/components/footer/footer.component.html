@@ -2,10 +2,12 @@
   <!--  <div class="icon">-->
   <!--    <mat-icon (click)="signOut()">logout</mat-icon>-->
   <!--    <span>Ausloggen</span>-->
-  <!--  </div>-->
+<!--  </div>-->
 
-  <div *ngFor="let icon of icons" class="icon">
+@for (icon of icons; track icon.url) {
+  <div class="icon">
     <mat-icon [routerLink]="icon.url">{{ icon.icon }}</mat-icon>
     <span>{{ icon.displayText }}</span>
   </div>
+}
 </div>
