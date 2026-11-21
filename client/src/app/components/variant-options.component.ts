@@ -1,14 +1,15 @@
 import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
+import { Product } from '../models/models';
 import { eur } from '../utils/format';
 import { GroupTile } from '../utils/groups';
-import { Product } from '../models/models';
 
 /** Variant buttons of one group tile (rows x columns), used on the order screen and when cashing up. */
 @Component({
   selector: 'app-variant-options',
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    @for (row of tile().rows; track row.label) {
+    @let tileRows = tile().rows;
+    @for (row of tileRows; track row.label) {
       <div class="vrow">
         <span class="vlabel">{{ row.label }}</span>
         <div class="vgrid" [style.grid-template-columns]="'repeat(' + tile().columns + ', minmax(0, 1fr))'">
@@ -16,10 +17,15 @@ import { Product } from '../models/models';
             @if (cell.product; as p) {
               @let q = quantities().get(p.id) ?? 0;
               <div class="vcell-wrap">
-                <button type="button" class="vcell" [class.has]="q > 0" [class.soldout]="!p.available" (click)="pick.emit(p)"
+                <button type="button" class="vcell" [class.has]="q > 0" [class.soldout]="!p.available"
+                        (click)="pick.emit(p)"
                         [attr.aria-disabled]="!p.available"
                         [attr.aria-label]="p.name + (p.available ? ', ' + eur(p.price) + ' hinzufügen' : ', ausverkauft') + (q ? ', ' + q + ' ausgewählt' : '')">
-                  <span class="vname">{{ cell.label }}</span>
+                  @if (tileRows.length === 1) {
+                    <span class="vname">{{ cell.label }}</span>
+                  } @else {
+                    <span class="vname">{{ row.label }} {{ cell.label }}</span>
+                  }
                   @if (p.available) {
                     <span class="vprice">{{ eur(p.price) }}</span>
                   } @else {
@@ -30,7 +36,8 @@ import { Product } from '../models/models';
                   }
                 </button>
                 @if (showMinus() && q > 0) {
-                  <button type="button" class="vminus" (click)="minus.emit(p)" [attr.aria-label]="p.name + ' eins weniger'">
+                  <button type="button" class="vminus" (click)="minus.emit(p)"
+                          [attr.aria-label]="p.name + ' eins weniger'">
                     <i class="pi pi-minus" aria-hidden="true"></i>
                   </button>
                 }
