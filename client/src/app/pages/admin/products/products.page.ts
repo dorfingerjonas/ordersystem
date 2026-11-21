@@ -1,4 +1,5 @@
-import { ChangeDetectionStrategy, Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, input, linkedSignal, signal, untracked } from '@angular/core';
+import { AdminStateService } from '../../../services/admin-state.service';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { ToggleSwitchModule } from 'primeng/toggleswitch';
@@ -226,9 +227,11 @@ export class ProductsPage {
   protected readonly search = signal('');
   /** ?category= (e.g. after saving a group) */
   public readonly categoryParam = input<string | undefined>(undefined, { alias: 'category' });
+  private readonly adminState = inject(AdminStateService);
+  /** ?category= wins, otherwise the tab used last (stays when coming back from editing) */
   protected readonly selected = linkedSignal<number | null>(() => {
     const id = Number(this.categoryParam());
-    return this.categoryParam() && Number.isFinite(id) ? id : null;
+    return this.categoryParam() && Number.isFinite(id) ? id : untracked(() => this.adminState.productCategory());
   });
 
   protected readonly active = computed(() => {
@@ -237,6 +240,14 @@ export class ProductsPage {
   });
 
   protected readonly activeCategory = computed(() => this.data.categoryById().get(this.active() ?? -1) ?? null);
+
+  constructor() {
+    // remember the tab for the next visit (after editing, sorting …)
+    effect(() => {
+      const active = this.active();
+      if (active !== null && this.data.loaded()) untracked(() => this.adminState.productCategory.set(active));
+    });
+  }
 
   /** visible products incl. variants; a group name matches all its variants */
   protected readonly searchResults = computed(() => {

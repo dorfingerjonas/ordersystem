@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, effect, inject, signal, u
 import { Router, RouterLink } from '@angular/router';
 import { DataService } from '../../../services/data.service';
 import { NotifyService } from '../../../services/notify.service';
+import { AdminStateService } from '../../../services/admin-state.service';
 
 type Mode = 'products' | 'categories';
 
@@ -95,7 +96,9 @@ export class SortPage {
   private readonly router = inject(Router);
 
   protected readonly mode = signal<Mode>('products');
-  protected readonly category = signal<number | null>(null);
+  private readonly adminState = inject(AdminStateService);
+  /** starts on the tab of the product list */
+  protected readonly category = signal<number | null>(this.adminState.productCategory());
   protected readonly moved = signal<number | string | null>(null);
   protected readonly saving = signal(false);
 

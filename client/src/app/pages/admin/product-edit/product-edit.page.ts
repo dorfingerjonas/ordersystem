@@ -7,6 +7,7 @@ import { ToggleSwitchModule } from 'primeng/toggleswitch';
 import { ConfirmationService } from 'primeng/api';
 import { DataService } from '../../../services/data.service';
 import { NotifyService } from '../../../services/notify.service';
+import { AdminStateService } from '../../../services/admin-state.service';
 
 @Component({
   selector: 'app-product-edit',
@@ -94,6 +95,7 @@ export class ProductEditPage {
   private readonly notify = inject(NotifyService);
   private readonly router = inject(Router);
   private readonly confirm = inject(ConfirmationService);
+  private readonly adminState = inject(AdminStateService);
 
   public readonly productId = input.required<string>();
   /** preselected category for new products (?category=) */
@@ -164,6 +166,8 @@ export class ProductEditPage {
         this.notify.success(`„${ row.name }“ gespeichert`);
       }
 
+      // back to the tab of the saved product
+      this.adminState.productCategory.set(row.category);
       await this.router.navigate([ '/admin/products' ]);
     } catch (e) {
       this.notify.error('Produkt konnte nicht gespeichert werden', e);

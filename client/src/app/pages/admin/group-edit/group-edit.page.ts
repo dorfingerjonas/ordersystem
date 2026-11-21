@@ -7,6 +7,7 @@ import { ConfirmationService } from 'primeng/api';
 import { CdkDrag, CdkDragDrop, CdkDragHandle, CdkDragPlaceholder, CdkDropList, moveItemInArray } from '@angular/cdk/drag-drop';
 import { DataService } from '../../../services/data.service';
 import { NotifyService } from '../../../services/notify.service';
+import { AdminStateService } from '../../../services/admin-state.service';
 import { eur } from '../../../utils/format';
 import {
   combinations,
@@ -55,6 +56,7 @@ export class GroupEditPage {
   private readonly notify = inject(NotifyService);
   private readonly router = inject(Router);
   private readonly confirm = inject(ConfirmationService);
+  private readonly adminState = inject(AdminStateService);
 
   public readonly groupId = input.required<string>();
   /** preselected category for new groups (?category=) */
@@ -608,7 +610,8 @@ export class GroupEditPage {
 
       this.dirty.set(false);
       this.notify.success(`„${ group.name }“ gespeichert`, `${ count } ${ count === 1 ? 'Produkt' : 'Produkte' }`);
-      await this.router.navigate([ '/admin/products' ], { queryParams: { category: group.category } });
+      this.adminState.productCategory.set(group.category);
+      await this.router.navigate([ '/admin/products' ]);
     } catch (e) {
       this.notify.error('Produktgruppe konnte nicht gespeichert werden', e);
     } finally {
