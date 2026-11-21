@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, effect, inject, input, linkedSignal, signal, untracked } from '@angular/core';
 import { AdminStateService } from '../../../services/admin-state.service';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { ToggleSwitchModule } from 'primeng/toggleswitch';
 import { InputTextModule } from 'primeng/inputtext';
 import { IconFieldModule } from 'primeng/iconfield';
@@ -19,10 +19,11 @@ import { priceRange } from '../../../utils/groups';
 
 @Component({
   selector: 'app-admin-products',
-  imports: [ FormsModule, RouterLink, ToggleSwitchModule, InputTextModule, IconFieldModule, InputIconModule, DialogModule, ButtonModule, AutoFocusModule ],
+  imports: [ FormsModule, RouterLink, RouterLinkActive, RouterOutlet, ToggleSwitchModule, InputTextModule, IconFieldModule, InputIconModule, DialogModule, ButtonModule, AutoFocusModule ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <div class="screen">
+    <div class="screen split" [class.has-detail]="detailOpen()">
+    <div class="screen list">
       <header class="page-header">
         <a class="icon-btn" routerLink="/more" aria-label="Zurück zur Verwaltung">
           <i class="pi pi-chevron-left" aria-hidden="true"></i>
@@ -65,7 +66,7 @@ import { priceRange } from '../../../utils/groups';
             @for (p of searchResults(); track p.id) {
               @let g = p.product_group !== null ? data.groupById().get(p.product_group) : undefined;
               <div class="row">
-                <a class="row-link" [routerLink]="g ? ['/admin/groups', g.id] : ['/admin/products', p.id]"
+                <a class="row-link" [routerLink]="g ? ['/admin/products/group', g.id] : ['/admin/products', p.id]" routerLinkActive="active"
                    [attr.aria-label]="(g ? 'Gruppe ' + g.name : p.name) + ' bearbeiten'">
                   <span class="row-main">
                     <span class="row-title" [class.strike]="!p.available">{{ p.name }}</span>
@@ -105,7 +106,7 @@ import { priceRange } from '../../../utils/groups';
                     </span>
                     <i class="pi chev" [class.pi-chevron-down]="!open" [class.pi-chevron-up]="open" aria-hidden="true"></i>
                   </button>
-                  <a class="icon-btn edit" [routerLink]="['/admin/groups', e.group.id]" [attr.aria-label]="'Gruppe ' + e.group.name + ' bearbeiten'">
+                  <a class="icon-btn edit" [routerLink]="['/admin/products/group', e.group.id]" routerLinkActive="active" [attr.aria-label]="'Gruppe ' + e.group.name + ' bearbeiten'">
                     <i class="pi pi-pencil" aria-hidden="true"></i>
                   </a>
                 </div>
@@ -128,7 +129,7 @@ import { priceRange } from '../../../utils/groups';
                 }
               } @else {
                 <div class="row">
-                  <a class="row-link" [routerLink]="['/admin/products', e.product.id]" [attr.aria-label]="e.product.name + ' bearbeiten'">
+                  <a class="row-link" [routerLink]="['/admin/products', e.product.id]" routerLinkActive="active" [attr.aria-label]="e.product.name + ' bearbeiten'">
                     <span class="row-main">
                       <span class="row-title" [class.strike]="!e.product.available">{{ e.product.name }}</span>
                       <span class="row-sub">
@@ -157,11 +158,23 @@ import { priceRange } from '../../../utils/groups';
           <a class="btn-ghost new-btn" routerLink="/admin/products/new" [queryParams]="{ category: active() }">
             <i class="pi pi-plus" aria-hidden="true"></i> Einzelprodukt
           </a>
-          <a class="cta dark new-btn" routerLink="/admin/groups/new" [queryParams]="{ category: active() }">
+          <a class="cta dark new-btn" routerLink="/admin/products/group/new" [queryParams]="{ category: active() }">
             <i class="pi pi-plus" aria-hidden="true"></i> Gruppe
           </a>
         </div>
       </footer>
+    </div>
+
+    <section class="detail" aria-label="Bearbeiten">
+      <router-outlet (activate)="detailOpen.set(true)" (deactivate)="detailOpen.set(false)" />
+      @if (!detailOpen()) {
+        <div class="empty detail-empty">
+          <i class="pi pi-pencil" aria-hidden="true"></i>
+          <strong>Produkt oder Gruppe wählen</strong>
+          <span>Zum Bearbeiten links anklicken – oder neu anlegen.</span>
+        </div>
+      }
+    </section>
     </div>
 
     <p-dialog [(visible)]="dialogOpen" [modal]="true" [header]="editing() ? 'Kategorie bearbeiten' : 'Neue Kategorie'"
@@ -188,8 +201,39 @@ import { priceRange } from '../../../utils/groups';
     </p-dialog>
   `,
   styles: `
+    :host { display: contents; }
+    .split { flex-direction: column; }
+    .split.has-detail > .list { display: none; }
+    .split:not(.has-detail) > .detail { display: none; }
+    .detail { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
+    .detail-empty { display: none; }
+    .row:has(.active) { background: var(--os-primary-soft); }
+    .row:has(.active) .row-link .row-title { font-weight: 700; }
+    .icon-btn.edit.active { background: var(--os-primary-softer); }
+
+    @media (min-width: 1024px) {
+      .split { flex-direction: row; }
+      .split.has-detail > .list, .split:not(.has-detail) > .detail { display: flex; }
+      .list { flex: 1 1 0; min-width: 0; }
+      .detail {
+        flex: 0 0 clamp(400px, 46%, 640px);
+        border-left: 1px solid var(--os-border);
+        background: var(--os-card-soft);
+        --os-gutter: 24px;
+      }
+      .detail-empty { display: flex; margin: auto; }
+    }
+
+    @media (min-width: 768px) {
+      .list .cat-row { flex-wrap: wrap; overflow: visible; }
+      .list .filters { flex-direction: row; flex-wrap: wrap; align-items: flex-start; }
+      .list .filters p-iconfield { flex: 0 1 280px; }
+      .list .filters .cat-row { flex: 1 1 320px; }
+      .list .new-actions { width: min(100%, 420px); margin-left: auto; }
+    }
+
     .grow { flex: 1 1 auto; }
-    .filters { padding: 0 16px 12px; display: flex; flex-direction: column; gap: 10px; flex-shrink: 0; }
+    .filters { padding: 0 var(--os-pad) 12px; display: flex; flex-direction: column; gap: 10px; flex-shrink: 0; }
     .search { width: 100%; }
     p-iconfield { display: block; }
     .cat-row { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; padding-bottom: 2px; }
@@ -276,6 +320,9 @@ export class ProductsPage {
         soldOut: e.variants.filter(v => !v.product.available).length
       });
   });
+
+  /** editor (product / group) is open next to / instead of the list */
+  protected readonly detailOpen = signal(false);
 
   protected readonly expanded = signal<Set<number>>(new Set());
 

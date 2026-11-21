@@ -558,12 +558,15 @@ export class GroupEditPage {
   // ---------- save / leave ----------
 
   protected back(): void {
-    if (!this.dirty()) {
-      void this.router.navigate([ '/admin/products' ]);
-      return;
-    }
+    // unsaved changes are confirmed by groupLeaveGuard
+    void this.router.navigate([ '/admin/products' ]);
+  }
 
-    this.confirm.confirm({
+  /** used by groupLeaveGuard */
+  public canLeave(): boolean | Promise<boolean> {
+    if (!this.dirty()) return true;
+
+    return new Promise(resolve => this.confirm.confirm({
       header: 'Änderungen verwerfen?',
       message: 'Die Produktgruppe wurde noch nicht gespeichert.',
       icon: 'pi pi-exclamation-triangle',
@@ -571,8 +574,9 @@ export class GroupEditPage {
       rejectLabel: 'Weiter bearbeiten',
       acceptButtonProps: { severity: 'danger' },
       rejectButtonProps: { severity: 'secondary' },
-      accept: () => void this.router.navigate([ '/admin/products' ])
-    });
+      accept: () => resolve(true),
+      reject: () => resolve(false)
+    }));
   }
 
   protected save(): void {

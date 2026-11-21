@@ -1,5 +1,5 @@
 import { ApplicationConfig, isDevMode, LOCALE_ID, provideBrowserGlobalErrorListeners, provideZonelessChangeDetection } from '@angular/core';
-import { provideRouter, withComponentInputBinding, withHashLocation, withInMemoryScrolling } from '@angular/router';
+import { provideRouter, RouteReuseStrategy, withComponentInputBinding, withHashLocation, withInMemoryScrolling } from '@angular/router';
 import { provideServiceWorker } from '@angular/service-worker';
 import { registerLocaleData } from '@angular/common';
 import localeDe from '@angular/common/locales/de-AT';
@@ -8,6 +8,7 @@ import { ConfirmationService, MessageService } from 'primeng/api';
 import { environment } from '../environments/environment';
 import { OrderSystemTheme } from './ui-theme';
 import { routes } from './app.routes';
+import { RemountReuseStrategy } from './utils/remount-reuse.strategy';
 
 registerLocaleData(localeDe);
 
@@ -16,6 +17,7 @@ export const appConfig: ApplicationConfig = {
     provideBrowserGlobalErrorListeners(),
     provideZonelessChangeDetection(),
     provideRouter(routes, withHashLocation(), withComponentInputBinding(), withInMemoryScrolling({ scrollPositionRestoration: 'top' })),
+    { provide: RouteReuseStrategy, useClass: RemountReuseStrategy },
     provideServiceWorker('ngsw-worker.js', {
       enabled: !isDevMode(),
       registrationStrategy: 'registerWhenStable:30000'

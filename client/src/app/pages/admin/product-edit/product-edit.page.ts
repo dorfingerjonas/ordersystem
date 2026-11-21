@@ -81,6 +81,7 @@ import { AdminStateService } from '../../../services/admin-state.service';
     </div>
   `,
   styles: `
+    :host { display: contents; --os-page-max: 720px; }
     .form { padding: 16px; display: flex; flex-direction: column; gap: 18px; flex-shrink: 0; }
     fieldset { border: none; padding: 0; margin: 0; }
     legend { margin-bottom: 6px; }
@@ -131,7 +132,7 @@ export class ProductEditPage {
           this.category.set(this.data.categoryById().has(preselected) ? preselected : this.data.categories()[0]?.id ?? null);
         } else if (product && product.product_group !== null && this.data.groupById().has(product.product_group)) {
           // variants are edited in their group
-          void this.router.navigate([ '/admin/groups', product.product_group ], { replaceUrl: true });
+          void this.router.navigate([ '/admin/products/group', product.product_group ], { replaceUrl: true });
         } else if (product) {
           this.name.set(product.name);
           this.price.set(product.price);
