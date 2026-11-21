@@ -1,0 +1,236 @@
+.sec { padding: 14px; display: flex; flex-direction: column; gap: 14px; flex-shrink: 0; }
+.card { flex-shrink: 0; }
+
+fieldset { border: none; padding: 0; margin: 0; }
+legend { margin-bottom: 6px; }
+
+.hint { font-size: 13px; color: var(--os-muted); display: flex; gap: 6px; align-items: center; }
+.warn-text { color: var(--os-danger); font-weight: 600; }
+
+.switch-row { display: flex; align-items: center; gap: 12px; }
+
+.sec-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+
+  h2 { font-size: 15px; font-weight: 800; }
+  &.pad { padding: 14px 14px 8px; }
+}
+
+.sec-note { font-size: 12px; color: var(--os-muted); }
+
+// ---------- attributes ----------
+.attr { display: flex; flex-direction: column; gap: 8px; padding-bottom: 12px; border-bottom: 1px solid var(--os-divider); }
+
+.attr-head { display: flex; gap: 6px; align-items: center; }
+.attr-name { flex: 1 1 auto; min-width: 0; font-weight: 700; }
+.attr-hint { font-size: 12px; color: var(--os-muted); margin-top: -4px; }
+
+.mini-btn {
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  border-radius: 10px;
+  border: 1.5px solid var(--os-border-strong);
+  background: var(--os-card);
+  color: var(--os-text);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+
+  i { font-size: 14px; }
+  &:disabled { opacity: .35; cursor: default; }
+  &.danger { color: var(--os-danger); border-color: #f1c2bc; }
+}
+
+.values { display: flex; flex-wrap: wrap; gap: 6px; }
+
+.value {
+  min-height: 40px;
+  padding: 0 10px 0 14px;
+  border-radius: 20px;
+  border: none;
+  background: var(--os-text);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+
+  i { font-size: 11px; }
+
+  &.add {
+    padding: 0 14px;
+    border: 1.5px dashed var(--os-faint);
+    background: transparent;
+    color: var(--os-text-2);
+  }
+}
+
+.add-row {
+  display: flex;
+  gap: 6px;
+
+  input { flex: 1 1 auto; min-width: 0; border: 2px solid var(--os-primary-strong); }
+}
+
+.done-btn {
+  height: 44px;
+  padding: 0 12px;
+  border-radius: 10px;
+  border: none;
+  background: var(--os-text);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+// ---------- prices ----------
+.price-grid { display: grid; gap: 6px; align-items: center; }
+.ph { font-size: 13px; font-weight: 700; color: var(--os-text-2); text-align: center; overflow-wrap: anywhere; }
+.pr { font-size: 14px; font-weight: 700; overflow-wrap: anywhere; }
+
+.money {
+  position: relative;
+  display: flex;
+  align-items: center;
+
+  input {
+    width: 100%;
+    height: 44px;
+    padding: 0 24px 0 8px;
+    border-radius: 10px;
+    border: 1.5px solid var(--os-border-strong);
+    background: var(--os-card);
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--os-text);
+    text-align: right;
+    font-family: inherit;
+
+    &:focus { outline: 2px solid var(--os-primary-strong); outline-offset: 0; border-color: var(--os-primary-strong); }
+    &.bad { border-color: var(--os-danger); background: var(--os-danger-soft); }
+  }
+
+  span { position: absolute; right: 8px; font-size: 14px; font-weight: 600; color: var(--os-muted); pointer-events: none; }
+
+  &.sur { width: 110px; flex-shrink: 0; }
+}
+
+.bulk {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+
+  span { flex: 1 1 auto; font-size: 13px; color: var(--os-text-2); }
+}
+
+.btn-ghost.small { min-height: 40px; font-size: 14px; padding: 0 12px; }
+
+.surcharge { border-top: 1px solid var(--os-divider); padding-top: 10px; display: flex; flex-direction: column; gap: 8px; }
+.sur-head { display: flex; justify-content: space-between; align-items: center; strong { font-size: 14px; } }
+.sur-row { display: flex; align-items: center; gap: 10px; font-size: 15px; font-weight: 600; }
+.sur-row .plus { color: var(--os-text-2); font-weight: 700; }
+.grow { flex: 1 1 auto; min-width: 0; }
+
+.link-btn {
+  align-self: flex-start;
+  min-height: 44px;
+  padding: 0 4px;
+  border: none;
+  background: transparent;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--os-text);
+  cursor: pointer;
+
+  &.soft { min-height: 36px; font-size: 13px; font-weight: 600; color: var(--os-text-2); }
+}
+
+// ---------- resulting products ----------
+.combo-group {
+  padding: 8px 14px 4px;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .8px;
+  color: var(--os-muted);
+  background: var(--os-card-soft);
+  border-top: 1px solid #ecEAE4;
+  display: flex;
+  justify-content: space-between;
+}
+
+.sur-tag { text-transform: none; letter-spacing: 0; color: #8a5a00; }
+
+.combo {
+  width: 100%;
+  min-height: 48px;
+  border: none;
+  border-top: 1px solid var(--os-divider);
+  background: var(--os-card);
+  padding: 0 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--os-text);
+  text-align: left;
+  cursor: pointer;
+
+  .combo-name { flex: 1 1 auto; min-width: 0; font-size: 15px; font-weight: 600; display: flex; align-items: center; gap: 6px; }
+  .combo-price { font-size: 15px; font-weight: 600; white-space: nowrap; }
+  .missing { color: var(--os-danger); }
+
+  .switch {
+    width: 44px;
+    height: 26px;
+    flex-shrink: 0;
+    border-radius: 13px;
+    background: var(--os-success);
+    padding: 3px;
+    display: flex;
+    justify-content: flex-end;
+
+    span { width: 20px; height: 20px; border-radius: 10px; background: #fff; }
+  }
+
+  &.off {
+    background: var(--os-card-soft);
+    color: var(--os-muted);
+
+    .combo-name { font-weight: 500; text-decoration: line-through; }
+    .combo-price { font-size: 13px; }
+    .switch { background: var(--os-faint); justify-content: flex-start; }
+  }
+}
+
+.new-tag {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 8px;
+  background: var(--os-success-soft);
+  color: var(--os-on-success-soft);
+  text-decoration: none;
+}
+
+.notice {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 12px 14px;
+  border-radius: var(--os-radius);
+  background: var(--os-primary-soft);
+  color: var(--os-on-primary-soft);
+  font-size: 14px;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.delete { width: 100%; height: 52px; flex-shrink: 0; }

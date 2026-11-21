@@ -5,7 +5,9 @@ import { TextareaModule } from 'primeng/textarea';
 import { InputTextModule } from 'primeng/inputtext';
 import { SkeletonModule } from 'primeng/skeleton';
 import { ConfirmationService } from 'primeng/api';
-import { DataService } from '../../services/data.service';
+import { catalogTiles, DataService, OrderTile } from '../../services/data.service';
+import { VariantOptionsComponent } from '../../components/variant-options.component';
+import { GroupTile } from '../../utils/groups';
 import { CartLine, CartService } from '../../services/cart.service';
 import { AuthService } from '../../services/auth.service';
 import { NotifyService } from '../../services/notify.service';
@@ -27,7 +29,7 @@ interface ReviewGroup {
 
 @Component({
   selector: 'app-order',
-  imports: [ RouterLink, DrawerModule, TextareaModule, InputTextModule, SkeletonModule ],
+  imports: [ RouterLink, DrawerModule, TextareaModule, InputTextModule, SkeletonModule, VariantOptionsComponent ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './order.page.html',
   styleUrl: './order.page.scss'
@@ -49,7 +51,7 @@ export class OrderPage {
 
   /** categories that actually contain products */
   protected readonly categories = computed(() => this.data.categories()
-    .filter(c => (this.data.productsByCategory().get(c.id)?.length ?? 0) > 0));
+    .filter(c => (this.data.catalogByCategory().get(c.id)?.length ?? 0) > 0));
 
   protected readonly selectedCategory = signal<number | null>(null);
   protected readonly activeCategory = computed(() => {
@@ -58,10 +60,26 @@ export class OrderPage {
     return cats.find(c => c.id === selected)?.id ?? cats[0]?.id ?? null;
   });
 
-  protected readonly products = computed(() => {
+  /** single products and group tiles ("Apfel", "Orange", "Mineral") of the active category */
+  protected readonly tiles = computed<OrderTile[]>(() => {
     const category = this.activeCategory();
-    return category === null ? [] : this.data.productsByCategory().get(category) ?? [];
+    return category === null ? [] : catalogTiles(this.data.catalogByCategory().get(category) ?? []);
   });
+
+  /** variant sheet; looked up live so realtime changes (sold out, prices) show up while it is open */
+  protected readonly sheetKey = signal<string | null>(null);
+  protected readonly sheetTile = computed<GroupTile | null>(() => {
+    const key = this.sheetKey();
+    if (key === null) return null;
+
+    for (const entries of this.data.catalogByCategory().values()) {
+      const tile = catalogTiles(entries).find(t => t.key === key);
+      if (tile?.kind === 'group') return tile.tile;
+    }
+
+    return null;
+  });
+  protected readonly sheetOpen = computed(() => this.sheetTile() !== null);
 
   protected readonly lines = computed(() => this.cart.lines(this.id()));
 
@@ -101,14 +119,13 @@ export class OrderPage {
     const products = this.data.productById();
     const categories = this.data.categoryById();
     const printers = this.data.printersByCategory();
+    const rank = this.data.productRank();
     const groups = new Map<string, ReviewGroup>();
 
     const lines = this.lines()
       .map(line => ({ line, product: products.get(line.productId) }))
       .filter((l): l is { line: CartLine; product: Product } => !!l.product)
-      .sort((a, b) =>
-        (categories.get(a.product.category)?.ordering ?? 0) - (categories.get(b.product.category)?.ordering ?? 0)
-        || a.product.ordering - b.product.ordering);
+      .sort((a, b) => (rank.get(a.product.id) ?? 0) - (rank.get(b.product.id) ?? 0));
 
     lines.forEach(({ line, product }) => {
       const names = printers.get(product.category) ?? [];
@@ -137,12 +154,15 @@ export class OrderPage {
   });
 
   protected readonly reviewOpen = signal(false);
+  /** name of the variant added last via the sheet (feedback, the sheet closes right away) */
+  protected readonly lastAdded = signal<string | null>(null);
   protected readonly editingKey = signal<string | null>(null);
   private editingProduct: number | null = null;
   protected readonly noteDraft = signal('');
   protected readonly orderNoteOpen = signal(false);
   protected readonly sending = signal(false);
 
+  private lastAddedTimer: ReturnType<typeof setTimeout> | undefined;
   private touchStartX = 0;
   private touchStartY = 0;
 
@@ -164,12 +184,47 @@ export class OrderPage {
   // ---------- product grid ----------
 
   protected tap(product: Product): void {
-    if (!product.available) {
+    if (!product.available || product.archived) {
       this.notify.warn(`${ product.name } ist ausverkauft`);
       return;
     }
 
     this.cart.add(this.id(), product.id, 1);
+  }
+
+  protected openSheet(key: string): void {
+    this.sheetKey.set(key);
+  }
+
+  protected closeSheet(): void {
+    this.sheetKey.set(null);
+  }
+
+  /** variant tapped in the sheet: +1 and close (sold out keeps the sheet open) */
+  protected pickVariant(product: Product): void {
+    if (!product.available || product.archived) {
+      this.notify.warn(`${ product.name } ist ausverkauft`);
+      return;
+    }
+
+    this.cart.add(this.id(), product.id, 1);
+    this.lastAdded.set(product.name);
+    clearTimeout(this.lastAddedTimer);
+    this.lastAddedTimer = setTimeout(() => this.lastAdded.set(null), 2500);
+    this.closeSheet();
+  }
+
+  protected minusVariant(product: Product): void {
+    this.cart.add(this.id(), product.id, -1);
+  }
+
+  protected tileQty(tile: GroupTile): number {
+    const qty = this.qtyByProduct();
+    return tile.variants.reduce((s, v) => s + (qty.get(v.product.id) ?? 0), 0);
+  }
+
+  protected tileSoldOut(tile: GroupTile): boolean {
+    return tile.variants.every(v => !v.product.available);
   }
 
   protected minus(product: Product, event?: Event): void {
@@ -209,7 +264,7 @@ export class OrderPage {
     if (amount > line.amount) {
       const product = this.data.productById().get(line.productId);
 
-      if (product && !product.available) {
+      if (product && (!product.available || product.archived)) {
         this.notify.warn(`${ product.name } ist ausverkauft`);
         return;
       }
@@ -280,7 +335,7 @@ export class OrderPage {
     const products = this.data.productById();
     const soldOut = this.lines()
       .map(l => products.get(l.productId))
-      .filter((p): p is Product => !!p && !p.available);
+      .filter((p): p is Product => !!p && (!p.available || p.archived));
 
     if (soldOut.length > 0) {
       const names = [ ...new Set(soldOut.map(p => p.name)) ].join(', ');

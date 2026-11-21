@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { ToggleSwitchModule } from 'primeng/toggleswitch';
@@ -12,7 +12,9 @@ import { ConfirmationService } from 'primeng/api';
 import { DataService } from '../../../services/data.service';
 import { NotifyService } from '../../../services/notify.service';
 import { eur } from '../../../utils/format';
-import { Category, Product } from '../../../models/models';
+import { Category, Product, ProductGroup } from '../../../models/models';
+import { CatalogEntry } from '../../../services/data.service';
+import { priceRange } from '../../../utils/groups';
 
 @Component({
   selector: 'app-admin-products',
@@ -57,36 +59,107 @@ import { Category, Product } from '../../../models/models';
       </div>
 
       <main class="page-main">
-        <div class="card">
-          @for (p of list(); track p.id) {
-            <div class="row">
-              <a class="row-link" [routerLink]="['/admin/products', p.id]" [attr.aria-label]="p.name + ' bearbeiten'">
-                <span class="row-main">
-                  <span class="row-title" [class.strike]="!p.available">{{ p.name }}</span>
-                  <span class="row-sub">
-                    {{ eur(p.price) }}
-                    @if (search()) { · {{ data.categoryById().get(p.category)?.name }} }
-                    @if (!p.available) { · <span class="soldout">Ausverkauft</span> }
+        @if (search()) {
+          <div class="card">
+            @for (p of searchResults(); track p.id) {
+              @let g = p.product_group !== null ? data.groupById().get(p.product_group) : undefined;
+              <div class="row">
+                <a class="row-link" [routerLink]="g ? ['/admin/groups', g.id] : ['/admin/products', p.id]"
+                   [attr.aria-label]="(g ? 'Gruppe ' + g.name : p.name) + ' bearbeiten'">
+                  <span class="row-main">
+                    <span class="row-title" [class.strike]="!p.available">{{ p.name }}</span>
+                    <span class="row-sub">
+                      {{ eur(p.price) }} · {{ data.categoryById().get(p.category)?.name }}
+                      @if (g) { · Gruppe {{ g.name }} }
+                      @if (!p.available) { · <span class="soldout">Ausverkauft</span> }
+                    </span>
                   </span>
-                </span>
-              </a>
-              <p-toggleswitch [ngModel]="p.available" (ngModelChange)="toggleAvailable(p, $event)"
-                              [ariaLabel]="p.name + ' verfügbar'" />
-            </div>
-          } @empty {
-            <div class="empty">
-              <i class="pi pi-box" aria-hidden="true"></i>
-              <strong>{{ search() ? 'Nichts gefunden' : 'Keine Produkte in dieser Kategorie' }}</strong>
-            </div>
-          }
-        </div>
-        <p class="footer-hint">Schalter = verfügbar / ausverkauft</p>
+                </a>
+                <p-toggleswitch [ngModel]="p.available" (ngModelChange)="toggleAvailable(p, $event)"
+                                [ariaLabel]="p.name + ' verfügbar'" />
+              </div>
+            } @empty {
+              <div class="empty">
+                <i class="pi pi-box" aria-hidden="true"></i>
+                <strong>Nichts gefunden</strong>
+              </div>
+            }
+          </div>
+        } @else {
+          <div class="card">
+            @for (e of entries(); track e.key) {
+              @if (e.kind === 'group') {
+                @let open = expanded().has(e.group.id);
+                <div class="row group-row">
+                  <button type="button" class="row-link" (click)="toggleExpanded(e.group.id)" [attr.aria-expanded]="open"
+                          [attr.aria-label]="e.group.name + ', ' + e.variants.length + ' Varianten, ' + (open ? 'zuklappen' : 'aufklappen')">
+                    <span class="group-icon" aria-hidden="true"><i class="pi pi-th-large"></i></span>
+                    <span class="row-main">
+                      <span class="row-title">{{ e.group.name }}</span>
+                      <span class="row-sub">{{ groupDetail(e.group) }}</span>
+                    </span>
+                    <span class="group-meta">
+                      <span class="group-price">{{ e.range }}</span>
+                      <span class="group-count">{{ e.variants.length }} {{ e.variants.length === 1 ? 'Variante' : 'Varianten' }}{{ e.soldOut ? ' · ' + e.soldOut + ' aus' : '' }}</span>
+                    </span>
+                    <i class="pi chev" [class.pi-chevron-down]="!open" [class.pi-chevron-up]="open" aria-hidden="true"></i>
+                  </button>
+                  <a class="icon-btn edit" [routerLink]="['/admin/groups', e.group.id]" [attr.aria-label]="'Gruppe ' + e.group.name + ' bearbeiten'">
+                    <i class="pi pi-pencil" aria-hidden="true"></i>
+                  </a>
+                </div>
+                @if (open) {
+                  @for (v of e.variants; track v.product.id) {
+                    <div class="row variant-row">
+                      <span class="row-main">
+                        <span class="row-title" [class.strike]="!v.product.available">{{ v.product.name }}</span>
+                        <span class="row-sub">
+                          {{ eur(v.product.price) }}
+                          @if (!v.product.available) { · <span class="soldout">Ausverkauft</span> }
+                        </span>
+                      </span>
+                      <p-toggleswitch [ngModel]="v.product.available" (ngModelChange)="toggleAvailable(v.product, $event)"
+                                      [ariaLabel]="v.product.name + ' verfügbar'" />
+                    </div>
+                  } @empty {
+                    <div class="row variant-row"><span class="row-sub">Keine aktiven Varianten – Gruppe bearbeiten.</span></div>
+                  }
+                }
+              } @else {
+                <div class="row">
+                  <a class="row-link" [routerLink]="['/admin/products', e.product.id]" [attr.aria-label]="e.product.name + ' bearbeiten'">
+                    <span class="row-main">
+                      <span class="row-title" [class.strike]="!e.product.available">{{ e.product.name }}</span>
+                      <span class="row-sub">
+                        {{ eur(e.product.price) }}
+                        @if (!e.product.available) { · <span class="soldout">Ausverkauft</span> }
+                      </span>
+                    </span>
+                  </a>
+                  <p-toggleswitch [ngModel]="e.product.available" (ngModelChange)="toggleAvailable(e.product, $event)"
+                                  [ariaLabel]="e.product.name + ' verfügbar'" />
+                </div>
+              }
+            } @empty {
+              <div class="empty">
+                <i class="pi pi-box" aria-hidden="true"></i>
+                <strong>Keine Produkte in dieser Kategorie</strong>
+              </div>
+            }
+          </div>
+        }
+        <p class="footer-hint">Schalter = verfügbar / ausverkauft · Gruppe antippen = Varianten zeigen</p>
       </main>
 
       <footer class="page-footer">
-        <a class="cta dark" routerLink="/admin/products/new" [queryParams]="{ category: active() }">
-          <i class="pi pi-plus" aria-hidden="true"></i> Neues Produkt
-        </a>
+        <div class="new-actions">
+          <a class="btn-ghost new-btn" routerLink="/admin/products/new" [queryParams]="{ category: active() }">
+            <i class="pi pi-plus" aria-hidden="true"></i> Einzelprodukt
+          </a>
+          <a class="cta dark new-btn" routerLink="/admin/groups/new" [queryParams]="{ category: active() }">
+            <i class="pi pi-plus" aria-hidden="true"></i> Gruppe
+          </a>
+        </div>
       </footer>
     </div>
 
@@ -98,12 +171,12 @@ import { Category, Product } from '../../../models/models';
           <input pInputText id="cat-name" name="name" [(ngModel)]="categoryName" required autocomplete="off" [pAutoFocus]="true">
         </div>
         @if (editing(); as cat) {
-          @let count = data.productsByCategory().get(cat.id)?.length ?? 0;
+          @let count = categoryUsage(cat.id);
           <button type="button" class="btn-ghost danger" (click)="deleteCategory(cat)" [disabled]="count > 0">
             <i class="pi pi-trash" aria-hidden="true"></i> Kategorie löschen
           </button>
           @if (count > 0) {
-            <span class="hint">Nur leere Kategorien können gelöscht werden ({{ count }} Produkte).</span>
+            <span class="hint">Nur leere Kategorien können gelöscht werden ({{ count }} Produkte/Gruppen).</span>
           }
         }
       </form>
@@ -129,6 +202,18 @@ import { Category, Product } from '../../../models/models';
     .dialog-form { display: flex; flex-direction: column; gap: 14px; }
     .hint { font-size: 13px; color: var(--os-muted); }
     .card { flex-shrink: 0; }
+    button.row-link { border: none; background: transparent; padding: 0; text-align: left; gap: 10px; cursor: pointer; font: inherit; color: inherit; }
+    .group-row { padding-right: 8px; }
+    .group-row .row-title, .group-row .row-sub { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .group-icon { width: 40px; height: 40px; flex-shrink: 0; border-radius: 12px; background: var(--os-primary-soft); color: var(--os-on-primary-soft); display: flex; align-items: center; justify-content: center; }
+    .group-meta { display: flex; flex-direction: column; align-items: flex-end; gap: 3px; flex-shrink: 0; }
+    .group-price { font-size: 14px; font-weight: 600; white-space: nowrap; }
+    .group-count { font-size: 12px; font-weight: 700; color: var(--os-on-primary-soft); background: var(--os-primary-soft); padding: 2px 8px; border-radius: 10px; white-space: nowrap; }
+    .chev { color: var(--os-faint); font-size: 14px; }
+    .edit { flex-shrink: 0; }
+    .variant-row { padding-left: 32px; background: var(--os-card-soft); }
+    .new-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+    .new-btn { height: 56px; border-radius: 16px; font-size: 16px; }
   `
 })
 export class ProductsPage {
@@ -139,7 +224,12 @@ export class ProductsPage {
 
   protected readonly eur = eur;
   protected readonly search = signal('');
-  protected readonly selected = signal<number | null>(null);
+  /** ?category= (e.g. after saving a group) */
+  public readonly categoryParam = input<string | undefined>(undefined, { alias: 'category' });
+  protected readonly selected = linkedSignal<number | null>(() => {
+    const id = Number(this.categoryParam());
+    return this.categoryParam() && Number.isFinite(id) ? id : null;
+  });
 
   protected readonly active = computed(() => {
     const cats = this.data.categories();
@@ -148,15 +238,58 @@ export class ProductsPage {
 
   protected readonly activeCategory = computed(() => this.data.categoryById().get(this.active() ?? -1) ?? null);
 
-  protected readonly list = computed(() => {
+  /** visible products incl. variants; a group name matches all its variants */
+  protected readonly searchResults = computed(() => {
     const q = this.search().trim().toLowerCase();
+    const groups = this.data.groupById();
 
-    if (q) {
-      return this.data.products().filter(p => p.name.toLowerCase().includes(q));
-    }
-
-    return this.data.productsByCategory().get(this.active() ?? -1) ?? [];
+    return this.data.products().filter(p => p.name.toLowerCase().includes(q)
+      || (p.product_group !== null && (groups.get(p.product_group)?.name.toLowerCase().includes(q) ?? false)));
   });
+
+  /** single products and groups of the active category (groups without active variants too) */
+  protected readonly entries = computed(() => {
+    const category = this.active() ?? -1;
+    const catalog = this.data.catalogByCategory().get(category) ?? [];
+    const shown = new Set(catalog.flatMap(e => e.kind === 'group' ? [ e.group.id ] : []));
+    const empty: CatalogEntry[] = this.data.groups()
+      .filter(g => g.category === category && !shown.has(g.id))
+      .map(group => ({ kind: 'group', ordering: group.ordering, group, variants: [] }));
+
+    return [ ...catalog, ...empty ].map(e => e.kind === 'product'
+      ? { ...e, key: `p${ e.product.id }` }
+      : {
+        ...e,
+        key: `g${ e.group.id }`,
+        range: priceRange(e.variants.map(v => v.product), eur),
+        soldOut: e.variants.filter(v => !v.product.available).length
+      });
+  });
+
+  protected readonly expanded = signal<Set<number>>(new Set());
+
+  protected toggleExpanded(id: number): void {
+    this.expanded.update(set => {
+      const next = new Set(set);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  }
+
+  /** "Apfel, Orange, Johannis · Leitung / Mineral · 0,25l / 0,5l" */
+  protected groupDetail(group: ProductGroup): string {
+    return group.attributes.map(a => a.values.join(a.values.length > 2 ? ', ' : ' / ')).join(' · ');
+  }
+
+  /** products + groups that still use the category */
+  protected categoryUsage(id: number): number {
+    // archived products count too: they keep the category for revenue / open items
+    return this.data.productStore.items().filter(p => p.category === id).length + this.data.groups().filter(g => g.category === id).length;
+  }
 
   // category dialog
   protected readonly dialogOpen = signal(false);

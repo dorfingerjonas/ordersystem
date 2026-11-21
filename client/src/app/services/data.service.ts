@@ -11,10 +11,37 @@ import {
   OrderedProduct,
   PrintJob,
   Product,
+  ProductGroup,
   Table
 } from '../models/models';
 import { AuthService } from './auth.service';
 import { byOrdering, cents, naturalCompare } from '../utils/format';
+import { ActiveVariant, GroupShape, GroupTile, groupTiles, planGroupSave, valuesOf } from '../utils/groups';
+
+/** one entry on the order screen / admin list: a single product or a whole group */
+export type CatalogEntry =
+  | { kind: 'product'; ordering: number; product: Product }
+  | { kind: 'group'; ordering: number; group: ProductGroup; variants: ActiveVariant[] };
+
+/** tile on the order screen / pay picker: a single product or (a part of) a group */
+export type OrderTile =
+  | { kind: 'product'; key: string; product: Product }
+  | { kind: 'group'; key: string; tile: GroupTile };
+
+export function catalogTiles(entries: CatalogEntry[]): OrderTile[] {
+  return entries.flatMap<OrderTile>(entry => entry.kind === 'product'
+    ? [ { kind: 'product', key: `p${ entry.product.id }`, product: entry.product } ]
+    : groupTiles(entry.group, entry.variants).map(tile => ({ kind: 'group' as const, key: `g${ tile.key }`, tile })));
+}
+
+const normalizeGroup =(g: ProductGroup): ProductGroup => ({
+  ...g,
+  attributes: Array.isArray(g.attributes) ? g.attributes.map(a => ({ ...a, values: Array.isArray(a.values) ? a.values : [] })) : [],
+  prices: g.prices && typeof g.prices === 'object' ? g.prices : {},
+  surcharges: g.surcharges && typeof g.surcharges === 'object' ? g.surcharges : {},
+  excluded: Array.isArray(g.excluded) ? g.excluded : [],
+  prefix_name: g.prefix_name === true
+});
 
 type Id = number | string;
 
@@ -26,7 +53,7 @@ class Store<T extends { id: Id }> {
 
   public readonly error = signal<unknown>(null);
 
-  constructor(public readonly relation: string, private readonly map: (row: T) => T = row => row) {
+  constructor(public readonly relation: string, public readonly map: (row: T) => T = row => row) {
   }
 
   public async load(): Promise<void> {
@@ -106,13 +133,20 @@ export class DataService {
   public readonly tableStore = new Store<Table>('tables');
   public readonly categoryStore = new Store<Category>('category');
   // `available` is null/undefined until the migration ran -> treat as available
-  public readonly productStore = new Store<Product>('product', p => ({ ...p, available: p.available !== false }));
+  public readonly productStore = new Store<Product>('product', p => ({
+    ...p,
+    available: p.available !== false,
+    archived: p.archived === true,
+    product_group: p.product_group ?? null,
+    variant: p.variant ?? null
+  }));
+  public readonly productGroupStore = new Store<ProductGroup>('product_group', normalizeGroup);
   public readonly deviceStore = new Store<Device>('device');
   public readonly infrastructureStore = new Store<Infrastructure>('infrastructure');
   public readonly orderedStore = new Store<OrderedProduct>('ordered_product');
 
   private readonly stores: Store<any>[] = [
-    this.areaStore, this.tableStore, this.categoryStore, this.productStore,
+    this.areaStore, this.tableStore, this.categoryStore, this.productStore, this.productGroupStore,
     this.deviceStore, this.infrastructureStore, this.orderedStore
   ];
 
@@ -128,10 +162,14 @@ export class DataService {
   public readonly areas = computed(() => [ ...this.areaStore.items() ].sort(byOrdering));
   public readonly categories = computed(() => [ ...this.categoryStore.items() ].sort(byOrdering));
   public readonly tables = computed(() => [ ...this.tableStore.items() ].sort(byOrdering));
-  public readonly products = computed(() => [ ...this.productStore.items() ].sort(byOrdering));
+  /** all visible products (archived variants are left out), incl. variants of groups */
+  public readonly products = computed(() => this.productStore.items().filter(p => !p.archived).sort(byOrdering));
+  public readonly groups = computed(() => [ ...this.productGroupStore.items() ].sort(byOrdering));
 
   public readonly tableById = computed(() => new Map(this.tableStore.items().map(t => [ t.id, t ])));
+  /** ALL products incl. archived ones – needed for open items and revenue */
   public readonly productById = computed(() => new Map(this.productStore.items().map(p => [ p.id, p ])));
+  public readonly groupById = computed(() => new Map(this.productGroupStore.items().map(g => [ g.id, g ])));
   public readonly categoryById = computed(() => new Map(this.categoryStore.items().map(c => [ c.id, c ])));
   public readonly deviceById = computed(() => new Map(this.deviceStore.items().map(d => [ d.id, d ])));
 
@@ -146,6 +184,98 @@ export class DataService {
 
     return map;
   });
+
+  /** group id -> all its products (incl. archived) */
+  public readonly productsByGroup = computed(() => {
+    const map = new Map<number, Product[]>();
+
+    this.productStore.items().forEach(p => {
+      if (p.product_group === null) return;
+      if (!map.has(p.product_group)) map.set(p.product_group, []);
+      map.get(p.product_group)!.push(p);
+    });
+
+    return map;
+  });
+
+  /**
+   * Category -> single products and groups, sorted like on the order screen.
+   * A variant whose group is unknown (deleted / not loaded) or that doesn't
+   * match its group anymore is shown as a single product so it never gets lost.
+   */
+  public readonly catalogByCategory = computed(() => {
+    const groups = this.groupById();
+    const map = new Map<number, CatalogEntry[]>();
+    const variantsByGroup = new Map<number, ActiveVariant[]>();
+
+    const push = (category: number, entry: CatalogEntry) => {
+      if (!map.has(category)) map.set(category, []);
+      map.get(category)!.push(entry);
+    };
+
+    this.categories().forEach(c => map.set(c.id, []));
+
+    this.products().forEach(product => {
+      const group = product.product_group !== null ? groups.get(product.product_group) : undefined;
+      const values = group ? valuesOf(group.attributes, product) : null;
+
+      if (group && values) {
+        if (!variantsByGroup.has(group.id)) variantsByGroup.set(group.id, []);
+        variantsByGroup.get(group.id)!.push({ product, values });
+      } else {
+        push(product.category, { kind: 'product', ordering: product.ordering, product });
+      }
+    });
+
+    this.groups().forEach(group => {
+      const variants = variantsByGroup.get(group.id) ?? [];
+      const index = (values: string[]) => values.map((v, i) => group.attributes[i].values.indexOf(v));
+
+      variants.sort((a, b) => {
+        const ia = index(a.values);
+        const ib = index(b.values);
+        return ia.reduce((r, v, i) => r || v - ib[i], 0);
+      });
+
+      if (variants.length > 0) {
+        push(group.category, { kind: 'group', ordering: group.ordering, group, variants });
+      }
+    });
+
+    map.forEach(entries => entries.sort((a, b) =>
+      a.ordering - b.ordering
+      || (a.kind === b.kind ? 0 : a.kind === 'group' ? 1 : -1)
+      || (a.kind === 'product' ? a.product.id : a.group.id) - (b.kind === 'product' ? b.product.id : b.group.id)));
+
+    return map;
+  });
+
+  /** product id -> position like on the order screen (for sorting lists of ordered/open items) */
+  public readonly productRank = computed(() => {
+    const rank = new Map<number, number>();
+    let i = 0;
+
+    this.categories().forEach(c => (this.catalogByCategory().get(c.id) ?? []).forEach(entry => {
+      if (entry.kind === 'product') {
+        rank.set(entry.product.id, i++);
+      } else {
+        entry.variants.forEach(v => rank.set(v.product.id, i++));
+      }
+    }));
+
+    // archived / unknown category: behind everything else
+    [ ...this.productStore.items() ].sort(byOrdering).forEach(p => {
+      if (!rank.has(p.id)) rank.set(p.id, i++);
+    });
+
+    return rank;
+  });
+
+  /** next free ordering number (products and groups share one order per category) */
+  public nextOrdering(): number {
+    const all = [ ...this.productStore.items().map(p => p.ordering), ...this.productGroupStore.items().map(g => g.ordering) ];
+    return all.length ? Math.max(...all.map(o => o ?? 0)) + 1 : 1;
+  }
 
   /** areas with their tables; tables without area end up in "Weitere Tische" */
   public readonly tablesByArea = computed(() => {
@@ -332,8 +462,9 @@ export class DataService {
 
     if (error) throw error;
 
-    store.upsertLocal(data as T);
-    return data as T;
+    const saved = store.map(data as T);
+    store.upsertLocal(saved);
+    return saved;
   }
 
   public async update<T extends { id: Id }>(store: Store<T>, id: Id, patch: Partial<T>): Promise<T> {
@@ -341,8 +472,9 @@ export class DataService {
 
     if (error) throw error;
 
-    store.upsertLocal(data as T);
-    return data as T;
+    const saved = store.map(data as T);
+    store.upsertLocal(saved);
+    return saved;
   }
 
   public async remove<T extends { id: Id }>(store: Store<T>, id: Id): Promise<void> {
@@ -374,6 +506,109 @@ export class DataService {
     if (failed?.error) throw failed.error;
 
     store.upsertLocal(...changes.map(({ row, ordering }) => ({ ...row, ordering })));
+  }
+
+  // ---------- product groups ----------
+
+  /**
+   * Creates / updates a group and makes the product table match it:
+   * new variants are inserted, changed ones updated, removed / switched off
+   * ones archived (never deleted -> revenue and open items stay intact).
+   * Not atomic, but idempotent: saving again repairs a half-finished save.
+   */
+  public async saveGroup(id: number | null, draft: GroupShape & { category: number }): Promise<ProductGroup> {
+    const row = {
+      name: draft.name.trim(),
+      category: draft.category,
+      attributes: draft.attributes.map(a => ({ id: a.id, name: a.name.trim(), values: [ ...a.values ] })),
+      prices: draft.prices,
+      surcharges: draft.surcharges,
+      excluded: draft.excluded,
+      prefix_name: draft.prefix_name
+    };
+
+    const group = id === null
+      ? await this.insert(this.productGroupStore, { ...row, ordering: this.nextOrdering() })
+      : await this.update(this.productGroupStore, id, row);
+
+    const existing = this.productsByGroup().get(group.id) ?? [];
+    const plan = planGroupSave(group, existing);
+    const byId = new Map(existing.map(p => [ p.id, p ]));
+
+    if (plan.inserts.length > 0) {
+      const { data, error } = await supabase.from('product')
+        .insert(plan.inserts.map(p => ({ ...p, product_group: group.id })))
+        .select();
+
+      if (error) throw error;
+      this.productStore.upsertLocal(...(data as Product[]).map(this.productStore.map));
+    }
+
+    if (plan.updates.length > 0) {
+      // one request: upsert the full rows (insert path is never taken, the ids exist)
+      const rows = plan.updates.map(u => {
+        const { id: _, ...current } = byId.get(u.id)!;
+        return { ...current, ...u.patch, id: u.id };
+      });
+      const { data, error } = await supabase.from('product').upsert(rows).select();
+
+      if (error) throw error;
+      this.productStore.upsertLocal(...(data as Product[]).map(this.productStore.map));
+    }
+
+    if (plan.archive.length > 0) {
+      const { data, error } = await supabase.from('product').update({ archived: true }).in('id', plan.archive).select();
+
+      if (error) throw error;
+      this.productStore.upsertLocal(...(data as Product[]).map(this.productStore.map));
+    }
+
+    return group;
+  }
+
+  /** deletes a group; its products are archived (kept for revenue / open items) */
+  public async deleteGroup(group: ProductGroup): Promise<void> {
+    const ids = (this.productsByGroup().get(group.id) ?? []).filter(p => !p.archived).map(p => p.id);
+
+    if (ids.length > 0) {
+      const { data, error } = await supabase.from('product').update({ archived: true }).in('id', ids).select();
+
+      if (error) throw error;
+      this.productStore.upsertLocal(...(data as Product[]).map(this.productStore.map));
+    }
+
+    await this.remove(this.productGroupStore, group.id);
+  }
+
+  /** writes a new order of single products and groups of one category (shared ordering numbers) */
+  public async saveCatalogOrdering(entries: ({ kind: 'product'; id: number } | { kind: 'group'; id: number })[]): Promise<void> {
+    const products = this.productById();
+    const groups = this.groupById();
+    const rows = entries
+      .map(e => ({ e, ordering: e.kind === 'product' ? products.get(e.id)?.ordering : groups.get(e.id)?.ordering }))
+      .filter((r): r is { e: typeof entries[number]; ordering: number } => r.ordering !== undefined);
+
+    const current = rows.map(r => r.ordering).sort((a, b) => a - b);
+    const values = new Set(current).size === current.length ? current : rows.map((_, i) => i + 1);
+
+    const changes = rows
+      .map((r, i) => ({ ...r, next: values[i] }))
+      .filter(r => r.ordering !== r.next);
+
+    const results = await Promise.all(changes.map(c =>
+      supabase.from(c.e.kind === 'product' ? 'product' : 'product_group').update({ ordering: c.next }).eq('id', c.e.id)));
+
+    const failed = results.find(r => r.error);
+
+    if (failed?.error) throw failed.error;
+
+    changes.forEach(c => {
+      if (c.e.kind === 'product') {
+        this.productStore.upsertLocal({ ...products.get(c.e.id)!, ordering: c.next });
+      } else {
+        this.productGroupStore.upsertLocal({ ...groups.get(c.e.id)!, ordering: c.next });
+      }
+    });
   }
 
   // ---------- domain writes ----------

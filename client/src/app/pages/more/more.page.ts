@@ -45,7 +45,7 @@ import { eur } from '../../utils/format';
             <span class="nav-icon"><i class="pi pi-box" aria-hidden="true"></i></span>
             <span class="row-main">
               <span class="row-title">Produkte & Kategorien</span>
-              <span class="row-sub">{{ data.products().length }} Produkte · {{ data.categories().length }} Kategorien{{ soldOut() ? ' · ' + soldOut() + ' ausverkauft' : '' }}</span>
+              <span class="row-sub">{{ data.products().length }} Produkte{{ data.groups().length ? ' · ' + data.groups().length + ' Gruppen' : '' }} · {{ data.categories().length }} Kategorien{{ soldOut() ? ' · ' + soldOut() + ' ausverkauft' : '' }}</span>
             </span>
             <i class="pi pi-chevron-right chev" aria-hidden="true"></i>
           </a>

@@ -1,0 +1,240 @@
+<div class="screen">
+  <header class="page-header">
+    <button type="button" class="icon-btn" (click)="back()" aria-label="Zurück zu den Produkten">
+      <i class="pi pi-chevron-left" aria-hidden="true"></i>
+    </button>
+    <div class="titles">
+      <h1>{{ isNew() ? 'Neue Produktgruppe' : (name() || 'Produktgruppe') }}</h1>
+      <span class="subtitle">Produktgruppe{{ categoryName() ? ' · ' + categoryName() : '' }}{{ printers().length ? ' · ' + printers().join(', ') : '' }}</span>
+    </div>
+  </header>
+
+  <main class="page-main">
+    <!-- 0 · general -->
+    <section class="card sec">
+      <div class="field">
+        <label for="gname">Name der Gruppe</label>
+        <input pInputText id="gname" type="text" autocomplete="off" placeholder="z. B. Saft gespritzt"
+               [value]="name()" (input)="setName($any($event.target).value)">
+      </div>
+
+      <fieldset class="field">
+        <legend class="label">Kategorie</legend>
+        <div class="chips">
+          @for (c of data.categories(); track c.id) {
+            <button type="button" class="chip" [attr.aria-pressed]="c.id === category()" (click)="setCategory(c.id)">{{ c.name }}</button>
+          }
+        </div>
+        @if (category() !== null && printers().length === 0) {
+          <span class="hint warn-text"><i class="pi pi-print" aria-hidden="true"></i> Für diese Kategorie ist kein Drucker eingestellt.</span>
+        }
+      </fieldset>
+
+      <div class="switch-row">
+        <div class="row-main">
+          <span class="row-title">Gruppenname voranstellen</span>
+          <span class="row-sub">{{ example() ? 'Produktname: „' + example() + '“' : 'z. B. „Mineral 0,5l“ statt „0,5l“' }}</span>
+        </div>
+        <p-toggleswitch [ngModel]="prefixName()" (ngModelChange)="setPrefix($event)" ariaLabel="Gruppenname voranstellen" />
+      </div>
+    </section>
+
+    <!-- 1 · attributes -->
+    <section class="card sec">
+      <div class="sec-head">
+        <h2>1 · Merkmale</h2>
+        <span class="sec-note">Reihenfolge = Produktname</span>
+      </div>
+
+      @for (a of attributes(); track a.id; let i = $index; let first = $first; let last = $last) {
+        <div class="attr">
+          <div class="attr-head">
+            <input pInputText type="text" class="attr-name" autocomplete="off" placeholder="Merkmal, z. B. Größe"
+                   [attr.aria-label]="'Name von Merkmal ' + (i + 1)" [value]="a.name" (input)="renameAttribute(a.id, $any($event.target).value)">
+            @if (attributes().length > 1) {
+              <button type="button" class="mini-btn" (click)="moveAttribute(i, -1)" [disabled]="first" [attr.aria-label]="(a.name || 'Merkmal') + ' nach vorne'">
+                <i class="pi pi-arrow-up" aria-hidden="true"></i>
+              </button>
+              <button type="button" class="mini-btn" (click)="moveAttribute(i, 1)" [disabled]="last" [attr.aria-label]="(a.name || 'Merkmal') + ' nach hinten'">
+                <i class="pi pi-arrow-down" aria-hidden="true"></i>
+              </button>
+              <button type="button" class="mini-btn danger" (click)="removeAttribute(a)" [attr.aria-label]="(a.name || 'Merkmal') + ' entfernen'">
+                <i class="pi pi-trash" aria-hidden="true"></i>
+              </button>
+            }
+          </div>
+          @if (first && attributes().length > 1) {
+            <span class="attr-hint">Wird beim Bestellen je eine Kachel</span>
+          }
+
+          <div class="values">
+            @for (v of a.values; track v) {
+              <button type="button" class="value" (click)="removeValue(a, v)" [attr.aria-label]="v + ' entfernen'">
+                {{ v }} <i class="pi pi-times" aria-hidden="true"></i>
+              </button>
+            }
+            @if (adding() !== a.id && a.values.length < maxValues) {
+              <button type="button" class="value add" (click)="startAdd(a.id)">+ {{ a.name || 'Wert' }}</button>
+            }
+          </div>
+
+          @if (adding() === a.id) {
+            <div class="add-row">
+              <input pInputText type="text" [id]="'value-input-' + a.id" autocomplete="off" enterkeyhint="done"
+                     [attr.aria-label]="'Neuer Wert für ' + (a.name || 'Merkmal')" placeholder="Neuer Wert"
+                     [value]="valueDraft()" (input)="valueDraft.set($any($event.target).value); valueError.set('')"
+                     (keydown.enter)="confirmAdd(a)" (keydown.escape)="cancelAdd()">
+              <button type="button" class="done-btn" (click)="confirmAdd(a)">Hinzufügen</button>
+              <button type="button" class="mini-btn" (click)="cancelAdd()" aria-label="Fertig mit Hinzufügen">
+                <i class="pi pi-check" aria-hidden="true"></i>
+              </button>
+            </div>
+            @if (valueError()) {
+              <span class="hint warn-text" role="alert">{{ valueError() }}</span>
+            }
+          }
+        </div>
+      }
+
+      @if (attributes().length < maxAttributes) {
+        <button type="button" class="btn-ghost dashed" (click)="addAttribute()">
+          <i class="pi pi-plus" aria-hidden="true"></i> Merkmal hinzufügen
+        </button>
+      }
+    </section>
+
+    <!-- 2 · prices -->
+    @if (priceGrid().rows.length > 0) {
+      <section class="card sec">
+        <div class="sec-head">
+          <h2>2 · Preise</h2>
+          @if (surchargeAttr(); as sa) {
+            <span class="sec-note">gilt für jede {{ sa.name || 'Sorte' }}</span>
+          }
+        </div>
+
+        <div class="price-grid" [style.grid-template-columns]="'minmax(56px, auto) repeat(' + priceGrid().heads.length + ', minmax(0, 1fr))'">
+          <span></span>
+          @for (h of priceGrid().heads; track $index) {
+            <span class="ph">{{ h }}</span>
+          }
+          @for (r of priceGrid().rows; track r.label) {
+            <span class="pr">{{ r.label }}</span>
+            @for (c of r.cells; track c.key) {
+              <label class="money">
+                <input type="text" inputmode="decimal" autocomplete="off" placeholder="–"
+                       [class.bad]="c.invalid || c.required" [attr.aria-label]="'Preis ' + c.label"
+                       [attr.aria-invalid]="c.invalid || c.required"
+                       [value]="c.text" (input)="setPrice(c.key, $any($event.target).value)" (blur)="formatPrice(c.key)">
+                <span aria-hidden="true">€</span>
+              </label>
+            }
+          }
+        </div>
+
+        <div class="bulk">
+          <span>Alle Preise ändern</span>
+          <button type="button" class="btn-ghost small" (click)="bulk(-10)">−0,10 €</button>
+          <button type="button" class="btn-ghost small" (click)="bulk(10)">+0,10 €</button>
+        </div>
+
+        @if (surchargeAttr(); as sa) {
+          <div class="surcharge">
+            @if (!showSurcharge()) {
+              <button type="button" class="link-btn" (click)="toggleSurcharge()">+ Aufpreis pro {{ sa.name || 'Wert' }} (optional)</button>
+            } @else {
+              <div class="sur-head">
+                <strong>Aufpreis pro {{ sa.name || 'Wert' }}</strong>
+                <button type="button" class="link-btn soft" (click)="toggleSurcharge()">Ausblenden</button>
+              </div>
+              <span class="hint">Wird auf jeden Preis der Tabelle addiert. Leer = kein Aufpreis.</span>
+              @for (s of surchargeRows(); track s.value) {
+                <div class="sur-row">
+                  <span class="grow">{{ s.value }}</span>
+                  <span class="plus" aria-hidden="true">+</span>
+                  <label class="money sur">
+                    <input type="text" inputmode="decimal" autocomplete="off" placeholder="0,00" [class.bad]="s.invalid"
+                           [attr.aria-label]="'Aufpreis ' + s.value" [attr.aria-invalid]="s.invalid"
+                           [value]="s.text" (input)="setSurcharge(s.value, $any($event.target).value)" (blur)="formatSurcharge(s.value)">
+                    <span aria-hidden="true">€</span>
+                  </label>
+                </div>
+              }
+            }
+          </div>
+        }
+      </section>
+    }
+
+    <!-- 3 · resulting products -->
+    @if (combos().length > 0) {
+      <section class="card">
+        <div class="sec-head pad">
+          <h2>3 · Ergibt {{ activeCount() }} {{ activeCount() === 1 ? 'Produkt' : 'Produkte' }}</h2>
+          <span class="sec-note">antippen = aus/an</span>
+        </div>
+
+        @for (g of comboGroups(); track g.label) {
+          @if (g.label) {
+            <div class="combo-group">
+              <span>{{ g.label }}</span>
+              @if (g.surcharge > 0) {
+                <span class="sur-tag">Aufpreis +{{ eur(g.surcharge / 100) }}</span>
+              }
+            </div>
+          }
+          @for (c of g.combos; track c.key) {
+            <button type="button" class="combo" [class.off]="!c.on" (click)="toggleVariant(c.key)" [attr.aria-pressed]="c.on"
+                    [attr.aria-label]="c.name + (c.on ? ', aktiv' : ', gibt es nicht')">
+              <span class="combo-name">{{ c.name }}
+                @if (c.on && c.isNew) {
+                  <span class="new-tag">neu</span>
+                }
+              </span>
+              @if (!c.on) {
+                <span class="combo-price">gibt es nicht</span>
+              } @else if (c.cents === null) {
+                <span class="combo-price missing">Preis fehlt</span>
+              } @else {
+                <span class="combo-price">{{ eur(c.cents / 100) }}</span>
+              }
+              <span class="switch" aria-hidden="true"><span></span></span>
+            </button>
+          }
+        }
+      </section>
+    }
+
+    @if (nameClashes().length > 0) {
+      <div class="notice" role="status">
+        <i class="pi pi-exclamation-triangle" aria-hidden="true"></i>
+        <span>Name gibt es schon: {{ nameClashes().join(', ') }}. Auf dem Bon schwer zu unterscheiden.</span>
+      </div>
+    }
+
+    @if (!isNew()) {
+      <button type="button" class="btn-ghost danger delete" (click)="remove()">
+        <i class="pi pi-trash" aria-hidden="true"></i> Produktgruppe löschen
+      </button>
+    }
+  </main>
+
+  <footer class="page-footer">
+    @if (error(); as e) {
+      <span class="footer-hint">{{ e }}</span>
+    } @else if (plan(); as p) {
+      @if (!isNew() && (p.inserts.length || p.archive.length)) {
+        <span class="footer-hint">
+          {{ p.inserts.length ? p.inserts.length + ' neu' : '' }}{{ p.inserts.length && p.archive.length ? ' · ' : '' }}{{ p.archive.length ? p.archive.length + ' ausgeblendet' : '' }}
+        </span>
+      }
+    }
+    <button type="button" class="cta" (click)="save()" [disabled]="error() !== null || saving()">
+      @if (saving()) {
+        <i class="pi pi-spin pi-spinner" aria-hidden="true"></i> Speichern …
+      } @else {
+        <i class="pi pi-check" aria-hidden="true"></i> {{ activeCount() }} {{ activeCount() === 1 ? 'Produkt' : 'Produkte' }} speichern
+      }
+    </button>
+  </footer>
+</div>

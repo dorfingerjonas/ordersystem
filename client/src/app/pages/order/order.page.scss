@@ -114,6 +114,26 @@
   }
 }
 
+.tile.group {
+  position: relative;
+
+  .name { padding-right: 26px; }
+  .price { display: flex; align-items: center; gap: 4px; i { font-size: 11px; } }
+
+  &.has {
+    background: var(--os-primary-soft);
+    border: 2px solid var(--os-primary-strong);
+    .name { font-weight: 700; }
+    .price { color: var(--os-text-2); }
+  }
+
+  .gq { position: absolute; top: 8px; right: 8px; }
+}
+
+.footer-hint.added { color: var(--os-on-success-soft); font-weight: 600; }
+
+.sheet-sub { font-size: 14px; color: var(--os-muted); margin: -4px 0 12px; }
+
 .actions { display: flex; gap: 8px; }
 
 .review-btn {

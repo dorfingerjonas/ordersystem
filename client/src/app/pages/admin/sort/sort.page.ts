@@ -41,7 +41,12 @@ type Mode = 'products' | 'categories';
           @for (r of rows(); track r.id; let i = $index; let first = $first; let last = $last) {
             <div class="row" [class.moved]="moved() === r.id">
               <span class="pos">{{ i + 1 }}</span>
-              <span class="row-title grow">{{ r.name }}</span>
+              <span class="row-title grow">
+                {{ r.name }}
+                @if (r.group) {
+                  <span class="group-tag">Gruppe</span>
+                }
+              </span>
               <button type="button" class="step-btn" (click)="move(i, -1)" [disabled]="first" [attr.aria-label]="r.name + ' nach oben'">
                 <i class="pi pi-arrow-up" aria-hidden="true"></i>
               </button>
@@ -80,6 +85,7 @@ type Mode = 'products' | 'categories';
     .grow { flex: 1 1 auto; min-width: 0; }
     .actions { display: flex; gap: 8px; }
     .cancel { height: 60px; border-radius: 16px; padding: 0 20px; }
+    .group-tag { font-size: 11px; font-weight: 700; padding: 2px 6px; border-radius: 8px; background: var(--os-primary-soft); color: var(--os-on-primary-soft); vertical-align: middle; }
   `
 })
 export class SortPage {
@@ -90,11 +96,12 @@ export class SortPage {
 
   protected readonly mode = signal<Mode>('products');
   protected readonly category = signal<number | null>(null);
-  protected readonly moved = signal<number | null>(null);
+  protected readonly moved = signal<number | string | null>(null);
   protected readonly saving = signal(false);
 
   protected readonly categoryOrder = signal<number[]>([]);
-  protected readonly productOrder = signal<Map<number, number[]>>(new Map());
+  /** category -> entry keys ("p12" single product, "g3" group) */
+  protected readonly productOrder = signal<Map<number, string[]>>(new Map());
   protected readonly dirty = signal(false);
 
   protected readonly activeCategory = computed(() => {
@@ -102,14 +109,21 @@ export class SortPage {
     return order.includes(this.category() ?? -1) ? this.category() : order[0] ?? null;
   });
 
-  protected readonly rows = computed(() => {
+  protected readonly rows = computed<{ id: number | string; name: string; group: boolean }[]>(() => {
     if (this.mode() === 'categories') {
       const cats = this.data.categoryById();
-      return this.categoryOrder().map(id => ({ id, name: cats.get(id)?.name ?? '' }));
+      return this.categoryOrder().map(id => ({ id, name: cats.get(id)?.name ?? '', group: false }));
     }
 
     const products = this.data.productById();
-    return (this.productOrder().get(this.activeCategory() ?? -1) ?? []).map(id => ({ id, name: products.get(id)?.name ?? '' }));
+    const groups = this.data.groupById();
+
+    return (this.productOrder().get(this.activeCategory() ?? -1) ?? []).map(key => {
+      const id = Number(key.slice(1));
+      return key.startsWith('g')
+        ? { id: key, name: groups.get(id)?.name ?? '', group: true }
+        : { id: key, name: products.get(id)?.name ?? '', group: false };
+    });
   });
 
   private initialized = false;
@@ -121,7 +135,22 @@ export class SortPage {
       untracked(() => {
         this.initialized = true;
         this.categoryOrder.set(this.data.categories().map(c => c.id));
-        this.productOrder.set(new Map([ ...this.data.productsByCategory().entries() ].map(([ k, v ]) => [ k, v.map(p => p.id) ])));
+        // single products and groups share one order per category (like on the order screen)
+        const order = new Map<number, string[]>();
+
+        this.data.catalogByCategory().forEach((entries, category) => {
+          const shown = new Set(entries.flatMap(e => e.kind === 'group' ? [ e.group.id ] : []));
+          const all = [
+            ...entries,
+            ...this.data.groups()
+              .filter(g => g.category === category && !shown.has(g.id))
+              .map(g => ({ kind: 'group' as const, ordering: g.ordering, group: g, variants: [] }))
+          ].sort((a, b) => a.ordering - b.ordering);
+
+          order.set(category, all.map(e => e.kind === 'product' ? `p${ e.product.id }` : `g${ e.group.id }`));
+        });
+
+        this.productOrder.set(order);
       });
     });
   }
@@ -132,12 +161,12 @@ export class SortPage {
   }
 
   protected move(index: number, delta: number): void {
-    const swap = (list: number[]) => {
+    const swap = <T>(list: T[]) => {
       const next = [ ...list ];
       const j = index + delta;
       if (j < 0 || j >= next.length) return list;
       [ next[index], next[j] ] = [ next[j], next[index] ];
-      this.moved.set(next[j]);
+      this.moved.set(next[j] as number | string);
       return next;
     };
 
@@ -159,12 +188,14 @@ export class SortPage {
 
     try {
       const cats = this.data.categoryById();
-      const products = this.data.productById();
 
       await this.data.saveOrdering(this.data.categoryStore, this.categoryOrder().map(id => cats.get(id)!).filter(Boolean));
 
-      for (const ids of this.productOrder().values()) {
-        await this.data.saveOrdering(this.data.productStore, ids.map(id => products.get(id)!).filter(Boolean));
+      for (const keys of this.productOrder().values()) {
+        await this.data.saveCatalogOrdering(keys.map(key => ({
+          kind: key.startsWith('g') ? 'group' as const : 'product' as const,
+          id: Number(key.slice(1))
+        })));
       }
 
       this.notify.success('Reihenfolge gespeichert', 'Kellner sehen die neue Reihenfolge sofort.');

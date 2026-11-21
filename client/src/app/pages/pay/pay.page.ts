@@ -69,13 +69,11 @@ export class PayPage {
         groups.get(product.id)!.ids.push(o.id);
       });
 
-    const categories = this.data.categoryById();
+    const rank = this.data.productRank();
 
     return [ ...groups.values() ]
       .map(g => ({ ...g, ids: g.ids.sort(), selected: Math.min(selection.get(g.product.id) ?? 0, g.ids.length) }))
-      .sort((a, b) =>
-        (categories.get(a.product.category)?.ordering ?? 0) - (categories.get(b.product.category)?.ordering ?? 0)
-        || a.product.ordering - b.product.ordering);
+      .sort((a, b) => (rank.get(a.product.id) ?? 0) - (rank.get(b.product.id) ?? 0));
   });
 
   protected readonly openCents = computed(() => this.open().reduce((s, g) => s + cents(g.product.price) * g.ids.length, 0));

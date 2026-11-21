@@ -127,6 +127,9 @@ export class ProductEditPage {
         if (this.isNew()) {
           const preselected = Number(this.categoryParam());
           this.category.set(this.data.categoryById().has(preselected) ? preselected : this.data.categories()[0]?.id ?? null);
+        } else if (product && product.product_group !== null && this.data.groupById().has(product.product_group)) {
+          // variants are edited in their group
+          void this.router.navigate([ '/admin/groups', product.product_group ], { replaceUrl: true });
         } else if (product) {
           this.name.set(product.name);
           this.price.set(product.price);
@@ -154,7 +157,7 @@ export class ProductEditPage {
 
     try {
       if (this.isNew()) {
-        await this.data.insert(this.data.productStore, row);
+        await this.data.insert(this.data.productStore, { ...row, ordering: this.data.nextOrdering() });
         this.notify.success(`„${ row.name }“ angelegt`);
       } else {
         await this.data.update(this.data.productStore, this.product()!.id, row);

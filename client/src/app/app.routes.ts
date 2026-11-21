@@ -34,6 +34,7 @@ export const routes: Routes = [
     children: [
       { path: 'products', loadComponent: () => import('./pages/admin/products/products.page').then(m => m.ProductsPage) },
       { path: 'products/:productId', loadComponent: () => import('./pages/admin/product-edit/product-edit.page').then(m => m.ProductEditPage) },
+      { path: 'groups/:groupId', loadComponent: () => import('./pages/admin/group-edit/group-edit.page').then(m => m.GroupEditPage) },
       { path: 'sort', loadComponent: () => import('./pages/admin/sort/sort.page').then(m => m.SortPage) },
       { path: 'tables', loadComponent: () => import('./pages/admin/tables/admin-tables.page').then(m => m.AdminTablesPage) },
       { path: 'printers', loadComponent: () => import('./pages/admin/printers/printers.page').then(m => m.PrintersPage) },

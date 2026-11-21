@@ -38,7 +38,26 @@
 
     <main class="page-main" (touchstart)="onTouchStart($event)" (touchend)="onTouchEnd($event)">
       <div class="grid">
-        @for (p of products(); track p.id) {
+        @for (t of tiles(); track t.key) {
+          @if (t.kind === 'group') {
+            @let gq = tileQty(t.tile);
+            @let gsold = tileSoldOut(t.tile);
+            <button type="button" class="tile group" [class.has]="gq > 0" [class.soldout]="gsold" (click)="openSheet(t.key)"
+                    aria-haspopup="dialog"
+                    [attr.aria-label]="t.tile.title + ', ' + t.tile.variants.length + ' Varianten' + (gsold ? ', ausverkauft' : '') + (gq ? ', ' + gq + ' ausgewählt' : '')">
+              <span class="name">{{ t.tile.title }}</span>
+              @if (gsold) {
+                <span class="soldout-label">Ausverkauft</span>
+              } @else {
+                <span class="price">{{ t.tile.variants.length }} {{ t.tile.variants.length === 1 ? 'Variante' : 'Varianten' }}
+                  <i class="pi pi-chevron-down" aria-hidden="true"></i></span>
+              }
+              @if (gq > 0) {
+                <span class="count-badge gq" aria-hidden="true">{{ gq }}</span>
+              }
+            </button>
+          } @else {
+          @let p = t.product;
           @let qty = qtyByProduct().get(p.id) ?? 0;
           @if (qty > 0) {
             <div class="tile selected">
@@ -64,6 +83,7 @@
               }
             </button>
           }
+          }
         } @empty {
           <div class="empty span">
             <i class="pi pi-box" aria-hidden="true"></i>
@@ -76,7 +96,9 @@
   }
 
   <footer class="page-footer">
-    @if (count() === 0) {
+    @if (lastAdded(); as last) {
+      <p class="footer-hint added" aria-live="polite">+1 {{ last }}</p>
+    } @else if (count() === 0) {
       <p class="footer-hint">Antippen = +1</p>
     }
     <div class="actions">
@@ -101,6 +123,15 @@
     </div>
   </footer>
 </div>
+
+<p-drawer [visible]="sheetOpen()" (visibleChange)="!$event && closeSheet()" position="bottom" [blockScroll]="true"
+          [header]="sheetTile()?.title ?? ''" styleClass="variant-drawer">
+  @if (sheetTile(); as st) {
+    <p class="sheet-sub">Antippen fügt 1 hinzu</p>
+    <app-variant-options [tile]="st" [quantities]="qtyByProduct()" [showMinus]="true"
+                         (pick)="pickVariant($event)" (minus)="minusVariant($event)" />
+  }
+</p-drawer>
 
 <p-drawer [(visible)]="reviewOpen" position="bottom" [blockScroll]="true" header="Bestellung prüfen"
           styleClass="review-drawer">
