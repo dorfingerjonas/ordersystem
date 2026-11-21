@@ -76,7 +76,14 @@ type Mode = 'products' | 'categories';
     </div>
   `,
   styles: `
-    .cat-row { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; padding: 0 16px 12px; flex-shrink: 0; }
+    :host { display: contents; --os-page-max: 760px; }
+    .cat-row { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; padding: 0 var(--os-pad) 12px; flex-shrink: 0; }
+    @media (min-width: 768px) {
+      .cat-row { flex-wrap: wrap; overflow: visible; }
+      .seg { align-self: flex-start; width: 320px; margin-left: var(--os-pad); }
+      .actions .cancel { height: 52px; }
+      .actions .cta { width: auto; min-width: 220px; height: 52px; font-size: 16px; }
+    }
     .cat-row::-webkit-scrollbar { display: none; }
     .chip { flex-shrink: 0; }
     .card { flex-shrink: 0; }

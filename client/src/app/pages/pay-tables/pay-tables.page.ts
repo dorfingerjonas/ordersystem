@@ -71,6 +71,10 @@ import { ReceiptOfferComponent } from '../../components/receipt-offer.component'
     .area { display: flex; flex-direction: column; gap: 8px; }
     .grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
     @media (min-width: 560px) { .grid { grid-template-columns: repeat(5, minmax(0, 1fr)); } }
+    @media (min-width: 768px) {
+      .grid { grid-template-columns: repeat(auto-fill, minmax(128px, 1fr)); gap: 10px; }
+      .table-tile:hover { background: var(--os-primary-softer); }
+    }
     .table-tile {
       height: 76px;
       border-radius: var(--os-radius);

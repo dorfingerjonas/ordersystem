@@ -17,7 +17,14 @@ import { Device, DeviceType, PrinterType } from '../../../models/models';
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './printers.page.html',
   styles: `
+    :host { display: contents; }
     .printer { flex-shrink: 0; }
+    @media (min-width: 768px) {
+      .page-main { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); align-content: start; gap: 16px; }
+      .page-main > p-message, .page-main > .empty { grid-column: 1 / -1; }
+      .printer { display: flex; flex-direction: column; }
+      .p-body { flex: 1 1 auto; }
+    }
     .p-head { padding: 14px 12px 12px 16px; display: flex; align-items: center; gap: 12px; border-bottom: 1px solid var(--os-divider); }
     .p-head .icon-btn { width: 40px; height: 40px; }
     .p-body { padding: 12px 16px 14px; display: flex; flex-direction: column; gap: 10px; }

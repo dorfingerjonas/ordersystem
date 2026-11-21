@@ -17,10 +17,21 @@ import { naturalCompare } from '../../../utils/format';
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './admin-tables.page.html',
   styles: `
+    :host { display: contents; }
     .area { display: flex; flex-direction: column; gap: 8px; flex-shrink: 0; }
     .area-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
     .area-head .icon-btn { width: 40px; height: 40px; }
     .grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+    @media (min-width: 768px) {
+      .grid { grid-template-columns: repeat(auto-fill, minmax(72px, 1fr)); gap: 8px; }
+      .area { gap: 10px; padding: 12px 14px 14px; background: var(--os-card); border: 1px solid var(--os-border); border-radius: var(--os-radius-lg); }
+      .page-main { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); align-content: start; gap: 16px; }
+      .page-main > .empty { grid-column: 1 / -1; }
+      .grid .t:not(.add) { background: var(--os-card-soft); }
+      .t { cursor: pointer; transition: border-color .12s ease, background .12s ease; }
+      .t:hover { border-color: var(--os-primary-strong); background: var(--os-primary-soft); }
+      .t.add:hover { color: var(--os-text); }
+    }
     .t {
       height: 64px;
       border-radius: var(--os-radius);

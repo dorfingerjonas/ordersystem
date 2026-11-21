@@ -58,6 +58,7 @@ import { InstallBannerComponent } from '../../components/install-banner.componen
     .brand img { height: 44px; width: auto; }
     .brand h1 { font-size: 30px; font-weight: 800; letter-spacing: -.5px; }
     .brand p { color: var(--os-muted); font-size: 15px; }
+    @media (min-width: 768px) { .login { width: 100%; max-width: 440px; margin: 0 auto; } }
     .form { padding: 20px 16px; display: flex; flex-direction: column; gap: 16px; }
   `
 })

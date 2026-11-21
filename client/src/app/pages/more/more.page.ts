@@ -40,7 +40,7 @@ import { eur } from '../../utils/format';
           }
         </section>
 
-        <nav class="card" aria-label="Verwaltung">
+        <nav class="card admin-nav" aria-label="Verwaltung">
           <a class="nav-row" routerLink="/admin/products">
             <span class="nav-icon"><i class="pi pi-box" aria-hidden="true"></i></span>
             <span class="row-main">
@@ -104,7 +104,14 @@ import { eur } from '../../utils/format';
     </main>
   `,
   styles: `
-    :host { display: contents; }
+    :host { display: contents; --os-page-max: 960px; }
+    @media (min-width: 768px) {
+      .admin-nav { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); background: transparent; border: none; gap: 12px; overflow: visible; }
+      .admin-nav .nav-row { border: 1px solid var(--os-border); border-radius: var(--os-radius-lg); align-items: flex-start; flex-wrap: wrap; min-height: 120px; padding: 16px; }
+      .admin-nav .nav-row .row-main { flex: 1 1 100%; order: 2; }
+      .admin-nav .nav-row .chev { margin-left: auto; }
+      .page-main .logout { width: auto; align-self: flex-start; padding: 0 24px; }
+    }
     .revenue { padding: 16px; display: flex; flex-direction: column; gap: 12px; flex-shrink: 0; }
     .rev-head { display: flex; justify-content: space-between; align-items: baseline; }
     .rev-head span { font-size: 14px; font-weight: 600; color: var(--os-text-2); }

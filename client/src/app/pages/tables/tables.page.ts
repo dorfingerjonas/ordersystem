@@ -61,6 +61,13 @@ import { CartService } from '../../services/cart.service';
     .area { display: flex; flex-direction: column; gap: 8px; }
     .grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
     @media (min-width: 560px) { .grid { grid-template-columns: repeat(6, minmax(0, 1fr)); } }
+    @media (min-width: 768px) {
+      .page-main { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); align-content: start; column-gap: 24px; row-gap: 20px; }
+      .page-main > .empty { grid-column: 1 / -1; }
+      .grid { grid-template-columns: repeat(auto-fill, minmax(76px, 1fr)); gap: 10px; }
+      .area { gap: 10px; }
+      .table-tile:hover { border-color: var(--os-primary-strong); }
+    }
 
     .table-tile {
       position: relative;

@@ -60,6 +60,8 @@ import { VariantOptionsComponent } from './variant-options.component';
     :host { display: flex; flex-direction: column; }
     .seg { margin: 0 0 12px; }
     .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+    @media (min-width: 560px) { .grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+    @media (min-width: 768px) { .grid { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
     .span { grid-column: 1 / -1; }
     .tile {
       position: relative;
