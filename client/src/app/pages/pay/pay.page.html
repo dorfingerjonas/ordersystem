@@ -7,7 +7,6 @@
     <div class="titles">
       @if (direct()) {
         <h1>Direktverkauf</h1>
-        <span class="subtitle">Ohne Tisch · ohne Bon · sofort bezahlt</span>
       } @else {
         <h1>Tisch {{ table()?.nr ?? '…' }} kassieren</h1>
         <span class="subtitle">Offen am Tisch {{ eur(openCents() / 100) }}</span>

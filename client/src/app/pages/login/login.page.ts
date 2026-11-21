@@ -1,10 +1,10 @@
 import { ChangeDetectionStrategy, Component, inject, input, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { InputTextModule } from 'primeng/inputtext';
-import { PasswordModule } from 'primeng/password';
 import { ButtonModule } from 'primeng/button';
+import { InputTextModule } from 'primeng/inputtext';
 import { MessageModule } from 'primeng/message';
+import { PasswordModule } from 'primeng/password';
 import { AuthService } from '../../services/auth.service';
 import { NotifyService } from '../../services/notify.service';
 
@@ -17,7 +17,7 @@ import { NotifyService } from '../../services/notify.service';
       <main class="page-main login">
         <div class="brand">
           <img src="assets/images/ordersystem-clipped.svg" alt="" aria-hidden="true">
-          <h1>Ordersystem</h1>
+          <h1></h1>
           <p>Melde dich an, um Bestellungen aufzunehmen.</p>
         </div>
 
