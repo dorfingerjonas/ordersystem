@@ -128,19 +128,21 @@ export interface GroupSavePlan {
  */
 export function planGroupSave(
   group: GroupShape & { category: number; ordering: number },
-  existing: Product[]
+  existing: Product[],
+  renames: ValueRenames = {}
 ): GroupSavePlan {
   const excluded = new Set(group.excluded);
   const active = combinations(group.attributes).filter(c => !excluded.has(c.key));
 
   const byKey = new Map<string, Product>();
 
-  // prefer non-archived rows if there are duplicates for the same variant
+  // prefer non-archived rows if there are duplicates for the same variant;
+  // renamed values are applied first so the product (id, revenue, sold out) is kept
   [ ...existing ]
     .sort((a, b) => Number(a.archived) - Number(b.archived) || a.id - b.id)
     .forEach(p => {
       if (!p.variant) return;
-      const key = variantKey(p.variant);
+      const key = variantKey(renameVariant(p.variant, renames));
       if (!byKey.has(key)) byKey.set(key, p);
     });
 
@@ -165,6 +167,7 @@ export function planGroupSave(
       if (Math.round(product.price * 100) !== Math.round(price * 100)) patch.price = price;
       if (product.category !== group.category) patch.category = group.category;
       if (product.archived) patch.archived = false;
+      if (!product.variant || variantKey(product.variant) !== combination.key) patch.variant = combination.variant;
 
       if (Object.keys(patch).length > 0) plan.updates.push({ id: product.id, patch });
     } else {
@@ -187,6 +190,131 @@ export function planGroupSave(
   plan.duplicateNames = [ ...names.entries() ].filter(([ , n ]) => n > 1).map(([ name ]) => name);
 
   return plan;
+}
+
+// ---------------------------------------------------------------------
+// renaming values / reordering attributes in the editor
+// ---------------------------------------------------------------------
+
+/** attribute id -> original value (as stored in the products) -> current value */
+export type ValueRenames = Record<string, Record<string, string>>;
+
+export function renameVariant(variant: Record<string, string>, renames: ValueRenames): Record<string, string> {
+  const result: Record<string, string> = {};
+  Object.entries(variant).forEach(([ k, v ]) => result[k] = renames[k]?.[v] ?? v);
+  return result;
+}
+
+/** records "current value -> new value" on top of earlier renames (A->B, B->C = A->C; back to A = no rename) */
+export function addRename(renames: ValueRenames, attributeId: string, from: string, to: string): ValueRenames {
+  const own = { ...(renames[attributeId] ?? {}) };
+  const original = Object.keys(own).find(k => own[k] === from) ?? from;
+
+  if (original === to) {
+    delete own[original];
+  } else {
+    own[original] = to;
+  }
+
+  return { ...renames, [attributeId]: own };
+}
+
+export interface PriceDraft<T = number> {
+  attributes: GroupAttribute[];
+  /** numbers (or input text), keyed like GroupShape.prices */
+  prices: Record<string, T>;
+  surcharges: Record<string, T>;
+  excluded: string[];
+}
+
+/** renames one value everywhere in the draft (values, price grid, surcharges, switched off variants) */
+export function renameValueInDraft<T>(draft: PriceDraft<T>, attributeId: string, from: string, to: string): PriceDraft<T> {
+  const attributes = draft.attributes.map(a => a.id === attributeId
+    ? { ...a, values: a.values.map(v => v === from ? to : v) }
+    : a);
+
+  const priceAttrs = priceAttributes(draft.attributes);
+  const prices: Record<string, T> = {};
+
+  Object.entries(draft.prices).forEach(([ key, price ]) => {
+    let values: string[];
+    try { values = JSON.parse(key); } catch { prices[key] = price; return; }
+    prices[priceKey(values.map((v, i) => priceAttrs[i]?.id === attributeId && v === from ? to : v))] = price;
+  });
+
+  const surchargeAttr = surchargeAttribute(draft.attributes);
+  const surcharges: Record<string, T> = {};
+
+  Object.entries(draft.surcharges).forEach(([ v, s ]) => {
+    surcharges[surchargeAttr?.id === attributeId && v === from ? to : v] = s;
+  });
+
+  const renames: ValueRenames = { [attributeId]: { [from]: to } };
+  const excludedSet = new Set(draft.excluded);
+  const excluded = combinations(draft.attributes)
+    .filter(c => excludedSet.has(c.key))
+    .map(c => variantKey(renameVariant(c.variant, renames)));
+
+  return { attributes, prices, surcharges, excluded };
+}
+
+/**
+ * New attribute order: the price grid and surcharges are rebuilt so every
+ * variant keeps its price. exact = false if the old prices can't be expressed
+ * as grid + surcharge in the new order (then base = cheapest, surcharge = smallest difference).
+ */
+export function regridPrices(draft: PriceDraft, attributes: GroupAttribute[]): { prices: Record<string, number>; surcharges: Record<string, number>; exact: boolean } {
+  const old = { attributes: draft.attributes, prices: draft.prices, surcharges: draft.surcharges };
+  const oldIndex = draft.attributes.map(a => attributes.findIndex(n => n.id === a.id));
+
+  const priceOf = (values: string[]) => variantPriceCents(old, oldIndex.map(i => values[i]));
+
+  if (attributes.length <= 1) {
+    const prices: Record<string, number> = {};
+    combinations(attributes).forEach(c => {
+      const cents = priceOf(c.values);
+      if (cents !== null) prices[priceKey(c.values)] = cents / 100;
+    });
+    return { prices, surcharges: {}, exact: true };
+  }
+
+  // per price cell: price of every first value
+  const cells = new Map<string, { first: string; cents: number }[]>();
+
+  combinations(attributes).forEach(c => {
+    const cents = priceOf(c.values);
+    if (cents === null) return;
+    const key = priceKey(c.values.slice(1));
+    if (!cells.has(key)) cells.set(key, []);
+    cells.get(key)!.push({ first: c.values[0], cents });
+  });
+
+  const base = new Map<string, number>();
+  cells.forEach((list, key) => base.set(key, Math.min(...list.map(l => l.cents))));
+
+  const diffs = new Map<string, number[]>();
+  cells.forEach((list, key) => list.forEach(l => {
+    if (!diffs.has(l.first)) diffs.set(l.first, []);
+    diffs.get(l.first)!.push(l.cents - base.get(key)!);
+  }));
+
+  const surchargeCents = new Map<string, number>();
+  diffs.forEach((list, first) => surchargeCents.set(first, Math.min(...list)));
+
+  // the smallest surcharge can be moved into the grid so the cheapest value has none
+  const prices: Record<string, number> = {};
+  base.forEach((cents, key) => prices[key] = cents / 100);
+
+  const surcharges: Record<string, number> = {};
+  surchargeCents.forEach((cents, first) => {
+    if (cents > 0) surcharges[first] = cents / 100;
+  });
+
+  const next = { attributes, prices, surcharges };
+  const exact = combinations(attributes).every(c => priceOf(c.values) === variantPriceCents(next, c.values)
+    || priceOf(c.values) === null);
+
+  return { prices, surcharges, exact };
 }
 
 /** first problem that prevents saving, null if the group is fine */

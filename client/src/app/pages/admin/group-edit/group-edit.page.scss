@@ -15,14 +15,41 @@ legend { margin-bottom: 6px; }
   align-items: baseline;
   gap: 8px;
 
-  h2 { font-size: 15px; font-weight: 800; }
+  h2 { font-size: 15px; font-weight: 800; white-space: nowrap; }
   &.pad { padding: 14px 14px 8px; }
 }
 
 .sec-note { font-size: 12px; color: var(--os-muted); }
 
 // ---------- attributes ----------
-.attr { display: flex; flex-direction: column; gap: 8px; padding-bottom: 12px; border-bottom: 1px solid var(--os-divider); }
+.attr-list { display: flex; flex-direction: column; gap: 12px; }
+.attr { display: flex; flex-direction: column; gap: 8px; padding-bottom: 12px; border-bottom: 1px solid var(--os-divider); background: var(--os-card); }
+
+.drag-handle {
+  width: 40px;
+  height: 44px;
+  flex-shrink: 0;
+  border: none;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--os-muted);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: grab;
+  touch-action: none;
+
+  i { font-size: 16px; }
+  &:active { cursor: grabbing; background: var(--os-card-soft); }
+}
+
+// CDK drag & drop
+.cdk-drag-preview { box-shadow: 0 8px 24px rgba(0, 0, 0, .18); border-radius: 12px; opacity: .95; }
+.attr.cdk-drag-preview { padding: 8px; }
+.cdk-drag-placeholder { opacity: .35; }
+.cdk-drag-animating, .attr-list.cdk-drop-list-dragging .attr:not(.cdk-drag-placeholder),
+.values.cdk-drop-list-dragging .value:not(.cdk-drag-placeholder) { transition: transform .2s cubic-bezier(0, 0, .2, 1); }
+.value-placeholder { opacity: .35; }
 
 .attr-head { display: flex; gap: 6px; align-items: center; }
 .attr-name { flex: 1 1 auto; min-width: 0; font-weight: 700; }
@@ -62,7 +89,9 @@ legend { margin-bottom: 6px; }
   gap: 6px;
   cursor: pointer;
 
-  i { font-size: 11px; }
+  i { font-size: 11px; opacity: .7; }
+
+  &.on { outline: 3px solid var(--os-primary-strong); outline-offset: 1px; }
 
   &.add {
     padding: 0 14px;
@@ -74,9 +103,11 @@ legend { margin-bottom: 6px; }
 
 .add-row {
   display: flex;
+  flex-wrap: wrap;
   gap: 6px;
 
-  input { flex: 1 1 auto; min-width: 0; border: 2px solid var(--os-primary-strong); }
+  input { flex: 1 1 100%; min-width: 0; border: 2px solid var(--os-primary-strong); }
+  .done-btn { flex: 1 1 auto; }
 }
 
 .done-btn {

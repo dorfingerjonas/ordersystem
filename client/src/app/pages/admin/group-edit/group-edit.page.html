@@ -43,58 +43,71 @@
     <section class="card sec">
       <div class="sec-head">
         <h2>1 · Merkmale</h2>
-        <span class="sec-note">Reihenfolge = Produktname</span>
+        <span class="sec-note">≡ ziehen = Reihenfolge</span>
       </div>
 
-      @for (a of attributes(); track a.id; let i = $index; let first = $first; let last = $last) {
-        <div class="attr">
-          <div class="attr-head">
-            <input pInputText type="text" class="attr-name" autocomplete="off" placeholder="Merkmal, z. B. Größe"
-                   [attr.aria-label]="'Name von Merkmal ' + (i + 1)" [value]="a.name" (input)="renameAttribute(a.id, $any($event.target).value)">
-            @if (attributes().length > 1) {
-              <button type="button" class="mini-btn" (click)="moveAttribute(i, -1)" [disabled]="first" [attr.aria-label]="(a.name || 'Merkmal') + ' nach vorne'">
-                <i class="pi pi-arrow-up" aria-hidden="true"></i>
-              </button>
-              <button type="button" class="mini-btn" (click)="moveAttribute(i, 1)" [disabled]="last" [attr.aria-label]="(a.name || 'Merkmal') + ' nach hinten'">
-                <i class="pi pi-arrow-down" aria-hidden="true"></i>
-              </button>
-              <button type="button" class="mini-btn danger" (click)="removeAttribute(a)" [attr.aria-label]="(a.name || 'Merkmal') + ' entfernen'">
-                <i class="pi pi-trash" aria-hidden="true"></i>
-              </button>
-            }
-          </div>
-          @if (first && attributes().length > 1) {
-            <span class="attr-hint">Wird beim Bestellen je eine Kachel</span>
-          }
-
-          <div class="values">
-            @for (v of a.values; track v) {
-              <button type="button" class="value" (click)="removeValue(a, v)" [attr.aria-label]="v + ' entfernen'">
-                {{ v }} <i class="pi pi-times" aria-hidden="true"></i>
-              </button>
-            }
-            @if (adding() !== a.id && a.values.length < maxValues) {
-              <button type="button" class="value add" (click)="startAdd(a.id)">+ {{ a.name || 'Wert' }}</button>
-            }
-          </div>
-
-          @if (adding() === a.id) {
-            <div class="add-row">
-              <input pInputText type="text" [id]="'value-input-' + a.id" autocomplete="off" enterkeyhint="done"
-                     [attr.aria-label]="'Neuer Wert für ' + (a.name || 'Merkmal')" placeholder="Neuer Wert"
-                     [value]="valueDraft()" (input)="valueDraft.set($any($event.target).value); valueError.set('')"
-                     (keydown.enter)="confirmAdd(a)" (keydown.escape)="cancelAdd()">
-              <button type="button" class="done-btn" (click)="confirmAdd(a)">Hinzufügen</button>
-              <button type="button" class="mini-btn" (click)="cancelAdd()" aria-label="Fertig mit Hinzufügen">
-                <i class="pi pi-check" aria-hidden="true"></i>
-              </button>
+      <div class="attr-list" cdkDropList [cdkDropListData]="attributes()" (cdkDropListDropped)="dropAttribute($event)" cdkDropListLockAxis="y">
+        @for (a of attributes(); track a.id; let i = $index; let first = $first) {
+          <div class="attr" cdkDrag [cdkDragData]="a">
+            <div class="attr-head">
+              @if (attributes().length > 1) {
+                <button type="button" class="drag-handle" cdkDragHandle [attr.aria-label]="(a.name || 'Merkmal') + ' verschieben'">
+                  <i class="pi pi-bars" aria-hidden="true"></i>
+                </button>
+              }
+              <input pInputText type="text" class="attr-name" autocomplete="off" placeholder="Merkmal, z. B. Größe"
+                     [attr.aria-label]="'Name von Merkmal ' + (i + 1)" [value]="a.name" (input)="renameAttribute(a.id, $any($event.target).value)">
+              @if (attributes().length > 1) {
+                <button type="button" class="mini-btn danger" (click)="removeAttribute(a)" [attr.aria-label]="(a.name || 'Merkmal') + ' entfernen'">
+                  <i class="pi pi-trash" aria-hidden="true"></i>
+                </button>
+              }
             </div>
-            @if (valueError()) {
-              <span class="hint warn-text" role="alert">{{ valueError() }}</span>
+            @if (first && attributes().length > 1) {
+              <span class="attr-hint">Wird beim Bestellen je eine Kachel</span>
             }
-          }
-        </div>
-      }
+
+            <div class="values" cdkDropList cdkDropListOrientation="mixed" [cdkDropListData]="a.values" (cdkDropListDropped)="dropValue(a, $event)">
+              @for (v of a.values; track v) {
+                <button type="button" class="value" cdkDrag [cdkDragStartDelay]="{ touch: 250, mouse: 0 }"
+                        [class.on]="editing()?.attributeId === a.id && editing()?.original === v"
+                        (click)="startEdit(a, v)" [attr.aria-label]="v + ' bearbeiten'">
+                  {{ v }} <i class="pi pi-pencil" aria-hidden="true"></i>
+                  <span class="value value-placeholder" *cdkDragPlaceholder>{{ v }}</span>
+                </button>
+              }
+              @if (!(editing()?.attributeId === a.id && editing()?.original === null) && a.values.length < maxValues) {
+                <button type="button" class="value add" (click)="startAdd(a.id)">+ {{ a.name || 'Wert' }}</button>
+              }
+            </div>
+
+            @if (editing()?.attributeId === a.id) {
+              @let ed = editing()!;
+              <div class="add-row">
+                <input pInputText type="text" [id]="'value-input-' + a.id" autocomplete="off" enterkeyhint="done"
+                       [attr.aria-label]="ed.original === null ? 'Neuer Wert für ' + (a.name || 'Merkmal') : ed.original + ' umbenennen'"
+                       [placeholder]="ed.original === null ? 'Neuer Wert' : 'Neuer Name'"
+                       [value]="valueDraft()" (input)="valueDraft.set($any($event.target).value); valueError.set('')"
+                       (keydown.enter)="confirmValue(a)" (keydown.escape)="cancelEdit()">
+                <button type="button" class="done-btn" (click)="confirmValue(a)">{{ ed.original === null ? 'Hinzufügen' : 'Umbenennen' }}</button>
+                @if (ed.original !== null) {
+                  <button type="button" class="mini-btn danger" (click)="removeValue(a, ed.original)" [attr.aria-label]="ed.original + ' entfernen'">
+                    <i class="pi pi-trash" aria-hidden="true"></i>
+                  </button>
+                }
+                <button type="button" class="mini-btn" (click)="cancelEdit()" aria-label="Fertig">
+                  <i class="pi pi-check" aria-hidden="true"></i>
+                </button>
+              </div>
+              @if (valueError()) {
+                <span class="hint warn-text" role="alert">{{ valueError() }}</span>
+              } @else if (ed.original !== null) {
+                <span class="hint">Umbenennen behält Umsatz und Ausverkauft-Status.</span>
+              }
+            }
+          </div>
+        }
+      </div>
 
       @if (attributes().length < maxAttributes) {
         <button type="button" class="btn-ghost dashed" (click)="addAttribute()">

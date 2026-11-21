@@ -16,7 +16,7 @@ import {
 } from '../models/models';
 import { AuthService } from './auth.service';
 import { byOrdering, cents, naturalCompare } from '../utils/format';
-import { ActiveVariant, GroupShape, GroupTile, groupTiles, planGroupSave, valuesOf } from '../utils/groups';
+import { ActiveVariant, GroupShape, GroupTile, groupTiles, planGroupSave, ValueRenames, valuesOf } from '../utils/groups';
 
 /** one entry on the order screen / admin list: a single product or a whole group */
 export type CatalogEntry =
@@ -516,7 +516,7 @@ export class DataService {
    * ones archived (never deleted -> revenue and open items stay intact).
    * Not atomic, but idempotent: saving again repairs a half-finished save.
    */
-  public async saveGroup(id: number | null, draft: GroupShape & { category: number }): Promise<ProductGroup> {
+  public async saveGroup(id: number | null, draft: GroupShape & { category: number }, renames: ValueRenames = {}): Promise<ProductGroup> {
     const row = {
       name: draft.name.trim(),
       category: draft.category,
@@ -532,7 +532,7 @@ export class DataService {
       : await this.update(this.productGroupStore, id, row);
 
     const existing = this.productsByGroup().get(group.id) ?? [];
-    const plan = planGroupSave(group, existing);
+    const plan = planGroupSave(group, existing, renames);
     const byId = new Map(existing.map(p => [ p.id, p ]));
 
     if (plan.inserts.length > 0) {

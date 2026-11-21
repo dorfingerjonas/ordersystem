@@ -4,6 +4,7 @@ import { InputTextModule } from 'primeng/inputtext';
 import { ToggleSwitchModule } from 'primeng/toggleswitch';
 import { FormsModule } from '@angular/forms';
 import { ConfirmationService } from 'primeng/api';
+import { CdkDrag, CdkDragDrop, CdkDragHandle, CdkDragPlaceholder, CdkDropList, moveItemInArray } from '@angular/cdk/drag-drop';
 import { DataService } from '../../../services/data.service';
 import { NotifyService } from '../../../services/notify.service';
 import { eur } from '../../../utils/format';
@@ -15,6 +16,11 @@ import {
   MAX_VALUES,
   parseEuro,
   planGroupSave,
+  regridPrices,
+  renameValueInDraft,
+  renameVariant,
+  addRename,
+  ValueRenames,
   priceAttributes,
   priceKey,
   surchargeAttribute,
@@ -38,7 +44,7 @@ interface PriceCell {
 
 @Component({
   selector: 'app-group-edit',
-  imports: [ FormsModule, InputTextModule, ToggleSwitchModule ],
+  imports: [ FormsModule, InputTextModule, ToggleSwitchModule, CdkDropList, CdkDrag, CdkDragHandle, CdkDragPlaceholder ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './group-edit.page.html',
   styleUrl: './group-edit.page.scss'
@@ -74,7 +80,10 @@ export class GroupEditPage {
   protected readonly showSurcharge = signal(false);
   protected readonly excluded = signal<Set<string>>(new Set());
 
-  protected readonly adding = signal<string | null>(null);
+  /** value input under an attribute: adding a new value (original = null) or editing one */
+  protected readonly editing = signal<{ attributeId: string; original: string | null } | null>(null);
+  /** renamed values so existing products keep their id / revenue / sold out state */
+  private readonly renames = signal<ValueRenames>({});
   protected readonly valueDraft = signal('');
   protected readonly valueError = signal('');
   protected readonly dirty = signal(false);
@@ -124,7 +133,7 @@ export class GroupEditPage {
     const excluded = new Set(shape.excluded);
     const existing = new Set((this.data.productsByGroup().get(this.group()?.id ?? -1) ?? [])
       .filter(p => !p.archived && p.variant)
-      .map(p => variantKey(p.variant!)));
+      .map(p => variantKey(renameVariant(p.variant!, this.renames()))));
 
     return combinations(shape.attributes).map(c => {
       const cents = variantPriceCents(shape, c.values);
@@ -216,7 +225,7 @@ export class GroupEditPage {
     const shape = this.shape();
     if (shape.category === null) return null;
 
-    return planGroupSave({ ...shape, category: shape.category }, this.data.productsByGroup().get(this.group()?.id ?? -1) ?? []);
+    return planGroupSave({ ...shape, category: shape.category }, this.data.productsByGroup().get(this.group()?.id ?? -1) ?? [], this.renames());
   });
 
   /** generated names that clash with other (visible) products or with each other */
@@ -333,12 +342,48 @@ export class GroupEditPage {
     this.touch();
   }
 
+  /** drag & drop of attributes: the price grid is rebuilt so every variant keeps its price */
+  protected dropAttribute(event: CdkDragDrop<GroupAttribute[]>): void {
+    if (event.previousIndex === event.currentIndex) return;
+
+    const next = [ ...this.attributes() ];
+    moveItemInArray(next, event.previousIndex, event.currentIndex);
+
+    const shape = this.shape();
+    const result = regridPrices({ attributes: this.attributes(), prices: shape.prices, surcharges: shape.surcharges, excluded: [] }, next);
+
+    const prices: Record<string, string> = {};
+    Object.entries(result.prices).forEach(([ k, v ]) => prices[k] = euroInput(Math.round(v * 100)));
+    const surcharges: Record<string, string> = {};
+    Object.entries(result.surcharges).forEach(([ k, v ]) => surcharges[k] = euroInput(Math.round(v * 100)));
+
+    this.attributes.set(next);
+    this.priceText.set(prices);
+    this.surchargeText.set(surcharges);
+    this.showSurcharge.set(Object.keys(surcharges).length > 0);
+    this.touch();
+
+    if (!result.exact) {
+      this.notify.warn('Bitte Preise prüfen', 'Nicht alle bisherigen Preise passen in die neue Reihenfolge.', 6000);
+    }
+  }
+
+  /** drag & drop of values = order of tiles / buttons when ordering */
+  protected dropValue(attribute: GroupAttribute, event: CdkDragDrop<string[]>): void {
+    if (event.previousIndex === event.currentIndex) return;
+
+    const values = [ ...attribute.values ];
+    moveItemInArray(values, event.previousIndex, event.currentIndex);
+    this.attributes.update(list => list.map(a => a.id === attribute.id ? { ...a, values } : a));
+    this.touch();
+  }
+
   protected removeAttribute(attribute: GroupAttribute): void {
     if (this.attributes().length <= 1) return;
 
     const apply = () => {
       this.attributes.update(list => list.filter(a => a.id !== attribute.id));
-      if (this.adding() === attribute.id) this.adding.set(null);
+      if (this.editing()?.attributeId === attribute.id) this.editing.set(null);
       this.touch();
     };
 
@@ -359,39 +404,59 @@ export class GroupEditPage {
     });
   }
 
-  /** order of the attributes = order in the product name; the first one becomes the tile */
-  protected moveAttribute(index: number, delta: number): void {
-    const j = index + delta;
-    const list = [ ...this.attributes() ];
-    if (j < 0 || j >= list.length) return;
-
-    [ list[index], list[j] ] = [ list[j], list[index] ];
-    this.attributes.set(list);
-    this.touch();
-  }
-
   protected startAdd(id: string): void {
-    this.adding.set(id);
+    this.editing.set({ attributeId: id, original: null });
     this.valueDraft.set('');
     this.valueError.set('');
-    setTimeout(() => document.getElementById(`value-input-${ id }`)?.focus(), 50);
+    this.focusValueInput(id);
   }
 
-  protected cancelAdd(): void {
-    this.adding.set(null);
+  /** tap on a value: edit (rename / remove) */
+  protected startEdit(attribute: GroupAttribute, value: string): void {
+    this.editing.set({ attributeId: attribute.id, original: value });
+    this.valueDraft.set(value);
+    this.valueError.set('');
+    this.focusValueInput(attribute.id, true);
+  }
+
+  protected cancelEdit(): void {
+    this.editing.set(null);
     this.valueError.set('');
   }
 
-  protected confirmAdd(attribute: GroupAttribute): void {
+  private focusValueInput(id: string, select = false): void {
+    setTimeout(() => {
+      const input = document.getElementById(`value-input-${ id }`) as HTMLInputElement | null;
+      input?.focus();
+      if (select) input?.select();
+    }, 50);
+  }
+
+  protected confirmValue(attribute: GroupAttribute): void {
+    const edit = this.editing();
     const value = this.valueDraft().trim().replace(/\s+/g, ' ');
 
+    if (!edit) return;
+
     if (!value) {
-      this.cancelAdd();
+      if (edit.original === null) {
+        this.cancelEdit();
+      } else {
+        this.valueError.set('Name darf nicht leer sein');
+      }
       return;
     }
 
-    if (attribute.values.some(v => v.toLowerCase() === value.toLowerCase())) {
+    const others = attribute.values.filter(v => v !== edit.original);
+
+    if (others.some(v => v.toLowerCase() === value.toLowerCase())) {
       this.valueError.set(`„${ value }“ gibt es schon`);
+      return;
+    }
+
+    if (edit.original !== null) {
+      this.renameValue(attribute, edit.original, value);
+      this.cancelEdit();
       return;
     }
 
@@ -405,11 +470,31 @@ export class GroupEditPage {
     this.valueDraft.set('');
     this.valueError.set('');
     this.touch();
-    setTimeout(() => document.getElementById(`value-input-${ attribute.id }`)?.focus(), 0);
+    this.focusValueInput(attribute.id);
+  }
+
+  /** renames everywhere in the draft; on save the existing products are renamed (same id) */
+  private renameValue(attribute: GroupAttribute, from: string, to: string): void {
+    if (from === to) return;
+
+    const next = renameValueInDraft<string>({
+      attributes: this.attributes(),
+      prices: this.priceText(),
+      surcharges: this.surchargeText(),
+      excluded: [ ...this.excluded() ]
+    }, attribute.id, from, to);
+
+    this.attributes.set(next.attributes);
+    this.priceText.set(next.prices);
+    this.surchargeText.set(next.surcharges);
+    this.excluded.set(new Set(next.excluded));
+    this.renames.update(r => addRename(r, attribute.id, from, to));
+    this.touch();
   }
 
   protected removeValue(attribute: GroupAttribute, value: string): void {
     this.attributes.update(list => list.map(a => a.id === attribute.id ? { ...a, values: a.values.filter(v => v !== value) } : a));
+    if (this.editing()?.original === value) this.cancelEdit();
     this.touch();
   }
 
@@ -518,7 +603,7 @@ export class GroupEditPage {
     this.saving.set(true);
 
     try {
-      const group = await this.data.saveGroup(this.group()?.id ?? null, { ...shape, category: shape.category });
+      const group = await this.data.saveGroup(this.group()?.id ?? null, { ...shape, category: shape.category }, this.renames());
       const count = this.activeCount();
 
       this.dirty.set(false);
