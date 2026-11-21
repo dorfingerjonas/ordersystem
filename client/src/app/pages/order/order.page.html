@@ -138,15 +138,10 @@
   <div class="review">
     <p class="review-sub">Tisch {{ table()?.nr }} · Notiz gilt für 1 Stück</p>
 
-    @for (g of groups(); track g.printer) {
+    @for (g of groups(); track g.category) {
       <section class="card">
         <h2 class="card-head">
           <span>{{ g.label }}</span>
-          @if (g.missingPrinter) {
-            <span class="meta warn"><i class="pi pi-exclamation-triangle" aria-hidden="true"></i> Kein Drucker zugeordnet</span>
-          } @else {
-            <span class="meta"><i class="pi pi-print" aria-hidden="true"></i> {{ g.printer }}</span>
-          }
         </h2>
 
         @for (l of g.lines; track l.line.key) {

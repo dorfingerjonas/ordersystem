@@ -21,9 +21,8 @@ interface ReviewLine {
 }
 
 interface ReviewGroup {
+  category: number;
   label: string;
-  printer: string;
-  missingPrinter: boolean;
   lines: ReviewLine[];
 }
 
@@ -114,13 +113,12 @@ export class OrderPage {
 
   protected readonly orderNote = computed(() => this.cart.orderNote(this.id()));
 
-  /** review sheet: lines grouped by the printer they will be printed on */
+  /** review sheet: lines grouped by category */
   protected readonly groups = computed<ReviewGroup[]>(() => {
     const products = this.data.productById();
     const categories = this.data.categoryById();
-    const printers = this.data.printersByCategory();
     const rank = this.data.productRank();
-    const groups = new Map<string, ReviewGroup>();
+    const groups = new Map<number, ReviewGroup>();
 
     const lines = this.lines()
       .map(line => ({ line, product: products.get(line.productId) }))
@@ -128,26 +126,15 @@ export class OrderPage {
       .sort((a, b) => (rank.get(a.product.id) ?? 0) - (rank.get(b.product.id) ?? 0));
 
     lines.forEach(({ line, product }) => {
-      const names = printers.get(product.category) ?? [];
-      const key = names.join(', ') || '–';
-
-      if (!groups.has(key)) {
-        groups.set(key, {
-          label: names.length ? '' : 'Kein Drucker',
-          printer: key,
-          missingPrinter: names.length === 0,
+      if (!groups.has(product.category)) {
+        groups.set(product.category, {
+          category: product.category,
+          label: categories.get(product.category)?.name ?? '',
           lines: []
         });
       }
 
-      groups.get(key)!.lines.push({ line, product, sum: product.price * line.amount });
-    });
-
-    // label = category names inside the group ("Alkohol · Alkoholfrei")
-    groups.forEach(group => {
-      if (!group.missingPrinter) {
-        group.label = [ ...new Set(group.lines.map(l => categories.get(l.product.category)?.name ?? '')) ].join(' · ');
-      }
+      groups.get(product.category)!.lines.push({ line, product, sum: product.price * line.amount });
     });
 
     return [ ...groups.values() ];
