@@ -7,6 +7,7 @@ import { AuthService } from '../../services/auth.service';
 import { NotifyService } from '../../services/notify.service';
 import { UpdateService } from '../../services/update.service';
 import { CartService } from '../../services/cart.service';
+import { InstallService } from '../../services/install.service';
 import { eur } from '../../utils/format';
 
 @Component({
@@ -86,6 +87,15 @@ import { eur } from '../../utils/format';
             <span class="row-sub">Neue Versionen werden automatisch installiert</span>
           </span>
         </button>
+        @if (install.available()) {
+          <button type="button" class="nav-row" (click)="installApp()">
+            <span class="nav-icon soft"><i class="pi pi-download" aria-hidden="true"></i></span>
+            <span class="row-main">
+              <span class="row-title">App installieren</span>
+              <span class="row-sub">Schneller Start & Vollbild vom Home-Bildschirm</span>
+            </span>
+          </button>
+        }
       </section>
 
       <button type="button" class="btn-ghost danger logout" (click)="logout()">
@@ -124,6 +134,7 @@ export class MorePage {
   private readonly router = inject(Router);
   private readonly update = inject(UpdateService);
   private readonly cart = inject(CartService);
+  protected readonly install = inject(InstallService);
 
   protected readonly eur = eur;
   protected readonly checking = signal(false);
@@ -147,6 +158,16 @@ export class MorePage {
       }
     } else {
       this.notify.success('App ist aktuell');
+    }
+  }
+
+  protected async installApp(): Promise<void> {
+    if (this.install.canPrompt()) {
+      if (await this.install.install()) {
+        this.notify.success('App wird installiert', 'Du findest sie gleich auf deinem Home-Bildschirm.');
+      }
+    } else if (this.install.isIos) {
+      this.notify.info('App installieren', 'Unten auf „Teilen“ tippen und „Zum Home-Bildschirm“ wählen.', 8000);
     }
   }
 

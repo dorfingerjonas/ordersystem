@@ -1,11 +1,13 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { DataService } from '../services/data.service';
+import { InstallBannerComponent } from '../components/install-banner.component';
+import { InstallService } from '../services/install.service';
 
 /** Top level pages with the bottom tab bar (Tische / Kassieren / Mehr). */
 @Component({
   selector: 'app-shell',
-  imports: [ RouterOutlet, RouterLink, RouterLinkActive ],
+  imports: [ RouterOutlet, RouterLink, RouterLinkActive, InstallBannerComponent ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="screen">
@@ -14,6 +16,12 @@ import { DataService } from '../services/data.service';
           <i class="pi pi-wifi" aria-hidden="true"></i>
           <span>Einige Daten konnten nicht geladen werden.</span>
           <button type="button" class="banner-btn" (click)="data.reload()">Erneut versuchen</button>
+        </div>
+      }
+
+      @if (install.showBanner()) {
+        <div class="install-slot">
+          <app-install-banner />
         </div>
       }
 
@@ -37,6 +45,8 @@ import { DataService } from '../services/data.service';
   `,
   styles: `
     :host { display: contents; }
+
+    .install-slot { flex-shrink: 0; padding: 12px 16px 0; }
 
     .tabbar {
       flex-shrink: 0;
@@ -77,4 +87,5 @@ import { DataService } from '../services/data.service';
 })
 export class ShellComponent {
   protected readonly data = inject(DataService);
+  protected readonly install = inject(InstallService);
 }

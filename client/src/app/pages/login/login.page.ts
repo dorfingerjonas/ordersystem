@@ -7,10 +7,11 @@ import { MessageModule } from 'primeng/message';
 import { PasswordModule } from 'primeng/password';
 import { AuthService } from '../../services/auth.service';
 import { NotifyService } from '../../services/notify.service';
+import { InstallBannerComponent } from '../../components/install-banner.component';
 
 @Component({
   selector: 'app-login',
-  imports: [ FormsModule, InputTextModule, PasswordModule, ButtonModule, MessageModule ],
+  imports: [ FormsModule, InputTextModule, PasswordModule, ButtonModule, MessageModule, InstallBannerComponent ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="screen">
@@ -46,6 +47,8 @@ import { NotifyService } from '../../services/notify.service';
             }
           </button>
         </form>
+
+        <app-install-banner />
       </main>
     </div>
   `,
