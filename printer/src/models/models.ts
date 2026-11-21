@@ -65,10 +65,23 @@ export interface Device extends WithId {
   deviceType: DeviceType;
 }
 
+/** snapshot of a payment, printed as "Zahlungsbestätigung" (print_job.payload) */
+export interface ReceiptPayload {
+  /** table nr, null = direct sale */
+  table: string | null;
+  waiter: string;
+  recipient?: string;
+  timestamp: number;
+  lines: { name: string; amount: number; price: number }[];
+  total: number;
+  received: number | null;
+}
+
 export interface PrintJob extends WithId {
   created_at: string;
   device: number;
-  type: 'TEST';
+  type: 'TEST' | 'RECEIPT';
+  payload: ReceiptPayload | null;
   status: 'PENDING' | 'DONE' | 'FAILED';
   message: string | null;
   finished_at: string | null;

@@ -1,4 +1,4 @@
-import { Category, Device, DeviceType, Order, OrderDTO, OrderLine, PrintJob, Product, Table } from './models/models';
+import { Category, Device, DeviceType, Order, OrderDTO, OrderLine, PrintJob, Product, ReceiptPayload, Table } from './models/models';
 import { InfrastructureConfigDTO, PrinterConfig } from './config';
 import { CharacterSet, ThermalPrinter } from 'node-thermal-printer';
 
@@ -375,42 +375,27 @@ async function handlePrintJob(job: PrintJob): Promise<void> {
       return;
     }
 
-    const categoryNames = (infra?.categories ?? [])
-      .map(id => categories.find(c => c.id === id)?.name)
-      .filter(Boolean)
-      .join(', ');
-
     printer.clear();
 
     try {
-      printer.drawLine();
-      printer.alignCenter();
-      printer.setTextDoubleHeight();
-      printer.bold(true);
-      printer.println('TESTDRUCK');
-      printer.bold(false);
-      printer.setTextNormal();
-      printer.newLine();
-      printer.alignLeft();
-      printer.println(`Drucker: ${ name }`);
-      printer.println(`Schnittstelle: ${ iface }`);
-      printer.println(`Kategorien: ${ categoryNames || '(keine)' }`);
-      printer.println(`Datum: ${ formatDate(Date.now()) }`);
-      printer.newLine();
-      printer.println('Umlaute: äöü ÄÖÜ ß  Euro: €');
-      printer.newLine();
-      printer.alignCenter();
-      printer.println('Der Drucker funktioniert.');
-      printer.alignLeft();
-      printer.drawLine();
-      printer.cut();
+      if (job.type === 'RECEIPT') {
+        if (!job.payload) {
+          await finishJob(job, 'FAILED', 'Beleg ohne Inhalt.');
+          return;
+        }
 
+        buildPaymentReceipt(job.id, job.payload, printer);
+      } else {
+        buildTestPrint(name, iface, infra?.categories ?? [], printer);
+      }
+
+      printer.cut();
       await printer.execute();
     } finally {
       printer.clear();
     }
 
-    LOG.info(`test print on ${ name } done`);
+    LOG.info(`${ job.type === 'RECEIPT' ? 'receipt' : 'test print' } ${ job.id } on ${ name } done`);
     await finishJob(job, 'DONE', null);
   } catch (error) {
     LOG.error(`print job ${ job.id } failed ${ error }`);
@@ -418,6 +403,96 @@ async function handlePrintJob(job: PrintJob): Promise<void> {
   } finally {
     jobsInFlight.delete(job.id);
   }
+}
+
+function buildTestPrint(name: string, iface: string, categoryIds: number[], printer: ThermalPrinter): void {
+  const categoryNames = categoryIds
+    .map(id => categories.find(c => c.id === id)?.name)
+    .filter(Boolean)
+    .join(', ');
+
+  printer.drawLine();
+  printer.alignCenter();
+  printer.setTextDoubleHeight();
+  printer.bold(true);
+  printer.println('TESTDRUCK');
+  printer.bold(false);
+  printer.setTextNormal();
+  printer.newLine();
+  printer.alignLeft();
+  printer.println(`Drucker: ${ name }`);
+  printer.println(`Schnittstelle: ${ iface }`);
+  printer.println(`Kategorien: ${ categoryNames || '(keine)' }`);
+  printer.println(`Datum: ${ formatDate(Date.now()) }`);
+  printer.newLine();
+  printer.println('Umlaute: äöü ÄÖÜ ß  Euro: €');
+  printer.newLine();
+  printer.alignCenter();
+  printer.println('Der Drucker funktioniert.');
+  printer.alignLeft();
+  printer.drawLine();
+}
+
+// ---------------------------------------------------------------------
+// payment receipt ("Zahlungsbestätigung") – NOT an invoice
+// ---------------------------------------------------------------------
+
+const RECEIPT_WIDTH = 48;
+const eurFormatter = new Intl.NumberFormat('de-AT', { minimumFractionDigits: 2, maximumFractionDigits: 2, useGrouping: false });
+
+function formatEur(value: number): string {
+  return `${ eurFormatter.format(Math.round(value * 100) / 100) } €`;
+}
+
+/** left text (truncated if needed) and right text on one line */
+function leftRight(left: string, right: string): string {
+  const space = RECEIPT_WIDTH - right.length - 1;
+  const text = left.length > space ? left.slice(0, space - 1) + '.' : left;
+  return text.padEnd(space) + ' ' + right;
+}
+
+function buildPaymentReceipt(id: number, receipt: ReceiptPayload, printer: ThermalPrinter): void {
+  printer.drawLine();
+  printer.alignCenter();
+  printer.setTextDoubleHeight();
+  printer.bold(true);
+  printer.println('ZAHLUNGSBESTÄTIGUNG');
+  printer.bold(false);
+  printer.setTextNormal();
+  printer.println(`Beleg-Nr. ${ id }`);
+  printer.alignLeft();
+  printer.newLine();
+
+  printer.println(`Datum:   ${ formatDate(receipt.timestamp) }`);
+  printer.println(receipt.table === null ? 'Direktverkauf' : `Tisch:   ${ receipt.table }`);
+  if (receipt.waiter) printer.println(`Kellner: ${ receipt.waiter }`);
+  if (receipt.recipient) printer.println(`Für:     ${ receipt.recipient }`);
+
+  printer.println('-'.repeat(RECEIPT_WIDTH));
+
+  receipt.lines.forEach(line => {
+    printer.println(leftRight(`${ line.amount }x ${ line.name }`, formatEur(line.price * line.amount)));
+    if (line.amount > 1) printer.println(`   à ${ formatEur(line.price) }`);
+  });
+
+  printer.println('-'.repeat(RECEIPT_WIDTH));
+  printer.bold(true);
+  printer.println(leftRight('SUMME', formatEur(receipt.total)));
+  printer.bold(false);
+
+  if (receipt.received !== null && receipt.received >= receipt.total) {
+    printer.println(leftRight('Bar erhalten', formatEur(receipt.received)));
+    printer.println(leftRight('Rückgeld', formatEur(receipt.received - receipt.total)));
+  } else {
+    printer.println('Bar bezahlt');
+  }
+
+  printer.drawLine();
+  printer.alignCenter();
+  printer.println('Keine Rechnung im Sinne des UStG.');
+  printer.println('Interner Zahlungsnachweis.');
+  printer.alignLeft();
+  printer.drawLine();
 }
 
 // ---------------------------------------------------------------------
