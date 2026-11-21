@@ -18,6 +18,10 @@
     @if (!data.loaded()) {
       <p-skeleton height="200px" />
     } @else {
+      @if (selectedCount() === 0) {
+        <app-receipt-offer />
+      }
+
       @if (!direct()) {
         <div class="list-head">
           <span>Vom Tisch – tippen zum Auswählen</span>

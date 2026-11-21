@@ -7,8 +7,11 @@ import { FormsModule } from '@angular/forms';
 import { DataService } from '../../services/data.service';
 import { NotifyService } from '../../services/notify.service';
 import { ProductPickerComponent } from '../../components/product-picker.component';
+import { ReceiptOfferComponent } from '../../components/receipt-offer.component';
+import { ReceiptService } from '../../services/receipt.service';
+import { AuthService } from '../../services/auth.service';
 import { cents, eur } from '../../utils/format';
-import { Product } from '../../models/models';
+import { Product, ReceiptPayload } from '../../models/models';
 
 interface OpenGroup {
   product: Product;
@@ -18,7 +21,7 @@ interface OpenGroup {
 
 @Component({
   selector: 'app-pay',
-  imports: [ FormsModule, RouterLink, DrawerModule, InputTextModule, SkeletonModule, ProductPickerComponent ],
+  imports: [ FormsModule, RouterLink, DrawerModule, InputTextModule, SkeletonModule, ProductPickerComponent, ReceiptOfferComponent ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './pay.page.html',
   styleUrl: './pay.page.scss'
@@ -28,6 +31,8 @@ export class PayPage {
   protected readonly data = inject(DataService);
   private readonly notify = inject(NotifyService);
   private readonly router = inject(Router);
+  private readonly auth = inject(AuthService);
+  private readonly receipt = inject(ReceiptService);
 
   public readonly tableId = input.required<string>();
 
@@ -174,11 +179,24 @@ export class PayPage {
     const total = this.total();
     const change = this.change();
     const remaining = this.remaining();
+    const receiptLines = [
+      ...this.open().filter(g => g.selected > 0).map(g => ({ product: g.product, amount: g.selected })),
+      ...this.extraLines()
+    ];
 
     this.paying.set(true);
 
     try {
       await this.data.pay(ids, extras, this.id());
+
+      this.receipt.offer({
+        table: this.direct() ? null : this.table()?.nr ?? null,
+        waiter: this.auth.username(),
+        timestamp: Date.now(),
+        lines: mergeLines(receiptLines),
+        total,
+        received: this.received()
+      });
 
       const where = this.direct() ? 'Direktverkauf' : `Tisch ${ this.table()?.nr }`;
       const detail = change !== null && change > 0
@@ -200,4 +218,21 @@ export class PayPage {
       this.paying.set(false);
     }
   }
+}
+
+/** same product from the table and as extra -> one receipt line */
+function mergeLines(lines: { product: Product; amount: number }[]): ReceiptPayload['lines'] {
+  const merged = new Map<number, ReceiptPayload['lines'][number]>();
+
+  lines.forEach(({ product, amount }) => {
+    const line = merged.get(product.id);
+
+    if (line) {
+      line.amount += amount;
+    } else {
+      merged.set(product.id, { name: product.name, amount, price: product.price });
+    }
+  });
+
+  return [ ...merged.values() ];
 }

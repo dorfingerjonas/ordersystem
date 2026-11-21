@@ -101,10 +101,27 @@ export interface Infrastructure extends WithId {
 
 export type PrintJobStatus = 'PENDING' | 'DONE' | 'FAILED';
 
+/** snapshot of a payment, printed as "Zahlungsbestätigung" (print_job.payload) */
+export interface ReceiptPayload {
+  /** table nr, null = direct sale */
+  table: string | null;
+  waiter: string;
+  /** free text, e.g. the club the receipt is for */
+  recipient?: string;
+  /** epoch millis of the payment */
+  timestamp: number;
+  lines: { name: string; amount: number; price: number }[];
+  /** total in EUR */
+  total: number;
+  /** cash received in EUR, null = not entered */
+  received: number | null;
+}
+
 export interface PrintJob extends WithId {
   created_at: string;
   device: number;
-  type: 'TEST';
+  type: 'TEST' | 'RECEIPT';
+  payload?: ReceiptPayload | null;
   status: PrintJobStatus;
   message: string | null;
   finished_at: string | null;

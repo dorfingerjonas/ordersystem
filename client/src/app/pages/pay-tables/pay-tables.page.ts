@@ -3,10 +3,11 @@ import { RouterLink } from '@angular/router';
 import { SkeletonModule } from 'primeng/skeleton';
 import { DataService } from '../../services/data.service';
 import { eur } from '../../utils/format';
+import { ReceiptOfferComponent } from '../../components/receipt-offer.component';
 
 @Component({
   selector: 'app-pay-tables',
-  imports: [ RouterLink, SkeletonModule ],
+  imports: [ RouterLink, SkeletonModule, ReceiptOfferComponent ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <header class="page-header large">
@@ -23,6 +24,8 @@ import { eur } from '../../utils/format';
     </header>
 
     <main class="page-main">
+      <app-receipt-offer />
+
       <div class="card">
         <a class="nav-row" routerLink="/pay/direct">
           <span class="nav-icon"><i class="pi pi-shopping-bag" aria-hidden="true"></i></span>

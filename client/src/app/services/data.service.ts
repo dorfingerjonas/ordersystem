@@ -10,6 +10,7 @@ import {
   NewOrder,
   OrderedProduct,
   PrintJob,
+  ReceiptPayload,
   Product,
   ProductGroup,
   Table
@@ -647,9 +648,18 @@ export class DataService {
   }
 
   /** inserts a test print job and waits until the printer service reports back */
-  public async testPrint(deviceId: number, timeoutMs = 25_000): Promise<PrintJob> {
+  public testPrint(deviceId: number, timeoutMs = 25_000): Promise<PrintJob> {
+    return this.runPrintJob({ device: deviceId, type: 'TEST' }, timeoutMs);
+  }
+
+  /** prints a payment confirmation ("Zahlungsbestätigung") and waits for the printer service */
+  public printReceipt(deviceId: number, payload: ReceiptPayload, timeoutMs = 25_000): Promise<PrintJob> {
+    return this.runPrintJob({ device: deviceId, type: 'RECEIPT', payload }, timeoutMs);
+  }
+
+  private async runPrintJob(insert: Pick<PrintJob, 'device' | 'type' | 'payload'>, timeoutMs: number): Promise<PrintJob> {
     const { data, error } = await supabase.from('print_job')
-      .insert({ device: deviceId, type: 'TEST' })
+      .insert(insert)
       .select()
       .single();
 
