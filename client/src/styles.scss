@@ -33,13 +33,21 @@
   --os-radius-lg: 16px;
   --os-font: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
 
+  // horizontal page padding; on desktop it grows so content stays at most --os-page-max wide
+  --os-gutter: 16px;
+  --os-page-max: 1120px;
+
   color-scheme: light;
 }
 
 // =====================================================================
 // Base
 // =====================================================================
-*, *::before, *::after { box-sizing: border-box; }
+*, *::before, *::after {
+  box-sizing: border-box;
+  // declared on every element so local --os-gutter / --os-page-max overrides apply
+  --os-pad: max(var(--os-gutter), calc((100% - var(--os-page-max)) / 2));
+}
 
 html, body {
   height: 100%;
@@ -99,15 +107,26 @@ h1, h2, h3, p { margin: 0; }
   position: relative;
 }
 
+// pages rendered inside another screen (admin pages inside the shell, editor next to the product list)
+.screen .screen {
+  height: auto;
+  flex: 1 1 auto;
+  min-height: 0;
+  min-width: 0;
+  max-width: none;
+  margin: 0;
+  padding-top: 0;
+}
+
 .page-header {
   flex-shrink: 0;
-  padding: 12px 12px 8px;
+  padding: 12px calc(var(--os-pad) - 4px) 8px;
   display: flex;
   align-items: center;
   gap: 8px;
   min-height: 64px;
 
-  &.large { padding: 20px 20px 12px; justify-content: space-between; }
+  &.large { padding: 20px calc(var(--os-pad) + 4px) 12px; justify-content: space-between; }
 
   h1 { font-size: 24px; font-weight: 800; letter-spacing: -0.3px; line-height: 1.15; }
   &.large h1 { font-size: 30px; letter-spacing: -0.5px; }
@@ -141,7 +160,7 @@ h1, h2, h3, p { margin: 0; }
   overflow-x: hidden;
   -webkit-overflow-scrolling: touch;
   overscroll-behavior: contain;
-  padding: 4px 16px 16px;
+  padding: 4px var(--os-pad) 16px;
   display: flex;
   flex-direction: column;
   gap: 14px;
@@ -152,7 +171,7 @@ h1, h2, h3, p { margin: 0; }
 
 .page-footer {
   flex-shrink: 0;
-  padding: 12px 16px calc(16px + env(safe-area-inset-bottom));
+  padding: 12px var(--os-pad) calc(16px + env(safe-area-inset-bottom));
   background: var(--os-card);
   border-top: 1px solid var(--os-border);
   display: flex;
@@ -295,7 +314,7 @@ h1, h2, h3, p { margin: 0; }
   flex-shrink: 0;
   display: flex;
   gap: 4px;
-  margin: 4px 16px 12px;
+  margin: 4px var(--os-pad) 12px;
   padding: 4px;
   background: var(--os-seg);
   border-radius: 14px;
@@ -501,3 +520,80 @@ h1, h2, h3, p { margin: 0; }
 .p-button { min-height: 44px; }
 
 .p-skeleton { border-radius: var(--os-radius); }
+
+// =====================================================================
+// Desktop (mouse) – admin work mostly happens in advance on a computer
+// =====================================================================
+@media (hover: hover) and (pointer: fine) {
+  .icon-btn:hover { background: var(--os-seg); }
+  a.nav-row:hover, button.nav-row:hover:not(:disabled) { background: var(--os-card-soft); }
+  .btn-ghost:hover:not(:disabled) { background: var(--os-card-soft); border-color: var(--os-faint); }
+  .btn-ghost.dashed:hover:not(:disabled) { background: var(--os-card); }
+  .chip:hover:not([aria-pressed='true']):not(.on) { border-color: var(--os-faint); background: var(--os-card-soft); }
+  .step-btn:hover:not(:disabled):not(.plus) { background: var(--os-card-soft); }
+  .seg button:hover:not([aria-pressed='true']):not(.on) { color: var(--os-text); }
+  .cta:hover:not(:disabled) { filter: brightness(1.08); }
+
+  // the thin desktop scrollbar instead of none
+  .page-main { scrollbar-width: thin; scrollbar-color: var(--os-border-strong) transparent; }
+}
+
+// =====================================================================
+// Tablet (iPad portrait 768+) – still touch, tab bar stays
+// =====================================================================
+@media (min-width: 768px) {
+  :root { --os-gutter: 24px; }
+
+  // order / pay / login use the width of the tablet instead of a phone column
+  .screen { max-width: 1024px; }
+
+  .app {
+    .page-header.large { padding-top: 24px; }
+
+    // footer: compact action bar on the right instead of full-width buttons
+    .page-footer {
+      flex-direction: row;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 12px;
+      padding-top: 12px;
+    }
+
+    .page-footer .footer-hint { margin-right: auto; text-align: left; }
+    .page-footer > .cta { width: auto; min-width: 260px; height: 56px; }
+  }
+
+  .p-toast { max-width: 420px; }
+}
+
+// =====================================================================
+// Desktop + iPad landscape (1024+) – sidebar instead of tab bar
+// =====================================================================
+@media (min-width: 1024px) {
+  :root { --os-gutter: 32px; }
+
+  // shell: sidebar + content, full width
+  .screen.app { max-width: none; flex-direction: row; }
+
+  .app {
+    .page-header { min-height: 72px; padding-top: 20px; }
+    .page-header.large { padding-top: 28px; padding-bottom: 16px; }
+    .page-main { padding-bottom: 32px; }
+    .page-footer { padding-bottom: calc(16px + env(safe-area-inset-bottom)); }
+
+    // editor panel next to the list is narrow: keep its buttons full width
+    .detail .page-footer { flex-direction: column; align-items: stretch; }
+    .detail .page-footer .footer-hint { margin-right: 0; text-align: center; }
+    .detail .page-footer > .cta { width: 100%; }
+  }
+}
+
+// iPad landscape / small laptops: less gutter, more room for list + editor
+@media (min-width: 1024px) and (max-width: 1279px) {
+  :root { --os-gutter: 24px; }
+}
+
+// mouse: smaller primary buttons in the footer bar
+@media (min-width: 1024px) and (hover: hover) and (pointer: fine) {
+  .app .page-footer > .cta { height: 52px; font-size: 16px; }
+}
