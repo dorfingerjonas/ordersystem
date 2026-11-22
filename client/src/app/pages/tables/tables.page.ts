@@ -1,13 +1,14 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { SkeletonModule } from 'primeng/skeleton';
+import { FitTextDirective } from '../../utils/fit-text.directive';
 import { DataService } from '../../services/data.service';
 import { AuthService } from '../../services/auth.service';
 import { CartService } from '../../services/cart.service';
 
 @Component({
   selector: 'app-tables',
-  imports: [ RouterLink, SkeletonModule ],
+  imports: [ FitTextDirective, RouterLink, SkeletonModule ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <header class="page-header large">
@@ -37,7 +38,7 @@ import { CartService } from '../../services/cart.service';
                   @let pending = cart.pendingCountByTable().get(table.id);
                   <a class="table-tile" [class.pending]="pending" [routerLink]="['/order', table.id]"
                      [attr.aria-label]="'Tisch ' + table.nr + (pending ? ', ' + pending + ' nicht gesendet' : '')">
-                    <span class="nr">{{ table.nr }}</span>
+                    <span class="nr" appFitText>{{ table.nr }}</span>
                     @if (pending) {
                       <span class="count-badge pending-badge" aria-hidden="true">{{ pending }}</span>
                     }
@@ -83,7 +84,7 @@ import { CartService } from '../../services/cart.service';
       transition: transform .08s ease;
     }
     .table-tile:active { transform: scale(.96); background: var(--os-primary-soft); }
-    .table-tile .nr { font-size: 28px; font-weight: 800; }
+    .table-tile .nr { font-size: 28px; font-weight: 800; max-width: 100%; padding: 0 8px; box-sizing: border-box; white-space: nowrap; overflow: hidden; text-overflow: clip; }
     .table-tile.pending { background: var(--os-primary-soft); border: 2px solid var(--os-primary-strong); }
     .pending-badge { position: absolute; top: 6px; right: 6px; }
   `

@@ -8,6 +8,7 @@ import { ConfirmationService } from 'primeng/api';
 import { catalogTiles, DataService, OrderTile } from '../../services/data.service';
 import { VariantOptionsComponent } from '../../components/variant-options.component';
 import { GroupTile } from '../../utils/groups';
+import { FitTextDirective } from '../../utils/fit-text.directive';
 import { CartLine, CartService } from '../../services/cart.service';
 import { AuthService } from '../../services/auth.service';
 import { NotifyService } from '../../services/notify.service';
@@ -28,7 +29,7 @@ interface ReviewGroup {
 
 @Component({
   selector: 'app-order',
-  imports: [ RouterLink, DrawerModule, TextareaModule, InputTextModule, SkeletonModule, VariantOptionsComponent ],
+  imports: [ FitTextDirective, RouterLink, DrawerModule, TextareaModule, InputTextModule, SkeletonModule, VariantOptionsComponent ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './order.page.html',
   styleUrl: './order.page.scss'

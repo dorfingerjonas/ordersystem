@@ -45,7 +45,7 @@
             <button type="button" class="tile group" [class.has]="gq > 0" [class.soldout]="gsold" (click)="openSheet(t.key)"
                     aria-haspopup="dialog"
                     [attr.aria-label]="t.tile.title + ', ' + t.tile.variants.length + ' Varianten' + (gsold ? ', ausverkauft' : '') + (gq ? ', ' + gq + ' ausgewählt' : '')">
-              <span class="name">{{ t.tile.title }}</span>
+              <span class="name" appFitText>{{ t.tile.title }}</span>
               @if (gsold) {
                 <span class="soldout-label">Ausverkauft</span>
               } @else {
@@ -62,7 +62,7 @@
           @if (qty > 0) {
             <div class="tile selected">
               <button type="button" class="tile-main" (click)="tap(p)" [attr.aria-label]="p.name + ', ' + qty + ' ausgewählt, eins mehr'">
-                <span class="name">{{ p.name }}</span>
+                <span class="name" appFitText>{{ p.name }}</span>
                 <span class="price">{{ eur(p.price) }}</span>
               </button>
               <div class="tile-side">
@@ -75,7 +75,7 @@
           } @else {
             <button type="button" class="tile" [class.soldout]="!p.available" (click)="tap(p)"
                     [attr.aria-disabled]="!p.available" [attr.aria-label]="p.name + (p.available ? '' : ', ausverkauft')">
-              <span class="name">{{ p.name }}</span>
+              <span class="name" appFitText>{{ p.name }}</span>
               @if (p.available) {
                 <span class="price">{{ eur(p.price) }}</span>
               } @else {

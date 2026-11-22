@@ -2,10 +2,12 @@ import { ChangeDetectionStrategy, Component, input, output } from '@angular/core
 import { Product } from '../models/models';
 import { eur } from '../utils/format';
 import { GroupTile } from '../utils/groups';
+import { FitTextDirective } from '../utils/fit-text.directive';
 
 /** Variant buttons of one group tile (rows x columns), used on the order screen and when cashing up. */
 @Component({
   selector: 'app-variant-options',
+  imports: [ FitTextDirective ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     @let tileRows = tile().rows;
@@ -22,9 +24,9 @@ import { GroupTile } from '../utils/groups';
                         [attr.aria-disabled]="!p.available"
                         [attr.aria-label]="p.name + (p.available ? ', ' + eur(p.price) + ' hinzufügen' : ', ausverkauft') + (q ? ', ' + q + ' ausgewählt' : '')">
                   @if (tileRows.length === 1) {
-                    <span class="vname">{{ cell.label }}</span>
+                    <span class="vname" appFitText>{{ cell.label }}</span>
                   } @else {
-                    <span class="vname">{{ row.label }} {{ cell.label }}</span>
+                    <span class="vname" appFitText>{{ row.label }} {{ cell.label }}</span>
                   }
                   @if (p.available) {
                     <span class="vprice">{{ eur(p.price) }}</span>
@@ -44,7 +46,7 @@ import { GroupTile } from '../utils/groups';
               </div>
             } @else {
               <span class="vcell none" aria-hidden="true">
-                <span class="vname">{{ cell.label }}</span>
+                <span class="vname" appFitText>{{ cell.label }}</span>
                 <span class="vprice">–</span>
               </span>
             }
@@ -81,7 +83,7 @@ import { GroupTile } from '../utils/groups';
     .vcell.soldout { background: var(--os-card-soft); border-style: dashed; color: var(--os-faint); }
     .vcell.soldout .vname { text-decoration: line-through; }
     .vcell.none { background: transparent; border-style: dashed; color: var(--os-faint); cursor: default; }
-    .vname { font-size: 16px; font-weight: 700; line-height: 1.15; overflow-wrap: anywhere; }
+    .vname { max-width: 100%; font-size: 16px; font-weight: 700; line-height: 1.15; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
     .vprice { font-size: 13px; color: var(--os-text-2); }
     .vcell.none .vprice { color: var(--os-faint); }
     .vsold { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; color: var(--os-danger); }

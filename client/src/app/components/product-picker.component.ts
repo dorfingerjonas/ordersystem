@@ -4,11 +4,12 @@ import { eur } from '../utils/format';
 import { GroupTile } from '../utils/groups';
 import { Product } from '../models/models';
 import { VariantOptionsComponent } from './variant-options.component';
+import { FitTextDirective } from '../utils/fit-text.directive';
 
 /** Category tabs + product grid, used for direct sale and "Weitere Produkte" on the pay screen. */
 @Component({
   selector: 'app-product-picker',
-  imports: [ VariantOptionsComponent ],
+  imports: [ FitTextDirective, VariantOptionsComponent ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     @if (openTile(); as tile) {
@@ -31,7 +32,7 @@ import { VariantOptionsComponent } from './variant-options.component';
             @let gq = groupQty(t.tile);
             <button type="button" class="tile" [class.has]="gq > 0" (click)="openKey.set(t.key)"
                     [attr.aria-label]="t.tile.title + ', Variante wählen' + (gq ? ', ' + gq + ' ausgewählt' : '')">
-              <span class="name">{{ t.tile.title }}</span>
+              <span class="name" appFitText>{{ t.tile.title }}</span>
               <span class="price">{{ t.tile.variants.length }} {{ t.tile.variants.length === 1 ? 'Variante' : 'Varianten' }}
                 <i class="pi pi-chevron-right" aria-hidden="true"></i></span>
               @if (gq > 0) {
@@ -43,7 +44,7 @@ import { VariantOptionsComponent } from './variant-options.component';
             @let q = quantities().get(p.id) ?? 0;
             <button type="button" class="tile" [class.has]="q > 0" (click)="pick.emit(p)"
                     [attr.aria-label]="p.name + ' hinzufügen' + (q ? ', ' + q + ' ausgewählt' : '')">
-              <span class="name">{{ p.name }}</span>
+              <span class="name" appFitText>{{ p.name }}</span>
               <span class="price">{{ eur(p.price) }}</span>
               @if (q > 0) {
                 <span class="count-badge q">{{ q }}</span>
@@ -80,7 +81,8 @@ import { VariantOptionsComponent } from './variant-options.component';
     }
     .tile:active { transform: scale(.97); }
     .tile.has { background: var(--os-primary-soft); border-color: var(--os-primary-strong); }
-    .name { font-size: 15px; font-weight: 600; line-height: 1.2; padding-right: 26px; }
+    .name { font-size: 15px; font-weight: 600; line-height: 1.2; padding-right: 26px; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+    .price { white-space: nowrap; }
     .price { font-size: 13px; color: var(--os-muted); display: flex; align-items: center; gap: 4px; }
     .price i { font-size: 11px; }
     .q { position: absolute; top: 8px; right: 8px; }

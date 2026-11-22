@@ -1,13 +1,14 @@
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { SkeletonModule } from 'primeng/skeleton';
+import { FitTextDirective } from '../../utils/fit-text.directive';
 import { DataService } from '../../services/data.service';
 import { eur } from '../../utils/format';
 import { ReceiptOfferComponent } from '../../components/receipt-offer.component';
 
 @Component({
   selector: 'app-pay-tables',
-  imports: [ RouterLink, SkeletonModule, ReceiptOfferComponent ],
+  imports: [ FitTextDirective, RouterLink, SkeletonModule, ReceiptOfferComponent ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <header class="page-header large">
@@ -50,8 +51,8 @@ import { ReceiptOfferComponent } from '../../components/receipt-offer.component'
             <div class="grid">
               @for (t of section.tables; track t.id) {
                 <a class="table-tile" [routerLink]="['/pay', t.id]" [attr.aria-label]="'Tisch ' + t.nr + ', offen ' + eur(t.open)">
-                  <span class="nr">{{ t.nr }}</span>
-                  <span class="amount">{{ eur(t.open) }}</span>
+                  <span class="nr" appFitText>{{ t.nr }}</span>
+                  <span class="amount" appFitText>{{ eur(t.open) }}</span>
                 </a>
               }
             </div>
@@ -89,6 +90,7 @@ import { ReceiptOfferComponent } from '../../components/receipt-offer.component'
       gap: 2px;
     }
     .table-tile:active { transform: scale(.96); }
+    .nr, .amount { max-width: 100%; padding: 0 8px; box-sizing: border-box; white-space: nowrap; overflow: hidden; }
     .nr { font-size: 24px; font-weight: 800; }
     .amount { font-size: 13px; font-weight: 700; color: var(--os-on-primary-soft); }
   `
