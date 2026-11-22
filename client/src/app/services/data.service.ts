@@ -625,26 +625,46 @@ export class DataService {
    * (sold directly, not ordered at the table) as paid rows.
    */
   public async pay(orderedIds: string[], extras: { item: number; amount: number }[], table: number | null): Promise<void> {
-    const tasks: PromiseLike<{ error: unknown }>[] = [];
+    // paid_at / created_at / price are set by a DB trigger (server time); paid_by is who cashed up
+    const by = this.auth.username() || null;
+    const products = this.productById();
 
-    if (orderedIds.length > 0) {
-      tasks.push(supabase.from('ordered_product').update({ paid: true }).in('id', orderedIds));
+    const run = async (withStats: boolean) => {
+      const tasks: PromiseLike<{ error: { code?: string; message?: string } | null }>[] = [];
+
+      if (orderedIds.length > 0) {
+        tasks.push(supabase.from('ordered_product')
+          .update(withStats ? { paid: true, paid_by: by } : { paid: true })
+          .in('id', orderedIds));
+      }
+
+      const extraRows = extras.flatMap(e => Array.from({ length: e.amount }, () => withStats
+        ? { item: e.item, table, paid: true, waiter: by, paid_by: by, price: products.get(e.item)?.price ?? null }
+        : { item: e.item, table, paid: true }));
+
+      if (extraRows.length > 0) {
+        tasks.push(supabase.from('ordered_product').insert(extraRows));
+      }
+
+      return (await Promise.all(tasks)).find(r => r.error)?.error ?? null;
+    };
+
+    let error = await run(true);
+
+    // statistics migration not run yet -> unknown columns; pay without them
+    // (the update is idempotent, the insert failed as a whole)
+    if (error && (error.code === 'PGRST204' || /column/i.test(error.message ?? ''))) {
+      console.warn('paying without statistics columns', error);
+      error = await run(false);
     }
 
-    const extraRows = extras.flatMap(e => Array.from({ length: e.amount }, () => ({ item: e.item, table, paid: true })));
+    if (error) throw error;
 
-    if (extraRows.length > 0) {
-      tasks.push(supabase.from('ordered_product').insert(extraRows));
-    }
-
-    const results = await Promise.all(tasks);
-    const failed = results.find(r => r.error);
-
-    if (failed?.error) throw failed.error;
+    const paidAt = new Date().toISOString();
 
     this.orderedStore.upsertLocal(...this.orderedStore.items()
       .filter(o => orderedIds.includes(o.id))
-      .map(o => ({ ...o, paid: true })));
+      .map(o => ({ ...o, paid: true, paid_by: by, paid_at: o.paid_at ?? paidAt })));
   }
 
   /** inserts a test print job and waits until the printer service reports back */

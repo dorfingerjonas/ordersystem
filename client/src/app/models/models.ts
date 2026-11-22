@@ -68,11 +68,32 @@ export interface NewOrder {
   note?: string;
 }
 
+/** one sold item (one row per unit) */
 export interface OrderedProduct {
   id: string; // uuid
   item: number | null;
   paid: boolean;
   table: number | null;
+  /** ISO time it was ordered / sold directly (null for rows from before the statistics migration) */
+  created_at?: string | null;
+  /** price in EUR at that moment (null: use the current product price) */
+  price?: number | null;
+  /** order it came from, null = direct sale while cashing up */
+  order_id?: number | null;
+  /** who ordered it (direct sale: who sold it) */
+  waiter?: string | null;
+  /** ISO time it was cashed up */
+  paid_at?: string | null;
+  /** who cashed it up */
+  paid_by?: string | null;
+}
+
+/** row of "orders" as needed by the statistics */
+export interface OrderRow extends WithId {
+  table: number | null;
+  waiter: string | null;
+  timestamp: string | number | null;
+  products?: OrderLineDTO[] | null;
 }
 
 export enum PrinterType {
