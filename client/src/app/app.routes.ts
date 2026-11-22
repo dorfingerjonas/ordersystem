@@ -41,6 +41,11 @@ export const routes: Routes = [
           { path: 'groups/:groupId', redirectTo: 'products/group/:groupId' },
           { path: 'sort', loadComponent: () => import('./pages/admin/sort/sort.page').then(m => m.SortPage) },
           { path: 'tables', loadComponent: () => import('./pages/admin/tables/admin-tables.page').then(m => m.AdminTablesPage) },
+          { path: 'stats', loadComponent: () => import('./pages/admin/stats/stats.page').then(m => m.StatsPage) },
+          { path: 'stats/products', loadComponent: () => import('./pages/admin/stats/stats-products.page').then(m => m.StatsProductsPage) },
+          { path: 'stats/timeline', loadComponent: () => import('./pages/admin/stats/stats-timeline.page').then(m => m.StatsTimelinePage) },
+          { path: 'stats/waiters', loadComponent: () => import('./pages/admin/stats/stats-waiters.page').then(m => m.StatsWaitersPage) },
+          { path: 'stats/tables', loadComponent: () => import('./pages/admin/stats/stats-tables.page').then(m => m.StatsTablesPage) },
           { path: 'printers', loadComponent: () => import('./pages/admin/printers/printers.page').then(m => m.PrintersPage) },
           { path: '', pathMatch: 'full', redirectTo: '/more' }
         ]
