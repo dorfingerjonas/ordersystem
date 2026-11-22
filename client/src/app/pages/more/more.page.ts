@@ -41,6 +41,14 @@ import { eur } from '../../utils/format';
         </section>
 
         <nav class="card admin-nav" aria-label="Verwaltung">
+          <a class="nav-row" routerLink="/admin/stats">
+            <span class="nav-icon"><i class="pi pi-chart-line" aria-hidden="true"></i></span>
+            <span class="row-main">
+              <span class="row-title">Statistik</span>
+              <span class="row-sub">Produkte, Peaks, Kellner & Tische</span>
+            </span>
+            <i class="pi pi-chevron-right chev" aria-hidden="true"></i>
+          </a>
           <a class="nav-row" routerLink="/admin/products">
             <span class="nav-icon"><i class="pi pi-box" aria-hidden="true"></i></span>
             <span class="row-main">
@@ -105,8 +113,11 @@ import { eur } from '../../utils/format';
   `,
   styles: `
     :host { display: contents; --os-page-max: 960px; }
+    @media (min-width: 1200px) {
+      .admin-nav.admin-nav { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    }
     @media (min-width: 768px) {
-      .admin-nav { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); background: transparent; border: none; gap: 12px; overflow: visible; }
+      .admin-nav { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); background: transparent; border: none; gap: 12px; overflow: visible; }
       .admin-nav .nav-row { border: 1px solid var(--os-border); border-radius: var(--os-radius-lg); align-items: flex-start; flex-wrap: wrap; min-height: 120px; padding: 16px; }
       .admin-nav .nav-row .row-main { flex: 1 1 100%; order: 2; }
       .admin-nav .nav-row .chev { margin-left: auto; }

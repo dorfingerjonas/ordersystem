@@ -42,6 +42,9 @@ import { InstallService } from '../services/install.service';
             <a routerLink="/more" routerLinkActive="active" ariaCurrentWhenActive="page">
               <i class="pi pi-chart-bar" aria-hidden="true"></i> Übersicht
             </a>
+            <a routerLink="/admin/stats" routerLinkActive="active" ariaCurrentWhenActive="page">
+              <i class="pi pi-chart-line" aria-hidden="true"></i> Statistik
+            </a>
             <a routerLink="/admin/products" routerLinkActive="active" ariaCurrentWhenActive="page">
               <i class="pi pi-box" aria-hidden="true"></i> Produkte
             </a>
