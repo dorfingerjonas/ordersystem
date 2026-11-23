@@ -54,6 +54,9 @@ import { InstallService } from '../services/install.service';
             <a routerLink="/admin/tables" routerLinkActive="active" ariaCurrentWhenActive="page">
               <i class="pi pi-th-large" aria-hidden="true"></i> Tische & Bereiche
             </a>
+            <a routerLink="/admin/users" routerLinkActive="active" ariaCurrentWhenActive="page">
+              <i class="pi pi-users" aria-hidden="true"></i> Kellner & Konten
+            </a>
             <a routerLink="/admin/printers" routerLinkActive="active" ariaCurrentWhenActive="page">
               <i class="pi pi-print" aria-hidden="true"></i> Drucker
               @if (data.printers().length > 0) {

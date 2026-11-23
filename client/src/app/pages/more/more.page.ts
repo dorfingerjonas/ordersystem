@@ -65,6 +65,14 @@ import { eur } from '../../utils/format';
             </span>
             <i class="pi pi-chevron-right chev" aria-hidden="true"></i>
           </a>
+          <a class="nav-row" routerLink="/admin/users">
+            <span class="nav-icon"><i class="pi pi-users" aria-hidden="true"></i></span>
+            <span class="row-main">
+              <span class="row-title">Kellner & Konten</span>
+              <span class="row-sub">Anlegen, Rollen, Passwörter, Sperren</span>
+            </span>
+            <i class="pi pi-chevron-right chev" aria-hidden="true"></i>
+          </a>
           <a class="nav-row" routerLink="/admin/printers">
             <span class="nav-icon"><i class="pi pi-print" aria-hidden="true"></i></span>
             <span class="row-main">

@@ -46,6 +46,7 @@ export const routes: Routes = [
           { path: 'stats/timeline', loadComponent: () => import('./pages/admin/stats/stats-timeline.page').then(m => m.StatsTimelinePage) },
           { path: 'stats/waiters', loadComponent: () => import('./pages/admin/stats/stats-waiters.page').then(m => m.StatsWaitersPage) },
           { path: 'stats/tables', loadComponent: () => import('./pages/admin/stats/stats-tables.page').then(m => m.StatsTablesPage) },
+          { path: 'users', loadComponent: () => import('./pages/admin/users/users.page').then(m => m.UsersPage) },
           { path: 'printers', loadComponent: () => import('./pages/admin/printers/printers.page').then(m => m.PrintersPage) },
           { path: '', pathMatch: 'full', redirectTo: '/more' }
         ]
