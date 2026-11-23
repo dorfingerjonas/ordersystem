@@ -18,3 +18,13 @@ export function byOrdering<T extends { ordering: number }>(a: T, b: T): number {
 export function naturalCompare(a: string, b: string): number {
   return a.localeCompare(b, 'de', { numeric: true, sensitivity: 'base' });
 }
+
+/** "max-mustermann@x.at" -> "Max Mustermann" */
+export function nameFromEmail(email: string): string {
+  return email
+    .split('@')[0]
+    .split(/[-._]/)
+    .filter(Boolean)
+    .map(v => v.substring(0, 1).toUpperCase() + v.substring(1).toLowerCase())
+    .join(' ');
+}

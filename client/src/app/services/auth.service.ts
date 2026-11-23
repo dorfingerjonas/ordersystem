@@ -1,6 +1,7 @@
 import { computed, Injectable, signal } from '@angular/core';
 import { Session } from '@supabase/supabase-js';
 import { supabase } from '../supabase/supabase';
+import { nameFromEmail } from '../utils/format';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
@@ -8,15 +9,10 @@ export class AuthService {
   public readonly session = signal<Session | null>(null);
   public readonly isLoggedIn = computed(() => !!this.session());
   public readonly isAdmin = computed(() => this.session()?.user.app_metadata?.['role'] === 'admin');
+  public readonly userId = computed(() => this.session()?.user.id ?? '');
   public readonly email = computed(() => this.session()?.user.email ?? '');
 
-  /** "max-mustermann@x.at" -> "Max Mustermann" */
-  public readonly username = computed(() => this.email()
-    .split('@')[0]
-    .split(/[-._]/)
-    .filter(Boolean)
-    .map(v => v.substring(0, 1).toUpperCase() + v.substring(1).toLowerCase())
-    .join(' '));
+  public readonly username = computed(() => nameFromEmail(this.email()));
 
   public readonly firstName = computed(() => this.username().split(' ')[0] ?? '');
 
