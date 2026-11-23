@@ -1,0 +1,187 @@
+<div class="screen">
+  <header class="page-header">
+    <a class="icon-btn" routerLink="/more" aria-label="Zurück zur Verwaltung">
+      <i class="pi pi-chevron-left" aria-hidden="true"></i>
+    </a>
+    <div class="titles">
+      <h1>Kellner & Konten</h1>
+      <span class="subtitle">
+        @if (users.loaded()) {
+          {{ users.users().length }} Konten · {{ adminCount() }} Admins
+        } @else {
+          Konto antippen zum Bearbeiten
+        }
+      </span>
+    </div>
+    <button type="button" class="icon-btn" (click)="load()" [disabled]="loading()" aria-label="Neu laden" style="margin-left: auto">
+      <i class="pi pi-refresh" [class.pi-spin]="loading()" aria-hidden="true"></i>
+    </button>
+  </header>
+
+  <main class="page-main">
+    @if (loadError(); as error) {
+      <div class="empty">
+        <i class="pi pi-exclamation-circle" aria-hidden="true"></i>
+        <strong>Konten konnten nicht geladen werden</strong>
+        <span>{{ error }}</span>
+        <button type="button" class="btn-ghost" (click)="load()">Erneut versuchen</button>
+      </div>
+    } @else if (!users.loaded()) {
+      <div class="empty">
+        <i class="pi pi-spin pi-spinner" aria-hidden="true"></i>
+        <span>Konten werden geladen …</span>
+      </div>
+    } @else {
+      @if (users.users().length > 8) {
+        <div class="field">
+          <label for="user-search" class="sr-only">Suchen</label>
+          <input pInputText id="user-search" type="search" placeholder="Name oder E-Mail suchen"
+                 [ngModel]="search()" (ngModelChange)="search.set($event)" autocomplete="off">
+        </div>
+      }
+
+      <section class="card">
+        @for (u of filtered(); track u.id) {
+          <button type="button" class="row user-row" [class.banned]="u.banned" (click)="openEdit(u)"
+                  [attr.aria-label]="name(u.email) + ' bearbeiten'">
+            <span class="avatar" aria-hidden="true">{{ initial(u) }}</span>
+            <span class="row-main">
+              <span class="row-title">{{ name(u.email) || u.email }}</span>
+              <span class="row-sub">
+                {{ u.email }}
+                @if (u.lastSignInAt) {
+                  · zuletzt {{ u.lastSignInAt | date: 'dd.MM.yy HH:mm' }}
+                } @else {
+                  · noch nie angemeldet
+                }
+              </span>
+            </span>
+            <span class="badges">
+              @if (u.id === auth.userId()) {
+                <span class="badge">Du</span>
+              }
+              @if (u.banned) {
+                <span class="badge banned">Gesperrt</span>
+              }
+              <span class="badge" [class.admin]="u.admin">{{ u.admin ? 'Admin' : 'Kellner' }}</span>
+            </span>
+            <i class="pi pi-chevron-right chev" aria-hidden="true"></i>
+          </button>
+        } @empty {
+          <div class="empty">
+            <i class="pi pi-users" aria-hidden="true"></i>
+            <strong>Keine Konten gefunden</strong>
+          </div>
+        }
+      </section>
+    }
+  </main>
+
+  <footer class="page-footer">
+    <button type="button" class="cta dark" (click)="openCreate()" [disabled]="!users.loaded()">
+      <i class="pi pi-user-plus" aria-hidden="true"></i> Neues Konto
+    </button>
+  </footer>
+</div>
+
+<!-- create dialog -->
+<p-dialog [(visible)]="createDialog" [modal]="true" header="Neues Konto"
+          [style]="{ width: 'calc(100vw - 32px)', maxWidth: '420px' }" [draggable]="false" [dismissableMask]="true">
+  <form class="dialog-form" (ngSubmit)="create()">
+    <div class="field">
+      <label for="new-email">E-Mail-Adresse</label>
+      <input pInputText id="new-email" name="email" type="email" [ngModel]="newEmail()" (ngModelChange)="newEmail.set($event)"
+             required autocomplete="off" placeholder="vorname-nachname@…" [pAutoFocus]="true">
+      @if (duplicateEmail()) {
+        <span class="warn">Für diese E-Mail-Adresse gibt es schon ein Konto.</span>
+      } @else if (newEmail().trim()) {
+        <span class="hint">Angezeigt als „{{ name(newEmail().trim()) }}“. Es wird keine E-Mail verschickt.</span>
+      }
+    </div>
+
+    <div class="field">
+      <label for="new-password">Passwort</label>
+      <div class="pw">
+        <input pInputText id="new-password" name="password" [type]="showNewPassword() ? 'text' : 'password'"
+               [ngModel]="newPassword()" (ngModelChange)="newPassword.set($event)" required autocomplete="new-password">
+        <button type="button" class="btn-ghost" (click)="showNewPassword.set(!showNewPassword())"
+                [attr.aria-label]="showNewPassword() ? 'Passwort verbergen' : 'Passwort anzeigen'">
+          <i class="pi" [class.pi-eye-slash]="showNewPassword()" [class.pi-eye]="!showNewPassword()" aria-hidden="true"></i>
+        </button>
+        <button type="button" class="btn-ghost" (click)="newPassword.set(generatePassword()); showNewPassword.set(true)"
+                aria-label="Zufälliges Passwort erzeugen">
+          <i class="pi pi-sync" aria-hidden="true"></i>
+        </button>
+      </div>
+      @if (newPassword() && newPassword().length < minLength) {
+        <span class="warn">Mindestens {{ minLength }} Zeichen.</span>
+      }
+    </div>
+
+    <div class="toggle-row">
+      <p-toggleswitch inputId="new-admin" name="admin" [ngModel]="newAdmin()" (ngModelChange)="newAdmin.set($event)" />
+      <label for="new-admin">Admin-Rechte</label>
+    </div>
+  </form>
+  <ng-template #footer>
+    <p-button label="Abbrechen" severity="secondary" (onClick)="createDialog.set(false)" />
+    <p-button label="Anlegen" severity="contrast" [loading]="saving()" [disabled]="!canCreate()" (onClick)="create()" />
+  </ng-template>
+</p-dialog>
+
+<!-- edit dialog -->
+<p-dialog [(visible)]="editDialog" [modal]="true" [header]="editing() ? (name(editing()!.email) || editing()!.email) : ''"
+          [style]="{ width: 'calc(100vw - 32px)', maxWidth: '420px' }" [draggable]="false" [dismissableMask]="true">
+  @if (editing(); as user) {
+    <div class="dialog-form">
+      <span class="hint">{{ user.email }} · angelegt {{ user.createdAt | date: 'dd.MM.yyyy' }}</span>
+
+      <div class="field">
+        <div class="toggle-row">
+          <p-toggleswitch inputId="edit-admin" [ngModel]="user.admin" (ngModelChange)="toggleAdmin($event)"
+                          [disabled]="isSelf() || saving()" />
+          <label for="edit-admin">Admin-Rechte</label>
+        </div>
+        @if (isSelf()) {
+          <span class="hint">Die eigenen Admin-Rechte können nicht entfernt werden.</span>
+        }
+      </div>
+
+      <hr class="divider">
+
+      <form class="field" (ngSubmit)="savePassword()">
+        <label for="edit-password">Neues Passwort setzen</label>
+        <div class="pw">
+          <input pInputText id="edit-password" name="password" [type]="showEditPassword() ? 'text' : 'password'"
+                 [ngModel]="editPassword()" (ngModelChange)="editPassword.set($event)" autocomplete="new-password"
+                 placeholder="Mindestens {{ minLength }} Zeichen">
+          <button type="button" class="btn-ghost" (click)="showEditPassword.set(!showEditPassword())"
+                  [attr.aria-label]="showEditPassword() ? 'Passwort verbergen' : 'Passwort anzeigen'">
+            <i class="pi" [class.pi-eye-slash]="showEditPassword()" [class.pi-eye]="!showEditPassword()" aria-hidden="true"></i>
+          </button>
+          <button type="button" class="btn-ghost" (click)="editPassword.set(generatePassword()); showEditPassword.set(true)"
+                  aria-label="Zufälliges Passwort erzeugen">
+            <i class="pi pi-sync" aria-hidden="true"></i>
+          </button>
+        </div>
+        <span class="hint">Das alte Passwort ist nicht einsehbar und wird ersetzt.</span>
+        <p-button type="submit" label="Passwort speichern" severity="contrast" [loading]="saving()"
+                  [disabled]="editPassword().length < minLength" />
+      </form>
+
+      @if (!isSelf()) {
+        <hr class="divider">
+
+        <div class="actions">
+          <button type="button" class="btn-ghost" [class.danger]="!user.banned" (click)="toggleBan()" [disabled]="saving()">
+            <i class="pi" [class.pi-ban]="!user.banned" [class.pi-unlock]="user.banned" aria-hidden="true"></i>
+            {{ user.banned ? 'Entsperren' : 'Sperren' }}
+          </button>
+          <button type="button" class="btn-ghost danger" (click)="remove()" [disabled]="saving()">
+            <i class="pi pi-trash" aria-hidden="true"></i> Konto löschen
+          </button>
+        </div>
+      }
+    </div>
+  }
+</p-dialog>
