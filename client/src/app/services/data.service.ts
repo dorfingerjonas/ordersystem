@@ -705,18 +705,49 @@ export class DataService {
     if (error) throw error;
 
     const job = data as PrintJob;
-    const started = Date.now();
 
-    while (Date.now() - started < timeoutMs) {
-      await new Promise(r => setTimeout(r, 1500));
+    // wait for the printer service's status update via realtime;
+    // a slow poll is only the fallback if the update event gets lost
+    return new Promise<PrintJob>(resolve => {
+      let done = false;
 
-      const res = await supabase.from('print_job').select('*').eq('id', job.id).single();
+      const finish = (result: PrintJob) => {
+        if (done) return;
 
-      if (res.data && (res.data as PrintJob).status !== 'PENDING') {
-        return res.data as PrintJob;
-      }
-    }
+        done = true;
+        clearTimeout(timeout);
+        clearInterval(poll);
+        void supabase.removeChannel(channel);
+        resolve(result);
+      };
 
-    return { ...job, status: 'FAILED', message: 'Der Druckservice hat nicht geantwortet. Läuft der Server?' };
+      const check = async () => {
+        const res = await supabase.from('print_job').select('*').eq('id', job.id).single();
+
+        if (res.data && (res.data as PrintJob).status !== 'PENDING') finish(res.data as PrintJob);
+      };
+
+      const channel = supabase.channel(`print-job-${ job.id }`)
+        .on(
+          'postgres_changes',
+          { event: 'UPDATE', schema: 'public', table: 'print_job', filter: `id=eq.${ job.id }` },
+          payload => {
+            const row = payload.new as PrintJob;
+
+            if (row.status !== 'PENDING') finish(row);
+          }
+        )
+        // the job might have finished before the channel was ready
+        .subscribe(status => {
+          if (status === 'SUBSCRIBED') void check();
+        });
+
+      const poll = setInterval(() => void check(), 5000);
+      const timeout = setTimeout(() => finish({
+        ...job,
+        status: 'FAILED',
+        message: 'Der Druckservice hat nicht geantwortet. Läuft der Server?'
+      }), timeoutMs);
+    });
   }
 }
