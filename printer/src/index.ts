@@ -2,7 +2,7 @@ import { Category, Device, DeviceType, Order, OrderDTO, OrderLine, PrintJob, Pro
 import { InfrastructureConfigDTO, PrinterConfig } from './config';
 import { CharacterSet, ThermalPrinter } from 'node-thermal-printer';
 
-import { createClient } from '@supabase/supabase-js';
+import { createClient, RealtimeChannel } from '@supabase/supabase-js';
 import { environment } from './environment';
 import { Logger } from './helpers/logger';
 
@@ -24,7 +24,11 @@ const ordersInFlight = new Set<number>();
 const printedParts = new Map<number, Set<number>>();
 const jobsInFlight = new Set<number>();
 
-const POLL_INTERVAL = 10 * 1000;
+/** realtime is the primary channel; polling is only a safety net */
+const SAFETY_POLL_INTERVAL = 60 * 1000;
+/** while the realtime channel is down, poll at the old rate */
+const DEGRADED_POLL_INTERVAL = 10 * 1000;
+const RESUBSCRIBE_DELAY = 5 * 1000;
 const PING_INTERVAL = 10 * 1000;
 const JOB_MAX_AGE = 2 * 60 * 1000;
 
@@ -40,14 +44,16 @@ let ready = false;
   ready = true;
   LOG.info('initial data loaded');
 
-  getOutstandingOrders();
-  getPendingPrintJobs();
+  catchUp('startup');
   void pingPrinters();
 
+  // safety net only: realtime delivers new orders instantly. Poll every 60s
+  // while realtime is healthy, every 10s while the channel is down.
   setInterval(() => {
-    getOutstandingOrders();
-    getPendingPrintJobs();
-  }, POLL_INTERVAL);
+    const interval = realtimeHealthy ? SAFETY_POLL_INTERVAL : DEGRADED_POLL_INTERVAL;
+
+    if (Date.now() - lastCatchUp >= interval) catchUp(realtimeHealthy ? 'safety poll' : 'realtime down');
+  }, DEGRADED_POLL_INTERVAL);
 
   setInterval(() => void pingPrinters(), PING_INTERVAL);
 
@@ -147,6 +153,18 @@ function mapOrderDTO(orderDTO: OrderDTO): Order {
 // ---------------------------------------------------------------------
 // orders
 // ---------------------------------------------------------------------
+
+let lastCatchUp = 0;
+
+/** fetches everything that might have been missed (startup, reconnect, safety poll) */
+function catchUp(reason: string): void {
+  if (!ready) return;
+
+  lastCatchUp = Date.now();
+  LOG.debug(`catch up (${ reason })`);
+  getOutstandingOrders();
+  getPendingPrintJobs();
+}
 
 function getOutstandingOrders(): void {
   if (!ready) return;
@@ -499,27 +517,61 @@ function buildPaymentReceipt(id: number, receipt: ReceiptPayload, printer: Therm
 // realtime
 // ---------------------------------------------------------------------
 
-supabase.channel('realtime-orders')
-  .on(
-    'postgres_changes',
-    { event: 'INSERT', schema: 'public', table: 'orders', filter: 'printed=eq.false' },
-    (payload) => {
-      const order = payload.new as OrderDTO;
+let realtimeHealthy = false;
+let workChannel: RealtimeChannel | null = null;
+let resubscribeTimer: ReturnType<typeof setTimeout> | undefined;
 
-      if (order) {
-        void handleOrder(mapOrderDTO(order));
+/**
+ * New orders and print jobs arrive via realtime. Every (re)subscribe triggers
+ * a catch-up fetch, so nothing inserted while the socket was down is missed.
+ */
+function subscribeWork(): void {
+  workChannel = supabase.channel('printer-work')
+    .on(
+      'postgres_changes',
+      { event: 'INSERT', schema: 'public', table: 'orders', filter: 'printed=eq.false' },
+      (payload) => {
+        const order = payload.new as OrderDTO;
+
+        if (order) {
+          void handleOrder(mapOrderDTO(order));
+        }
       }
-    }
-  )
-  .subscribe();
+    )
+    .on(
+      'postgres_changes',
+      { event: 'INSERT', schema: 'public', table: 'print_job' },
+      (payload) => void handlePrintJob(payload.new as PrintJob)
+    )
+    .subscribe((status, error) => {
+      if (status === 'SUBSCRIBED') {
+        const wasDown = !realtimeHealthy;
 
-supabase.channel('realtime-print-jobs')
-  .on(
-    'postgres_changes',
-    { event: 'INSERT', schema: 'public', table: 'print_job' },
-    (payload) => void handlePrintJob(payload.new as PrintJob)
-  )
-  .subscribe();
+        realtimeHealthy = true;
+        LOG.info('realtime connected');
+
+        // (re)connected: fetch what arrived while we were not listening
+        if (wasDown) catchUp('realtime connected');
+        return;
+      }
+
+      realtimeHealthy = false;
+      LOG.warn(`realtime ${ status }${ error ? ' ' + error.message : '' } – polling every ${ DEGRADED_POLL_INTERVAL / 1000 }s`);
+
+      if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+        if (resubscribeTimer) clearTimeout(resubscribeTimer);
+        resubscribeTimer = setTimeout(() => {
+          if (realtimeHealthy) return;
+
+          const old = workChannel;
+          workChannel = null;
+          void (old ? supabase.removeChannel(old) : Promise.resolve()).then(subscribeWork);
+        }, RESUBSCRIBE_DELAY);
+      }
+    });
+}
+
+subscribeWork();
 
 supabase.channel('realtime-products')
   .on('postgres_changes', { event: '*', schema: 'public', table: 'product' }, () => void initData('product'))
