@@ -77,11 +77,18 @@ export interface ReceiptPayload {
   received: number | null;
 }
 
+/** print_job.payload of type 'ORDER': print an order slip again */
+export interface ReprintPayload {
+  order_id: number;
+  /** true: every line on this printer, false: only the categories of this printer */
+  all?: boolean;
+}
+
 export interface PrintJob extends WithId {
   created_at: string;
   device: number;
-  type: 'TEST' | 'RECEIPT';
-  payload: ReceiptPayload | null;
+  type: 'TEST' | 'RECEIPT' | 'ORDER';
+  payload: ReceiptPayload | ReprintPayload | null;
   status: 'PENDING' | 'DONE' | 'FAILED';
   message: string | null;
   finished_at: string | null;

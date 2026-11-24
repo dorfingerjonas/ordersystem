@@ -1,4 +1,4 @@
-import { Category, Device, DeviceType, Order, OrderDTO, OrderLine, PrintJob, Product, ReceiptPayload, Table } from './models/models';
+import { Category, Device, DeviceType, Order, OrderDTO, OrderLine, PrintJob, Product, ReceiptPayload, ReprintPayload, Table } from './models/models';
 import { InfrastructureConfigDTO, PrinterConfig } from './config';
 import { CharacterSet, ThermalPrinter } from 'node-thermal-printer';
 
@@ -295,8 +295,17 @@ async function printReceipt(order: Order, printer: ThermalPrinter): Promise<void
   }
 }
 
-function buildReceiptData(order: Order, printer: ThermalPrinter): void {
+function buildReceiptData(order: Order, printer: ThermalPrinter, reprint = false): void {
   printer.drawLine();
+
+  if (reprint) {
+    printer.alignCenter();
+    printer.bold(true);
+    printer.println(`*** NACHDRUCK ${ formatDate(Date.now()) } ***`);
+    printer.bold(false);
+    printer.alignLeft();
+  }
+
   printer.newLine();
 
   printer.setTextDoubleHeight();
@@ -393,16 +402,32 @@ async function handlePrintJob(job: PrintJob): Promise<void> {
       return;
     }
 
+    // reprint: resolve the order before touching the printer
+    let reprint: Order | null = null;
+
+    if (job.type === 'ORDER') {
+      const result = await loadReprint(job.payload as ReprintPayload | null, infra?.categories ?? null);
+
+      if (typeof result === 'string') {
+        await finishJob(job, 'FAILED', result);
+        return;
+      }
+
+      reprint = result;
+    }
+
     printer.clear();
 
     try {
-      if (job.type === 'RECEIPT') {
+      if (reprint) {
+        buildReceiptData(reprint, printer, true);
+      } else if (job.type === 'RECEIPT') {
         if (!job.payload) {
           await finishJob(job, 'FAILED', 'Beleg ohne Inhalt.');
           return;
         }
 
-        buildPaymentReceipt(job.id, job.payload, printer);
+        buildPaymentReceipt(job.id, job.payload as ReceiptPayload, printer);
       } else {
         buildTestPrint(name, iface, infra?.categories ?? [], printer);
       }
@@ -413,7 +438,7 @@ async function handlePrintJob(job: PrintJob): Promise<void> {
       printer.clear();
     }
 
-    LOG.info(`${ job.type === 'RECEIPT' ? 'receipt' : 'test print' } ${ job.id } on ${ name } done`);
+    LOG.info(`${ job.type === 'RECEIPT' ? 'receipt' : job.type === 'ORDER' ? 'reprint' : 'test print' } ${ job.id } on ${ name } done`);
     await finishJob(job, 'DONE', null);
   } catch (error) {
     LOG.error(`print job ${ job.id } failed ${ error }`);
@@ -421,6 +446,35 @@ async function handlePrintJob(job: PrintJob): Promise<void> {
   } finally {
     jobsInFlight.delete(job.id);
   }
+}
+
+/**
+ * Loads the order of a reprint job. categories = the printer's categories
+ * (null: printer has no infrastructure entry -> every line).
+ * Returns an error message for the admin UI if there is nothing to print.
+ */
+async function loadReprint(payload: ReprintPayload | null, categories: number[] | null): Promise<Order | string> {
+  if (!payload?.order_id) return 'Nachdruck ohne Bestellnummer.';
+
+  const { data, error } = await supabase.from('orders').select('*').eq('id', payload.order_id).maybeSingle();
+
+  if (error) return `Bestellung konnte nicht geladen werden: ${ error.message }`;
+  if (!data) return `Bestellung ${ payload.order_id } gibt es nicht mehr.`;
+
+  const order = mapOrderDTO(data as OrderDTO);
+
+  if (order.table.nr === '?') {
+    await initData('tables');
+    order.table = tables.find(t => t.id === order.table.id) ?? order.table;
+  }
+
+  const lines = payload.all || categories === null
+    ? order.products
+    : order.products.filter(p => categories.includes(p.category?.id));
+
+  if (lines.length === 0) return 'Diese Bestellung hat keine Artikel für diesen Drucker.';
+
+  return { ...order, products: lines };
 }
 
 function buildTestPrint(name: string, iface: string, categoryIds: number[], printer: ThermalPrinter): void {
