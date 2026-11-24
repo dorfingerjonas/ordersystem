@@ -2,10 +2,12 @@ import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/c
 import { toSignal } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { filter, map } from 'rxjs';
+import { ConfirmationService } from 'primeng/api';
 import { DataService } from '../services/data.service';
 import { AuthService } from '../services/auth.service';
 import { InstallBannerComponent } from '../components/install-banner.component';
 import { InstallService } from '../services/install.service';
+import { OutboxEntry, OutboxService } from '../services/outbox.service';
 
 /**
  * Frame of all pages except ordering / paying:
@@ -82,6 +84,28 @@ import { InstallService } from '../services/install.service';
             <i class="pi pi-wifi" aria-hidden="true"></i>
             <span>Einige Daten konnten nicht geladen werden.</span>
             <button type="button" class="banner-btn" (click)="data.reload()">Erneut versuchen</button>
+          </div>
+        }
+
+        @if (outbox.pending().length > 0) {
+          <div class="banner banner-warn" role="status">
+            <i class="pi pi-cloud-upload" aria-hidden="true"></i>
+            <span>
+              {{ outbox.pending().length === 1 ? '1 Bestellung' : outbox.pending().length + ' Bestellungen' }}
+              ({{ outboxTables() }}) noch nicht gesendet – wird automatisch wiederholt.
+            </span>
+            <button type="button" class="banner-btn" [disabled]="outbox.flushing()" (click)="outbox.flush()">
+              {{ outbox.flushing() ? 'Sende …' : 'Jetzt senden' }}
+            </button>
+          </div>
+        }
+
+        @for (entry of outbox.rejected(); track entry.clientId) {
+          <div class="banner banner-error" role="alert">
+            <i class="pi pi-times-circle" aria-hidden="true"></i>
+            <span>Tisch {{ entry.tableNr }}: Bestellung abgelehnt ({{ entry.lastError }})</span>
+            <button type="button" class="banner-btn" (click)="outbox.retry(entry.clientId)">Erneut</button>
+            <button type="button" class="banner-btn" (click)="discard(entry)">Verwerfen</button>
           </div>
         }
 
@@ -259,7 +283,9 @@ export class ShellComponent {
   protected readonly data = inject(DataService);
   protected readonly auth = inject(AuthService);
   protected readonly install = inject(InstallService);
+  protected readonly outbox = inject(OutboxService);
   private readonly router = inject(Router);
+  private readonly confirm = inject(ConfirmationService);
 
   private readonly url = toSignal(
     this.router.events.pipe(filter(e => e instanceof NavigationEnd), map(e => e.urlAfterRedirects)),
@@ -271,4 +297,20 @@ export class ShellComponent {
 
   protected readonly printersOnline = computed(() => this.data.printers().every(p => p.online));
   protected readonly initial = computed(() => (this.auth.username() || '?').charAt(0).toUpperCase());
+
+  protected readonly outboxTables = computed(() =>
+    [ ...new Set(this.outbox.pending().map(e => `Tisch ${ e.tableNr }`)) ].join(', '));
+
+  protected discard(entry: OutboxEntry): void {
+    this.confirm.confirm({
+      header: 'Bestellung verwerfen?',
+      message: `Die Bestellung für Tisch ${ entry.tableNr } wird gelöscht und nicht gedruckt.`,
+      icon: 'pi pi-exclamation-triangle',
+      acceptLabel: 'Verwerfen',
+      rejectLabel: 'Behalten',
+      acceptButtonProps: { severity: 'danger' },
+      rejectButtonProps: { severity: 'secondary' },
+      accept: () => void this.outbox.discard(entry.clientId)
+    });
+  }
 }

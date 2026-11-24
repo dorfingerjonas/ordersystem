@@ -462,6 +462,8 @@ h1, h2, h3, p { margin: 0; }
   font-weight: 600;
 
   &.banner-error { background: var(--os-danger-soft); color: var(--os-on-danger-soft); }
+  &.banner-warn { background: var(--os-primary-soft); color: var(--os-on-primary-soft); }
+  .banner-btn + .banner-btn { margin-left: 0; }
   .banner-btn {
     margin-left: auto;
     border: none;

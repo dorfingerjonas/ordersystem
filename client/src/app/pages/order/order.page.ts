@@ -12,6 +12,7 @@ import { FitTextDirective } from '../../utils/fit-text.directive';
 import { CartLine, CartService } from '../../services/cart.service';
 import { AuthService } from '../../services/auth.service';
 import { NotifyService } from '../../services/notify.service';
+import { OutboxService } from '../../services/outbox.service';
 import { cents, eur } from '../../utils/format';
 import { Product } from '../../models/models';
 
@@ -40,6 +41,7 @@ export class OrderPage {
   protected readonly cart = inject(CartService);
   private readonly auth = inject(AuthService);
   private readonly notify = inject(NotifyService);
+  private readonly outbox = inject(OutboxService);
   private readonly router = inject(Router);
   private readonly confirm = inject(ConfirmationService);
 
@@ -362,22 +364,32 @@ export class OrderPage {
     this.sending.set(true);
 
     try {
-      await this.data.createOrder({
+      // stored in the outbox (IndexedDB) first -> a WiFi gap can't lose it
+      const result = await this.outbox.submit({
         table: table.id,
         waiter: this.auth.username(),
         note: this.orderNote().trim(),
         products: lines.map(l => (l.note
           ? { id: l.productId, amount: l.amount, note: l.note }
           : { id: l.productId, amount: l.amount }))
-      });
+      }, table.nr);
 
       this.cart.clear(table.id);
       this.reviewOpen.set(false);
-      this.notify.success(
-        `Tisch ${ table.nr }: Bestellung gesendet`,
-        `${ count } Artikel · ${ eur(total) } – wird gedruckt.`,
-        3000
-      );
+
+      if (result === 'sent') {
+        this.notify.success(
+          `Tisch ${ table.nr }: Bestellung gesendet`,
+          `${ count } Artikel · ${ eur(total) } – wird gedruckt.`,
+          3000
+        );
+      } else {
+        this.notify.warn(
+          `Tisch ${ table.nr }: Bestellung gespeichert`,
+          'Keine Verbindung – wird automatisch gesendet, sobald das WLAN wieder da ist. Nicht neu bestellen!',
+          6000
+        );
+      }
 
       await this.router.navigate([ '/tables' ]);
     } catch (e) {

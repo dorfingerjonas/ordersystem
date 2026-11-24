@@ -10,6 +10,7 @@ import { CartService } from '../../services/cart.service';
 import { InstallService } from '../../services/install.service';
 import { eur } from '../../utils/format';
 
+import { OutboxService } from '../../services/outbox.service';
 @Component({
   selector: 'app-more',
   imports: [ RouterLink, SkeletonModule ],
@@ -160,6 +161,7 @@ export class MorePage {
   private readonly router = inject(Router);
   private readonly update = inject(UpdateService);
   private readonly cart = inject(CartService);
+  private readonly outbox = inject(OutboxService);
   protected readonly install = inject(InstallService);
 
   protected readonly eur = eur;
@@ -199,12 +201,16 @@ export class MorePage {
 
   protected logout(): void {
     const pending = this.cart.hasAnyPending();
+    const queued = this.outbox.pending().length;
 
     this.confirm.confirm({
       header: 'Abmelden?',
-      message: pending
-        ? 'Es gibt noch nicht gesendete Bestellungen. Diese bleiben auf diesem Gerät gespeichert.'
-        : 'Du kannst dich jederzeit wieder anmelden.',
+      message: queued > 0
+        ? `${ queued === 1 ? '1 Bestellung wurde' : queued + ' Bestellungen wurden' } noch nicht an den Server übertragen. `
+          + 'Sie bleiben auf diesem Gerät gespeichert und werden erst nach dem nächsten Anmelden gesendet.'
+        : pending
+          ? 'Es gibt noch nicht gesendete Bestellungen. Diese bleiben auf diesem Gerät gespeichert.'
+          : 'Du kannst dich jederzeit wieder anmelden.',
       icon: 'pi pi-sign-out',
       acceptLabel: 'Abmelden',
       rejectLabel: 'Abbrechen',
