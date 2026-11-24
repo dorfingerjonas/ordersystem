@@ -158,6 +158,6 @@
 <p-drawer [(visible)]="pickerOpen" position="bottom" [blockScroll]="true" header="Produkt hinzufügen">
   <app-product-picker [quantities]="extras()" (pick)="addExtra($event)" />
   <button type="button" class="cta dark done" (click)="pickerOpen.set(false)">
-    Fertig{{ extraLines().length ? ' · ' + eur(total()) : '' }}
+    Fertig{{ extraLines().length ? ' (' + eur(total()) + ')' : '' }}
   </button>
 </p-drawer>

@@ -296,7 +296,7 @@ export class StatsService {
     ? this.periodOrders().length
     : new Set(this.sales().filter(s => s.orderId !== null).map(s => s.orderId)).size);
 
-  /** one day: "Sa., 22.11. · 17:03 – 00:48", several: "15.11. – 22.11. · 3 Tage" */
+  /** one day: "Sa., 22.11., 17:03 – 00:48", several: "15.11. – 22.11., 3 Tage" */
   public readonly periodSubtitle = computed(() => {
     const days = this.days();
 
@@ -305,11 +305,11 @@ export class StatsService {
     if (days.length === 1) {
       const times = this.sales().map(s => s.at).filter((t): t is number => t !== null);
       const label = dayLabel(days[0]);
-      return times.length ? `${ label } · ${ clock(Math.min(...times)) } – ${ clock(Math.max(...times)) }` : label;
+      return times.length ? `${ label }, ${ clock(Math.min(...times)) } – ${ clock(Math.max(...times)) }` : label;
     }
 
     const short = (key: string) => { const [ , m, d ] = key.split('-'); return `${ d }.${ m }.`; };
-    return `${ short(days[days.length - 1]) } – ${ short(days[0]) } · ${ days.length } Tage`;
+    return `${ short(days[days.length - 1]) } – ${ short(days[0]) }, ${ days.length } Tage`;
   });
 
   public readonly totals = computed(() => {

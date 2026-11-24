@@ -7,7 +7,7 @@
       <h1>Kellner & Konten</h1>
       <span class="subtitle">
         @if (users.loaded()) {
-          {{ users.users().length }} Konten · {{ adminCount() }} Admins
+          {{ users.users().length }} Konten, {{ adminCount() }} Admins
         } @else {
           Konto antippen zum Bearbeiten
         }
@@ -48,12 +48,7 @@
             <span class="row-main">
               <span class="row-title">{{ name(u.email) || u.email }}</span>
               <span class="row-sub">
-                {{ u.email }}
-                @if (u.lastSignInAt) {
-                  · zuletzt {{ u.lastSignInAt | date: 'dd.MM.yy HH:mm' }}
-                } @else {
-                  · noch nie angemeldet
-                }
+                {{ u.email }}@if (u.lastSignInAt) {, zuletzt {{ u.lastSignInAt | date: 'dd.MM.yy HH:mm' }}} @else {, noch nie angemeldet}
               </span>
             </span>
             <span class="badges">
@@ -134,7 +129,7 @@
           [style]="{ width: 'calc(100vw - 32px)', maxWidth: '420px' }" [draggable]="false" [dismissableMask]="true">
   @if (editing(); as user) {
     <div class="dialog-form">
-      <span class="hint">{{ user.email }} · angelegt {{ user.createdAt | date: 'dd.MM.yyyy' }}</span>
+      <span class="hint">{{ user.email }}, angelegt {{ user.createdAt | date: 'dd.MM.yyyy' }}</span>
 
       <div class="field">
         <div class="toggle-row">

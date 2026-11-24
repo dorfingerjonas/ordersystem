@@ -136,7 +136,7 @@
 <p-drawer [(visible)]="reviewOpen" position="bottom" [blockScroll]="true" header="Bestellung prüfen"
           styleClass="review-drawer">
   <div class="review">
-    <p class="review-sub">Tisch {{ table()?.nr }} · Notiz gilt für 1 Stück</p>
+    <p class="review-sub">Tisch {{ table()?.nr }}, Notiz gilt für 1 Stück</p>
 
     @for (g of groups(); track g.category) {
       <section class="card">

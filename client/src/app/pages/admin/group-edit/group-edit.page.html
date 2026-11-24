@@ -5,12 +5,12 @@
     </button>
     <div class="titles">
       <h1>{{ isNew() ? 'Neue Produktgruppe' : (name() || 'Produktgruppe') }}</h1>
-      <span class="subtitle">Produktgruppe{{ categoryName() ? ' · ' + categoryName() : '' }}{{ printers().length ? ' · ' + printers().join(', ') : '' }}</span>
+      <span class="subtitle">Produktgruppe{{ categoryName() ? ', ' + categoryName() : '' }}{{ printers().length ? ', ' + printers().join(', ') : '' }}</span>
     </div>
   </header>
 
   <main class="page-main">
-    <!-- 0 · general -->
+    <!-- 0: general -->
     <section class="card sec">
       <div class="field">
         <label for="gname">Name der Gruppe</label>
@@ -39,10 +39,10 @@
       </div>
     </section>
 
-    <!-- 1 · attributes -->
+    <!-- 1: attributes -->
     <section class="card sec">
       <div class="sec-head">
-        <h2>1 · Merkmale</h2>
+        <h2>1. Merkmale</h2>
         <span class="sec-note">≡ ziehen = Reihenfolge</span>
       </div>
 
@@ -116,11 +116,11 @@
       }
     </section>
 
-    <!-- 2 · prices -->
+    <!-- 2: prices -->
     @if (priceGrid().rows.length > 0) {
       <section class="card sec">
         <div class="sec-head">
-          <h2>2 · Preise</h2>
+          <h2>2. Preise</h2>
           @if (surchargeAttr(); as sa) {
             <span class="sec-note">gilt für jede {{ sa.name || 'Sorte' }}</span>
           }
@@ -179,11 +179,11 @@
       </section>
     }
 
-    <!-- 3 · resulting products -->
+    <!-- 3: resulting products -->
     @if (combos().length > 0) {
       <section class="card">
         <div class="sec-head pad">
-          <h2>3 · Ergibt {{ activeCount() }} {{ activeCount() === 1 ? 'Produkt' : 'Produkte' }}</h2>
+          <h2>3. Ergibt {{ activeCount() }} {{ activeCount() === 1 ? 'Produkt' : 'Produkte' }}</h2>
           <span class="sec-note">antippen = aus/an</span>
         </div>
 
@@ -238,7 +238,7 @@
     } @else if (plan(); as p) {
       @if (!isNew() && (p.inserts.length || p.archive.length)) {
         <span class="footer-hint">
-          {{ p.inserts.length ? p.inserts.length + ' neu' : '' }}{{ p.inserts.length && p.archive.length ? ' · ' : '' }}{{ p.archive.length ? p.archive.length + ' ausgeblendet' : '' }}
+          {{ p.inserts.length ? p.inserts.length + ' neu' : '' }}{{ p.inserts.length && p.archive.length ? ', ' : '' }}{{ p.archive.length ? p.archive.length + ' ausgeblendet' : '' }}
         </span>
       }
     }

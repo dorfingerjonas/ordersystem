@@ -380,7 +380,7 @@ export class OrderPage {
       if (result === 'sent') {
         this.notify.success(
           `Tisch ${ table.nr }: Bestellung gesendet`,
-          `${ count } Artikel · ${ eur(total) } – wird gedruckt.`,
+          `${ count } Artikel (${ eur(total) }) – wird gedruckt.`,
           3000
         );
       } else {

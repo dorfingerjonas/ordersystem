@@ -24,13 +24,13 @@
             <span class="row-title">{{ p.device?.name ?? 'Unbekanntes Gerät' }}</span>
             <span class="row-sub">
               @if (p.online) {
-                <span class="online-text">Online</span>
+                <span class="online-text">Online</span>,
               } @else if (p.infrastructure.lastPing) {
-                <span class="offline-text">Offline</span> · zuletzt {{ p.infrastructure.lastPing | date: 'dd.MM. HH:mm' }}
+                <span class="offline-text">Offline</span>, zuletzt {{ p.infrastructure.lastPing | date: 'dd.MM. HH:mm' }},
               } @else {
-                <span class="offline-text">Noch nie verbunden</span>
+                <span class="offline-text">Noch nie verbunden</span>,
               }
-              · {{ p.device?.type }} · {{ p.device?.interface }}
+              {{ p.device?.type }}, {{ p.device?.interface }}
             </span>
           </div>
           @if (p.device; as device) {

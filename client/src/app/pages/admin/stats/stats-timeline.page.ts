@@ -107,7 +107,7 @@ const MAX_PRODUCTS = 6;
     <p-drawer [visible]="pickerOpen()" (visibleChange)="pickerOpen.set($event)" position="bottom" styleClass="picker-drawer"
               [modal]="true" header="Produkte wählen">
       <div class="picker">
-        <span class="card-sub">{{ selected().length }} von max. {{ max }} gewählt · sortiert nach Verkäufen</span>
+        <span class="card-sub">{{ selected().length }} von max. {{ max }} gewählt, sortiert nach Verkäufen</span>
         <input type="search" class="search" placeholder="Produkt suchen" aria-label="Produkt suchen"
                [ngModel]="query()" (ngModelChange)="query.set($event)">
         <div class="chip-row" role="group" aria-label="Kategorie">

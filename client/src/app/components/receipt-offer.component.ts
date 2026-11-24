@@ -21,7 +21,7 @@ import { eur } from '../utils/format';
       <div class="offer">
         <i class="pi pi-receipt" aria-hidden="true"></i>
         <span class="offer-text">
-          Letzte Zahlung · {{ last.table === null ? 'Direktverkauf' : 'Tisch ' + last.table }} · {{ eur(last.total) }}
+          Letzte Zahlung {{ last.table === null ? 'Direktverkauf' : 'Tisch ' + last.table }}: {{ eur(last.total) }}
         </span>
         <button type="button" class="btn-ghost small" (click)="open()">Beleg drucken</button>
         <button type="button" class="icon-btn small" (click)="receipt.dismiss()" aria-label="Beleg-Angebot ausblenden">

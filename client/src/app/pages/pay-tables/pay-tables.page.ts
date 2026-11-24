@@ -16,7 +16,7 @@ import { ReceiptOfferComponent } from '../../components/receipt-offer.component'
         <h1>Kassieren</h1>
         <span class="subtitle">
           @if (openTotal() > 0) {
-            {{ openCount() }} {{ openCount() === 1 ? 'Tisch' : 'Tische' }} offen · {{ eur(openTotal()) }}
+            {{ openCount() }} {{ openCount() === 1 ? 'Tisch' : 'Tische' }} offen: {{ eur(openTotal()) }}
           } @else {
             Tisch wählen
           }

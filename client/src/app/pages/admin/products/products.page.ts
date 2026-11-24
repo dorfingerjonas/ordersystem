@@ -71,9 +71,7 @@ import { priceRange } from '../../../utils/groups';
                   <span class="row-main">
                     <span class="row-title" [class.strike]="!p.available">{{ p.name }}</span>
                     <span class="row-sub">
-                      {{ eur(p.price) }} · {{ data.categoryById().get(p.category)?.name }}
-                      @if (g) { · Gruppe {{ g.name }} }
-                      @if (!p.available) { · <span class="soldout">Ausverkauft</span> }
+                      {{ eur(p.price) }}, {{ data.categoryById().get(p.category)?.name }}@if (g) {, Gruppe {{ g.name }}}@if (!p.available) {, <span class="soldout">Ausverkauft</span> }
                     </span>
                   </span>
                 </a>
@@ -102,7 +100,7 @@ import { priceRange } from '../../../utils/groups';
                     </span>
                     <span class="group-meta">
                       <span class="group-price">{{ e.range }}</span>
-                      <span class="group-count">{{ e.variants.length }} {{ e.variants.length === 1 ? 'Variante' : 'Varianten' }}{{ e.soldOut ? ' · ' + e.soldOut + ' aus' : '' }}</span>
+                      <span class="group-count">{{ e.variants.length }} {{ e.variants.length === 1 ? 'Variante' : 'Varianten' }}{{ e.soldOut ? ', ' + e.soldOut + ' aus' : '' }}</span>
                     </span>
                     <i class="pi chev" [class.pi-chevron-down]="!open" [class.pi-chevron-up]="open" aria-hidden="true"></i>
                   </button>
@@ -116,8 +114,7 @@ import { priceRange } from '../../../utils/groups';
                       <span class="row-main">
                         <span class="row-title" [class.strike]="!v.product.available">{{ v.product.name }}</span>
                         <span class="row-sub">
-                          {{ eur(v.product.price) }}
-                          @if (!v.product.available) { · <span class="soldout">Ausverkauft</span> }
+                          {{ eur(v.product.price) }}@if (!v.product.available) {, <span class="soldout">Ausverkauft</span> }
                         </span>
                       </span>
                       <p-toggleswitch [ngModel]="v.product.available" (ngModelChange)="toggleAvailable(v.product, $event)"
@@ -133,8 +130,7 @@ import { priceRange } from '../../../utils/groups';
                     <span class="row-main">
                       <span class="row-title" [class.strike]="!e.product.available">{{ e.product.name }}</span>
                       <span class="row-sub">
-                        {{ eur(e.product.price) }}
-                        @if (!e.product.available) { · <span class="soldout">Ausverkauft</span> }
+                        {{ eur(e.product.price) }}@if (!e.product.available) {, <span class="soldout">Ausverkauft</span> }
                       </span>
                     </span>
                   </a>
@@ -150,7 +146,7 @@ import { priceRange } from '../../../utils/groups';
             }
           </div>
         }
-        <p class="footer-hint">Schalter = verfügbar / ausverkauft · Gruppe antippen = Varianten zeigen</p>
+        <p class="footer-hint">Schalter = verfügbar / ausverkauft, Gruppe antippen = Varianten zeigen</p>
       </main>
 
       <footer class="page-footer">
@@ -338,9 +334,9 @@ export class ProductsPage {
     });
   }
 
-  /** "Apfel, Orange, Johannis · Leitung / Mineral · 0,25l / 0,5l" */
+  /** "Apfel, Orange, Johannis; Leitung / Mineral; 0,25l / 0,5l" */
   protected groupDetail(group: ProductGroup): string {
-    return group.attributes.map(a => a.values.join(a.values.length > 2 ? ', ' : ' / ')).join(' · ');
+    return group.attributes.map(a => a.values.join(a.values.length > 2 ? ', ' : ' / ')).join('; ');
   }
 
   /** products + groups that still use the category */

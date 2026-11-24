@@ -84,8 +84,8 @@ export class StatsProductsPage {
         pct: Math.max(2, Math.round(v / max * 100)),
         value: byQty ? `${ p.qty }×` : eur(p.cents / 100),
         sub: byQty
-          ? `${ eur(p.cents / 100) } Umsatz · ${ Math.round(p.qty / totalQty * 100) } % aller Artikel`
-          : `${ p.qty }× verkauft · ${ Math.round(p.cents / totalCents * 100) } % vom Umsatz`
+          ? `${ eur(p.cents / 100) } Umsatz, ${ Math.round(p.qty / totalQty * 100) } % aller Artikel`
+          : `${ p.qty }× verkauft, ${ Math.round(p.cents / totalCents * 100) } % vom Umsatz`
       };
     });
   });

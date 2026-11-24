@@ -62,7 +62,7 @@ import { OutboxService } from '../../services/outbox.service';
             <span class="nav-icon"><i class="pi pi-box" aria-hidden="true"></i></span>
             <span class="row-main">
               <span class="row-title">Produkte & Kategorien</span>
-              <span class="row-sub">{{ data.products().length }} Produkte{{ data.groups().length ? ' · ' + data.groups().length + ' Gruppen' : '' }} · {{ data.categories().length }} Kategorien{{ soldOut() ? ' · ' + soldOut() + ' ausverkauft' : '' }}</span>
+              <span class="row-sub">{{ data.products().length }} Produkte{{ data.groups().length ? ', ' + data.groups().length + ' Gruppen' : '' }}, {{ data.categories().length }} Kategorien{{ soldOut() ? ', ' + soldOut() + ' ausverkauft' : '' }}</span>
             </span>
             <i class="pi pi-chevron-right chev" aria-hidden="true"></i>
           </a>
@@ -70,7 +70,7 @@ import { OutboxService } from '../../services/outbox.service';
             <span class="nav-icon"><i class="pi pi-th-large" aria-hidden="true"></i></span>
             <span class="row-main">
               <span class="row-title">Tische & Bereiche</span>
-              <span class="row-sub">{{ data.tables().length }} Tische · {{ data.areas().length }} Bereiche</span>
+              <span class="row-sub">{{ data.tables().length }} Tische, {{ data.areas().length }} Bereiche</span>
             </span>
             <i class="pi pi-chevron-right chev" aria-hidden="true"></i>
           </a>
@@ -86,7 +86,7 @@ import { OutboxService } from '../../services/outbox.service';
             <span class="nav-icon"><i class="pi pi-print" aria-hidden="true"></i></span>
             <span class="row-main">
               <span class="row-title">Drucker</span>
-              <span class="row-sub">{{ data.printers().length }} eingebunden · {{ onlinePrinters() }} online</span>
+              <span class="row-sub">{{ data.printers().length }} eingebunden, {{ onlinePrinters() }} online</span>
             </span>
             @if (data.printers().length > 0) {
               <span class="status-dot" [class.online]="onlinePrinters() === data.printers().length"
@@ -102,7 +102,7 @@ import { OutboxService } from '../../services/outbox.service';
           <span class="nav-icon user"><i class="pi pi-user" aria-hidden="true"></i></span>
           <span class="row-main">
             <span class="row-title">{{ auth.username() }}</span>
-            <span class="row-sub">{{ auth.email() }} · {{ auth.isAdmin() ? 'Admin' : 'Kellner' }}</span>
+            <span class="row-sub">{{ auth.email() }}, {{ auth.isAdmin() ? 'Admin' : 'Kellner' }}</span>
           </span>
         </div>
         <button type="button" class="nav-row" (click)="checkUpdate()" [disabled]="checking()">
