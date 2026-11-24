@@ -614,8 +614,27 @@ export class DataService {
 
   // ---------- domain writes ----------
 
-  public async createOrder(order: NewOrder): Promise<void> {
-    const { error } = await supabase.from('orders').insert(order);
+  /**
+   * Sends one order. Idempotent: the server ignores a second insert with the
+   * same client_id (unique index), so the outbox may retry safely.
+   * Use OutboxService.submit() instead of calling this directly.
+   */
+  public async createOrder(order: NewOrder, clientId: string, timeoutMs = 10_000): Promise<void> {
+    const send = (withClientId: boolean) => withClientId
+      ? supabase.from('orders')
+        .upsert({ ...order, client_id: clientId }, { onConflict: 'client_id', ignoreDuplicates: true })
+        .abortSignal(AbortSignal.timeout(timeoutMs))
+      : supabase.from('orders')
+        .insert(order)
+        .abortSignal(AbortSignal.timeout(timeoutMs));
+
+    let { error } = await send(true);
+
+    // migration 09 not run yet: unknown column / no unique index -> plain insert (not idempotent)
+    if (error && (error.code === 'PGRST204' || error.code === '42P10' || /client_id/i.test(error.message ?? ''))) {
+      console.warn('sending order without client_id', error);
+      ({ error } = await send(false));
+    }
 
     if (error) throw error;
   }
