@@ -138,11 +138,29 @@ export interface ReceiptPayload {
   received: number | null;
 }
 
+/** print_job.payload of type 'ORDER': print an order slip again ("NACHDRUCK") */
+export interface ReprintPayload {
+  order_id: number;
+  /** true: every line on this printer, false: only the categories of this printer */
+  all?: boolean;
+}
+
+/** row of the orders table as shown in the order list */
+export interface OrderRecord {
+  id: number;
+  table: number;
+  waiter: string;
+  timestamp: string;
+  products: OrderLineDTO[] | null;
+  note: string | null;
+  printed: boolean;
+}
+
 export interface PrintJob extends WithId {
   created_at: string;
   device: number;
-  type: 'TEST' | 'RECEIPT';
-  payload?: ReceiptPayload | null;
+  type: 'TEST' | 'RECEIPT' | 'ORDER';
+  payload?: ReceiptPayload | ReprintPayload | null;
   status: PrintJobStatus;
   message: string | null;
   finished_at: string | null;

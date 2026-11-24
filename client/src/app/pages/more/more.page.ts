@@ -50,6 +50,14 @@ import { OutboxService } from '../../services/outbox.service';
             </span>
             <i class="pi pi-chevron-right chev" aria-hidden="true"></i>
           </a>
+          <a class="nav-row" routerLink="/admin/orders">
+            <span class="nav-icon"><i class="pi pi-list" aria-hidden="true"></i></span>
+            <span class="row-main">
+              <span class="row-title">Bestellungen</span>
+              <span class="row-sub">Alle Bons, nach Drucker & Kellner, neu drucken</span>
+            </span>
+            <i class="pi pi-chevron-right chev" aria-hidden="true"></i>
+          </a>
           <a class="nav-row" routerLink="/admin/products">
             <span class="nav-icon"><i class="pi pi-box" aria-hidden="true"></i></span>
             <span class="row-main">

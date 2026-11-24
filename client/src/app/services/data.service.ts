@@ -11,6 +11,7 @@ import {
   OrderedProduct,
   PrintJob,
   ReceiptPayload,
+  ReprintPayload,
   Product,
   ProductGroup,
   Table
@@ -694,6 +695,11 @@ export class DataService {
   /** prints a payment confirmation ("Zahlungsbestätigung") and waits for the printer service */
   public printReceipt(deviceId: number, payload: ReceiptPayload, timeoutMs = 25_000): Promise<PrintJob> {
     return this.runPrintJob({ device: deviceId, type: 'RECEIPT', payload }, timeoutMs);
+  }
+
+  /** prints an order slip again (marked "NACHDRUCK") and waits for the printer service */
+  public reprintOrder(deviceId: number, payload: ReprintPayload, timeoutMs = 25_000): Promise<PrintJob> {
+    return this.runPrintJob({ device: deviceId, type: 'ORDER', payload }, timeoutMs);
   }
 
   private async runPrintJob(insert: Pick<PrintJob, 'device' | 'type' | 'payload'>, timeoutMs: number): Promise<PrintJob> {

@@ -1,0 +1,177 @@
+<div class="screen">
+  <header class="page-header">
+    <a class="icon-btn" routerLink="/more" aria-label="Zurück zur Verwaltung">
+      <i class="pi pi-chevron-left" aria-hidden="true"></i>
+    </a>
+    <div class="titles">
+      <h1>Bestellungen</h1>
+      <span class="subtitle">
+        @if (loaded()) {
+          {{ filtered() ? total() + ' von ' + orders().length : orders().length + ' gesamt' }}@if (unprinted() > 0) {, {{ unprinted() }} noch nicht gedruckt}
+        } @else {
+          Alle Bestellungen, Bons neu drucken
+        }
+      </span>
+    </div>
+    <button type="button" class="icon-btn" (click)="load()" [disabled]="loading()" aria-label="Neu laden" style="margin-left: auto">
+      <i class="pi pi-refresh" [class.pi-spin]="loading()" aria-hidden="true"></i>
+    </button>
+  </header>
+
+  <main class="page-main">
+    @if (loadError(); as error) {
+      <div class="empty">
+        <i class="pi pi-exclamation-circle" aria-hidden="true"></i>
+        <strong>Bestellungen konnten nicht geladen werden</strong>
+        <span>{{ error }}</span>
+        <button type="button" class="btn-ghost" (click)="load()">Erneut versuchen</button>
+      </div>
+    } @else if (!loaded()) {
+      <div class="empty">
+        <i class="pi pi-spin pi-spinner" aria-hidden="true"></i>
+        <span>Bestellungen werden geladen …</span>
+      </div>
+    } @else {
+      <div class="filters">
+        @if (slipPrinters().length > 0) {
+          <fieldset class="filter">
+            <legend class="label">Drucker</legend>
+            <div class="chips scroll">
+              <button type="button" class="chip" [attr.aria-pressed]="printerFilter() === null" (click)="setPrinter(null)">Alle</button>
+              @for (p of slipPrinters(); track p.infrastructure.id) {
+                <button type="button" class="chip" [attr.aria-pressed]="printerFilter() === p.infrastructure.id"
+                        (click)="setPrinter(p.infrastructure.id)">
+                  <span class="status-dot" [class.online]="p.online" [class.offline]="!p.online" aria-hidden="true"></span>
+                  {{ printerLabel(p) }}
+                </button>
+              }
+            </div>
+          </fieldset>
+        }
+
+        <fieldset class="filter">
+          <legend class="label">Kellner</legend>
+          <div class="chips scroll">
+            <button type="button" class="chip" [attr.aria-pressed]="waiterFilter() === null" (click)="setWaiter(null)">Alle</button>
+            @for (w of waiters(); track w.name) {
+              <button type="button" class="chip" [attr.aria-pressed]="waiterFilter() === w.name" (click)="setWaiter(w.name)">
+                {{ w.name }} <span class="count">{{ w.count }}</span>
+              </button>
+            }
+          </div>
+        </fieldset>
+      </div>
+
+      <div class="field">
+        <label for="order-search" class="sr-only">Tisch oder Bestellnummer</label>
+        <input pInputText id="order-search" type="search" inputmode="numeric" placeholder="Tisch oder Bestell-Nr."
+               [ngModel]="search()" (ngModelChange)="setSearch($event)" autocomplete="off">
+      </div>
+
+      <section class="card" aria-live="polite">
+        @for (v of visible(); track v.order.id) {
+          <article class="order">
+            <div class="order-head">
+              <span class="table-nr" [attr.aria-label]="'Tisch ' + v.tableNr">{{ v.tableNr }}</span>
+              <div class="order-meta">
+                <span class="order-title">
+                  {{ v.order.timestamp | date: 'dd.MM. HH:mm' }}, {{ v.order.waiter || '?' }}
+                  @if (!v.order.printed) {
+                    <span class="badge">nicht gedruckt</span>
+                  }
+                </span>
+                <span class="order-sub">
+                  Nr. {{ v.order.id }}, {{ v.count }} Artikel@if (v.printerNames.length > 0 && printerFilter() === null) {, {{ v.printerNames.join(', ') }}}
+                </span>
+              </div>
+              <button type="button" class="btn-ghost reprint" (click)="openReprint(v)"
+                      [attr.aria-label]="'Bon von Tisch ' + v.tableNr + ' neu drucken'">
+                <i class="pi pi-print" aria-hidden="true"></i> Neu drucken
+              </button>
+            </div>
+
+            <ul class="lines">
+              @for (l of v.lines; track $index) {
+                <li>
+                  {{ l.amount }}× {{ l.name }}
+                  @if (l.note) {
+                    <span class="note">→ {{ l.note }}</span>
+                  }
+                </li>
+              }
+            </ul>
+
+            @if (v.otherCount > 0) {
+              <span class="other">+ {{ v.otherCount }} Artikel auf anderen Druckern</span>
+            }
+            @if (v.order.note?.trim()) {
+              <span class="order-note">Anm: {{ v.order.note }}</span>
+            }
+          </article>
+        } @empty {
+          <div class="empty">
+            <i class="pi pi-list" aria-hidden="true"></i>
+            <strong>Keine Bestellungen gefunden</strong>
+          </div>
+        }
+      </section>
+
+      @if (total() > visible().length) {
+        <button type="button" class="btn-ghost more" (click)="limit.set(limit() + 50)">
+          Weitere anzeigen ({{ total() - visible().length }})
+        </button>
+      }
+    }
+  </main>
+</div>
+
+<p-dialog [visible]="reprintOrder() !== null" (visibleChange)="!$event && closeReprint()" [modal]="true"
+          [header]="reprintOrder() ? 'Bon neu drucken, Tisch ' + reprintOrder()!.tableNr : ''"
+          [style]="{ width: 'calc(100vw - 32px)', maxWidth: '440px' }" [draggable]="false" [dismissableMask]="true">
+  @if (reprintOrder(); as v) {
+    <div class="dialog-form">
+      <span class="hint">
+        Bestellung Nr. {{ v.order.id }}, {{ v.order.timestamp | date: 'dd.MM. HH:mm' }}, {{ v.order.waiter }}.
+        Der Bon wird als „NACHDRUCK“ markiert.
+      </span>
+
+      <fieldset class="field">
+        <legend class="label">Drucker</legend>
+        <div class="chips">
+          <button type="button" class="chip" [attr.aria-pressed]="target() === 'auto'" (click)="target.set('auto')"
+                  [disabled]="responsible().length === 0">
+            Alle zuständigen ({{ responsible().length }})
+          </button>
+          @for (d of data.printerDevices(); track d.id) {
+            <button type="button" class="chip" [attr.aria-pressed]="target() === d.id" (click)="target.set(d.id)">
+              <span class="status-dot" [class.online]="online().has(d.id)" [class.offline]="!online().has(d.id)" aria-hidden="true"></span>
+              {{ d.name }}
+            </button>
+          }
+        </div>
+      </fieldset>
+
+      @if (target() !== 'auto') {
+        <fieldset class="field">
+          <legend class="label">Inhalt</legend>
+          <div class="chips">
+            <button type="button" class="chip" [attr.aria-pressed]="!whole()" (click)="whole.set(false)">Nur Artikel dieses Druckers</button>
+            <button type="button" class="chip" [attr.aria-pressed]="whole()" (click)="whole.set(true)">Ganze Bestellung</button>
+          </div>
+        </fieldset>
+      } @else {
+        <span class="hint">
+          Jeder Drucker bekommt wieder seinen Teil:
+          {{ responsible().length ? '' : 'keiner zuständig.' }}
+          @for (p of responsible(); track p.infrastructure.id; let last = $last) {
+            {{ printerLabel(p) }}{{ last ? '' : ', ' }}
+          }
+        </span>
+      }
+    </div>
+  }
+  <ng-template #footer>
+    <p-button label="Abbrechen" severity="secondary" (onClick)="closeReprint()" [disabled]="printing()" />
+    <p-button label="Drucken" icon="pi pi-print" severity="contrast" [loading]="printing()" (onClick)="reprint()" />
+  </ng-template>
+</p-dialog>
