@@ -489,6 +489,8 @@ h1, h2, h3, p { margin: 0; }
 
 .field { display: flex; flex-direction: column; gap: 6px; }
 .field label, .field .label { font-size: 14px; font-weight: 600; color: var(--os-text-2); }
+fieldset.field { border: none; padding: 0; margin: 0; min-width: 0; }
+fieldset.field > legend { padding: 0; margin-bottom: 6px; }
 .field .hint { font-size: 13px; color: var(--os-muted); }
 
 // make PrimeNG inputs full width in fields
